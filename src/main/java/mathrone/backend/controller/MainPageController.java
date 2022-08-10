@@ -38,8 +38,8 @@ public class MainPageController {
         return mainPageService.getStarBook(userId);
     }
 
-    @GetMapping("/main/problem/try")
-    public List<RecentTryDto> getRecentTry(){
-        return mainPageService.getRecentTry();
-    }
+//    @GetMapping("/main/problem/try")
+//    public List<RecentTryDto> getRecentTry(){
+//        return mainPageService.getRecentTry();
+//    }
 }
