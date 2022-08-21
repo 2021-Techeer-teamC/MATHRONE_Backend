@@ -11,7 +11,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Setter
 public class ProblemGradeRequestDto {
-    private int userId;
     private List<problemSolve> answerSubmitList;
 
     @Getter

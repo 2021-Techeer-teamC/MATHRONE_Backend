@@ -15,7 +15,7 @@ import mathrone.backend.repository.ProblemRepository;
 import mathrone.backend.repository.ProblemTryRepository;
 import mathrone.backend.repository.SolutionRepository;
 import mathrone.backend.repository.UserInfoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,36 +26,49 @@ public class AnswerServiceImpl implements AnswerService {
     private final ProblemRepository problemRepository;
     private final UserInfoRepository userInfoRepository;
     private final ProblemTryRepository problemTryRepository;
+    private final TokenProviderUtil tokenProviderUtil;
 
     @Transactional
     public List<ProblemGradeResponseDto> gradeProblem(
-            ProblemGradeRequestDto problemGradeRequestDtoList) {
+        ProblemGradeRequestDto problemGradeRequestDtoList, String accessToken) {
+
+        // token 검증
+        if (!tokenProviderUtil.validateToken(accessToken)) {
+            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
+        }
+
+        // access token에서 userId 가져오기
+        Integer userId = Integer.parseInt(
+            tokenProviderUtil.getAuthentication(accessToken).getName());
+
+
         List<ProblemGradeResponseDto> problemGradeResponseDtoList = new ArrayList<>();
         List<ProblemGradeRequestDto.problemSolve> list = problemGradeRequestDtoList.getAnswerSubmitList();
-        UserInfo user = userInfoRepository.findByUserId(problemGradeRequestDtoList.getUserId());
+        UserInfo user = userInfoRepository.findByUserId(userId);
 
         for (ProblemGradeRequestDto.problemSolve problem : list) {
             Solution solutionProblem = solutionRepository.findSolutionByProblemId(
-                    problem.getProblemId());
+                problem.getProblemId());
             Problem registedProblem = problemRepository.findByProblemId(problem.getProblemId());
             boolean isCorrect = false;
             if (solutionProblem.getAnswer() == problem.getSolution()) {
                 isCorrect = true;
             }
 
-            Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(registedProblem,
-                    user);
+            Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
+                registedProblem,
+                user);
             if (registedProblemTry.isPresent()) {
                 ProblemTry problemTry = registedProblemTry.get();
                 problemTry.setIscorrect(isCorrect);
                 problemTry.setAnswerSubmitted(problem.getSolution());
             } else {
                 ProblemTry problemTry = ProblemTry.builder()
-                        .answerSubmitted(problem.getSolution())
-                        .iscorrect(isCorrect)
-                        .user(user)
-                        .problem(registedProblem)
-                        .build();
+                    .answerSubmitted(problem.getSolution())
+                    .iscorrect(isCorrect)
+                    .user(user)
+                    .problem(registedProblem)
+                    .build();
 
                 // user.getProblemTryList().add(problemTry);
                 // registedProblem.getProblemTryList().add(problemTry);
@@ -63,9 +76,9 @@ public class AnswerServiceImpl implements AnswerService {
             }
 
             problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
-                    .problemId(problem.getProblemId())
-                    .solution(problem.getSolution())
-                    .answer(isCorrect).build());
+                .problemId(problem.getProblemId())
+                .solution(problem.getSolution())
+                .answer(isCorrect).build());
         }
         return problemGradeResponseDtoList;
     }
