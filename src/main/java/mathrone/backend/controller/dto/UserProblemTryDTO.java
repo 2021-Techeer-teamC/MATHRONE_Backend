@@ -25,4 +25,5 @@ public class UserProblemTryDTO {
 
     private boolean iscorrect;
 
+    private String title;
 }

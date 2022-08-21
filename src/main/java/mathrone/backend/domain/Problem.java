@@ -28,7 +28,8 @@ import org.hibernate.annotations.TypeDef;
             @ColumnResult(name = "chapterId", type = String.class),
             @ColumnResult(name = "workbookId", type = String.class),
             @ColumnResult(name = "levelOfDiff", type = Integer.class),
-            @ColumnResult(name = "iscorrect", type = Boolean.class)
+            @ColumnResult(name = "iscorrect", type = Boolean.class),
+            @ColumnResult(name = "title", type = String.class)
         }
     )
 )
@@ -41,7 +42,11 @@ import org.hibernate.annotations.TypeDef;
         + "P.chapter_id as chapterId,"
         + "P.workbook_id as workbookId,"
         + "P.level_of_diff as levelOfDiff,"
-        + "PT.iscorrect from problem P, problem_try PT where P.problem_id = PT.problem_id and PT.user_id = :userId"
+        + "PT.iscorrect, W.title "
+        + "from problem P, problem_try PT, workbook W "
+        + "where P.problem_id = PT.problem_id "
+        + "and P.workbook_id = W.workbook_id "
+        + "and PT.user_id = :userId"
 
 )
 

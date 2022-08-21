@@ -77,6 +77,8 @@ public class ProfileService {
         // 2. access token으로부터 user id 가져오기 (email x)
         String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
 
+
+
         return problemRepository.findUserTryProblem(
             Integer.parseInt(userId));
     }
