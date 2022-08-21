@@ -10,5 +10,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ProblemTryRespository extends JpaRepository<ProblemTry, Long> {
 
     Optional<ProblemTry> findAllByProblemAndUser(Problem problem, UserInfo userInfo);
-    List<ProblemTry> findDistinctTop10();
+//    List<ProblemTry> findDistinctTop10();
 }

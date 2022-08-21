@@ -136,21 +136,21 @@ public class MainPageService {
 
     }
     
-    public List<RecentTryDto> getRecentTry(){
-        List<ProblemTry> problemList = problemTryRespository.findDistinctTop10(); // 최근 푼 10개 가져옴
-        List<RecentTryDto> recentTryProblems = new ArrayList<RecentTryDto>();
-        for(int i = 0; i < 10; i++){
-            Problem problem = problemList.get(i).getProblem();
-            RecentTryDto recentTry = RecentTryDto.builder()
-                    .problemId(problem.getProblemId())
-                    .problemNum(problem.getProblemNum())
-                    .workbookTitle(workBookRepository.findByWorkbookId(problem.getChapterId()).getTitle())
-                    .level(problem.getLevelOfDiff())
-                    .subject(chapterRepository.findByChapterId(problem.getChapterId()).get().getSubject())
-                    .chapter(chapterRepository.findByChapterId(problem.getChapterId()).get().getChapter())
-                    .build();
-            recentTryProblems.add(recentTry);
-        }
-        return recentTryProblems;
-    }
+//    public List<RecentTryDto> getRecentTry(){
+//        List<ProblemTry> problemList = problemTryRespository.findDistinctTop10(); // 최근 푼 10개 가져옴
+//        List<RecentTryDto> recentTryProblems = new ArrayList<RecentTryDto>();
+//        for(int i = 0; i < 10; i++){
+//            Problem problem = problemList.get(i).getProblem();
+//            RecentTryDto recentTry = RecentTryDto.builder()
+//                    .problemId(problem.getProblemId())
+//                    .problemNum(problem.getProblemNum())
+//                    .workbookTitle(workBookRepository.findByWorkbookId(problem.getChapterId()).getTitle())
+//                    .level(problem.getLevelOfDiff())
+//                    .subject(chapterRepository.findByChapterId(problem.getChapterId()).get().getSubject())
+//                    .chapter(chapterRepository.findByChapterId(problem.getChapterId()).get().getChapter())
+//                    .build();
+//            recentTryProblems.add(recentTry);
+//        }
+//        return recentTryProblems;
+//    }
 }
