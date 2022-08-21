@@ -2,10 +2,14 @@ package mathrone.backend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.List;
+import mathrone.backend.controller.dto.UserProblemTryDTO;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.domain.UserProfile;
 import mathrone.backend.domain.UserRank;
+import mathrone.backend.repository.ProblemRepository;
 import mathrone.backend.repository.UserInfoRepository;
+import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
@@ -15,11 +19,18 @@ public class ProfileService {
 
     private final UserInfoRepository userInfoRepository;
     private final ZSetOperations<String, String> zSetOperations;
+    private final TokenProviderUtil tokenProviderUtil;
+    private final ProblemRepository problemRepository;
+
 
     public ProfileService(UserInfoRepository userInfoRepository,
-        RedisTemplate<String, String> redisTemplate) {
+        RedisTemplate<String, String> redisTemplate,
+        TokenProviderUtil tokenProviderUtil,
+        ProblemRepository problemRepository) {
         this.userInfoRepository = userInfoRepository;
         this.zSetOperations = redisTemplate.opsForZSet();
+        this.tokenProviderUtil = tokenProviderUtil;
+        this.problemRepository = problemRepository;
     }
 
     //userId를 받아와서 전송
@@ -57,6 +68,17 @@ public class ProfileService {
 
     public UserInfo getUserInfo(long userId) {
         return userInfoRepository.getById(userId);
+    }
+
+    public List<UserProblemTryDTO> getTryProblem(String accessToken) {
+        if(!tokenProviderUtil.validateToken(accessToken)){
+            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
+        }
+        // 2. access token으로부터 user id 가져오기 (email x)
+        String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
+
+        return problemRepository.findUserTryProblem(
+            Integer.parseInt(userId));
     }
 
 
