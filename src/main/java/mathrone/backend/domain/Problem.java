@@ -2,14 +2,48 @@ package mathrone.backend.domain;
 
 import com.sun.istack.NotNull;
 import com.vladmihalcea.hibernate.type.array.IntArrayType;
-import java.util.LinkedList;
-import java.util.List;
+import javax.persistence.Column;
+import javax.persistence.ColumnResult;
+import javax.persistence.ConstructorResult;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.SqlResultSetMapping;
+import javax.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import mathrone.backend.controller.dto.UserProblemTryDTO;
 import org.hibernate.annotations.TypeDef;
 
-import javax.persistence.*;
+@SqlResultSetMapping(
+    name = "problemTryDTOMapping",
+    classes = @ConstructorResult(
+        targetClass = UserProblemTryDTO.class,
+        columns = {
+            @ColumnResult(name = "problemId", type = String.class),
+            @ColumnResult(name = "problemNum", type = Integer.class),
+            @ColumnResult(name = "chapterId", type = String.class),
+            @ColumnResult(name = "workbookId", type = String.class),
+            @ColumnResult(name = "levelOfDiff", type = Integer.class),
+            @ColumnResult(name = "iscorrect", type = Boolean.class)
+        }
+    )
+)
+
+@NamedNativeQuery(name = "Problem.findUserTryProblem",
+    resultClass = UserProblemTryDTO.class,
+    resultSetMapping = "problemTryDTOMapping",
+    query = "select P.problem_id as problemId,"
+        + "P.problem_num as problemNum,"
+        + "P.chapter_id as chapterId,"
+        + "P.workbook_id as workbookId,"
+        + "P.level_of_diff as levelOfDiff,"
+        + "PT.iscorrect from problem P, problem_try PT where P.problem_id = PT.problem_id and PT.user_id = :userId"
+
+)
 
 @NoArgsConstructor
 @Entity
@@ -46,7 +80,6 @@ public class Problem {
 //    @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true) //영속화 설정
 //    private List<ProblemTry> problemTryList = new LinkedList<>();   // null 에러 방지
 
-
 //    @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true) //영속화 설정
 //    private List<ProblemTry> problemTryList = new LinkedList<>();   // null 에러 방지
 
@@ -75,3 +108,4 @@ public class Problem {
         return levelOfDiff;
     }
 }
+
