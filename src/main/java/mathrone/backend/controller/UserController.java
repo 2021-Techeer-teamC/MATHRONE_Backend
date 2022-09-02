@@ -5,6 +5,7 @@ import mathrone.backend.controller.dto.*;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.domain.token.RefreshToken;
 import mathrone.backend.service.AuthService;
+import mathrone.backend.service.SnsLoginService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,11 +15,11 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/user")
+//@RequestMapping("/user")
 @RequiredArgsConstructor
 public class UserController {
     private final AuthService authService;
-//    private final SnsLoginService snsLoginService;
+    private final SnsLoginService snsLoginService;
 
     @GetMapping("/delUser")
     public ResponseEntity<Void> deleteUser(@RequestParam String email){
@@ -64,11 +65,11 @@ public class UserController {
 
 
 
-    @PostMapping(value = "/login/google", headers = {"Content-type=application/json"})
-    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) {
+    @PostMapping(value = "/oauth/callback/google", headers = {"Content-type=application/json"})
+    public ResponseEntity<ResponseTokenDTO> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) {
         System.out.println("usercontroller");
         System.out.println(requestCodeDto.getCode());
-        return ResponseEntity.ok(new TokenDto());
+        return snsLoginService.getToken(requestCodeDto.getCode());
     }
 
 //    @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
