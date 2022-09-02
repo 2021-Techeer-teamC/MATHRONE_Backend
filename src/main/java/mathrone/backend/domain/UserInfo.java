@@ -61,6 +61,14 @@ public class UserInfo {
     }
 
 
+    //업데이트 될만한 거
+    public UserInfo update(String userImg, boolean premium){
+        this.userImg = userImg;
+        this.premium = premium;
+
+        return this;
+    }
+
 
     //GETTER SETTER
 
