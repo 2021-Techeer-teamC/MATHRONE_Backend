@@ -21,6 +21,7 @@ public class RequestTokenDTO {
 
     private String scope;   // OAuth 동의하는 기능의 범위
 
+    private String accessType;
 
     private String code; // accesstoken을 발급 받기 전 임시 비밀번호 (authorization Code)
 
