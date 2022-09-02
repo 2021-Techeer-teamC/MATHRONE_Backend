@@ -5,6 +5,7 @@ import mathrone.backend.config.jwt.JwtAccessDeniedHandler;
 import mathrone.backend.config.jwt.JwtAuthenticationEntryPoint;
 import mathrone.backend.config.jwt.JwtSecurityConfig;
 import mathrone.backend.repository.tokenRepository.LogoutAccessTokenRedisRepository;
+//import mathrone.backend.service.GoogleOAuth2UserService;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +26,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final LogoutAccessTokenRedisRepository logoutAccessTokenRedisRepository;
+//    private final GoogleOAuth2UserService oAuth2UserService;
 
     private static final String[] AUTH_LIST = {
             "/v3/api-docs",
@@ -38,6 +40,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             "/answer/**",
             "/rank/**",
             "/profile/**",
+            "/oauth/**"
     };
 
     @Bean // user password 암호화
@@ -76,5 +79,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .and()
                 .apply(new JwtSecurityConfig(tokenProviderUtil, logoutAccessTokenRedisRepository));
+
+                //google login
+//                .and()
+//                .oauth2Login()
+//                .userInfoEndpoint()
+//                .userService(oAuth2UserService);
     }
 }
