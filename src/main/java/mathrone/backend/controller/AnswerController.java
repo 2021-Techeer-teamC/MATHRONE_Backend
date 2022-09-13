@@ -7,6 +7,7 @@ import mathrone.backend.controller.dto.ProblemGradeResponseDto;
 import mathrone.backend.service.AnswerServiceImpl;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,8 +20,9 @@ public class AnswerController {
 
     @PutMapping("/problem")
     public List<ProblemGradeResponseDto> problemGrade(
+        @RequestHeader String accessToken,
         @RequestBody ProblemGradeRequestDto problemGradeRequestDtoList) {
-        return answerService.gradeProblem(problemGradeRequestDtoList);
+        return answerService.gradeProblem(problemGradeRequestDtoList, accessToken);
     }
 
 }

@@ -1,16 +1,14 @@
 package mathrone.backend.repository;
 
+import java.util.Optional;
 import mathrone.backend.domain.UserInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
 @Repository
 public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
 
-    //@Query(value = "SELECT nickname FROM user_info WHERE user_id=:user_id", nativeQuery = true)
     UserInfo findByUserId(Integer userId);
 
     UserInfo findById(String id);
@@ -21,7 +19,9 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
     Long getTryByUserID(int userId);
 
     Optional<UserInfo> findByEmail(String userId);
+
     boolean existsByEmail(String email);
+
     Optional<Void> deleteByEmail(String email);
 
 
