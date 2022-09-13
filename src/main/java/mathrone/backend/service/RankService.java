@@ -7,6 +7,7 @@ import mathrone.backend.repository.UserInfoRepository;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
+import mathrone.backend.util.TokenProviderUtil;
 
 
 import java.util.Set;
@@ -17,10 +18,14 @@ public class RankService {
 
     private final ZSetOperations<String, String> zSetOperations;
     private final UserInfoRepository userInfoRepository;
+    private final TokenProviderUtil tokenProviderUtil;
 
-    public RankService(RedisTemplate<String, String> redisTemplate, UserInfoRepository userInfoRepository) {
+    public RankService(RedisTemplate<String, String> redisTemplate,
+            UserInfoRepository userInfoRepository,
+            TokenProviderUtil tokenProviderUtil) {
         this.zSetOperations = redisTemplate.opsForZSet();
         this.userInfoRepository = userInfoRepository;
+        this.tokenProviderUtil = tokenProviderUtil;
     }
 
     public ArrayNode getAllRank(){ // 리더보드에 필요한 rank 데이터 조회
@@ -39,12 +44,20 @@ public class RankService {
         return arrayNode;
     }
 
-    public ObjectNode getMyRank(Integer user_id){ // 리더보드에 필요한 나의 rank 조회
+    public ObjectNode getMyRank(String accessToken){ // 리더보드에 필요한 나의 rank 조회
+        if (!tokenProviderUtil.validateToken(accessToken)) {
+            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
+        }
+
+        // access token에서 userId 가져오기
+        Integer userId = Integer.parseInt(
+                tokenProviderUtil.getAuthentication(accessToken).getName());
+
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
-        node.put("rank", zSetOperations.reverseRank("test", user_id.toString()) + 1);
-        node.put("score", zSetOperations.score("test", user_id.toString()));
-        node.put("try", userInfoRepository.getTryByUserID(user_id));
+        node.put("rank", zSetOperations.reverseRank("test", userId.toString()) + 1);
+        node.put("score", zSetOperations.score("test", userId.toString()));
+        node.put("try", userInfoRepository.getTryByUserID(userId));
         return node;
     }
 
