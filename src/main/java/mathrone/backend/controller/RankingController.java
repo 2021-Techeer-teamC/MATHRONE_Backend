@@ -15,12 +15,12 @@ public class RankingController {
         this.rankService = rankService;
     }
 
-    @GetMapping("/rankdata") // 상위 랭킹 정보를 가져옴
+    @GetMapping("/total-rank") // 상위 랭킹 정보를 가져옴
     public ArrayNode getRank(){
         return rankService.getAllRank();
     }
 
-    @GetMapping("/myrankdata") // 나의 랭킹 정보를 가져오기
+    @GetMapping("/rank") // 나의 랭킹 정보를 가져오기
     public ObjectNode getMyRank(@RequestHeader String accessToken){  // user_id(int)를 파라미터로 필요로 함
         return rankService.getMyRank(accessToken);
     }
