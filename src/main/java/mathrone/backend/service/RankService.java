@@ -36,9 +36,9 @@ public class RankService {
         for(ZSetOperations.TypedTuple<String> str : rankSet) {
             ObjectNode node = mapper.createObjectNode();
             int temp = Integer.parseInt(str.getValue());
-            node.put("user_id", temp);
-            node.put("score", str.getScore());
-            node.put("try", userInfoRepository.getTryByUserID(temp));
+            node.put("user_name", userInfoRepository.findByUserId(temp).getId());
+            node.put("correct_count", str.getScore());
+            node.put("try_count", userInfoRepository.getTryByUserID(temp));
             arrayNode.add(node);
         } // 해당 유저가 시도한 문제 수를 포함한 JSON 형식 다시 생성
         return arrayNode;
@@ -49,14 +49,15 @@ public class RankService {
             throw new RuntimeException("Access Token 이 유효하지 않습니다.");
         }
 
-        Integer userId = Integer.parseInt(
+        int userId = Integer.parseInt(
                 tokenProviderUtil.getAuthentication(accessToken).getName());
 
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
-        node.put("rank", zSetOperations.reverseRank("test", userId.toString()) + 1);
-        node.put("score", zSetOperations.score("test", userId.toString()));
-        node.put("try", userInfoRepository.getTryByUserID(userId));
+        node.put("rank", zSetOperations.reverseRank("test", Integer.toString(userId)) + 1);
+        node.put("user_name", userInfoRepository.findByUserId(userId + 1).getId());
+        node.put("correct_count", zSetOperations.score("test", Integer.toString(userId)));
+        node.put("try_count", userInfoRepository.getTryByUserID(userId));
         return node;
     }
 
