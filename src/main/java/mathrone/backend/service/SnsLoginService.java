@@ -129,7 +129,10 @@ public class SnsLoginService {
             GoogleIDToken userInfoDto = objectMapper.readValue(resultJson, new TypeReference<GoogleIDToken>() {
             });
 
+            System.out.println("google id token ㅂㅏㄷ아내기");
             System.out.println(resultJson);
+
+            System.out.println("리턴되는 값 ");
             System.out.println(userInfoDto);
 
             return ResponseEntity.ok().body(userInfoDto);
