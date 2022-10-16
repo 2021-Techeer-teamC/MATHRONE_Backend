@@ -46,19 +46,9 @@ public class AuthService {
     @Transactional
     public UserResponseDto signupWithGoogle(ResponseEntity<GoogleIDToken> googleIDToken){
 
-        System.out.println("singup1");
         UserSignUpDto userSignUpDto = new UserSignUpDto(googleIDToken.getBody().getEmail(), "googleLogin", googleIDToken.getBody().getEmail()); //id와 email을 email로 채워서 만들기
-        System.out.println("singup2");
-
-//        if (userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),"GOOGLE") ){
-//            //이메일이 존재함 + 가입방식이 구글임! -> 해당 이메일로 다른 sns가입에 사용했을수도 있기 때문에 둘다 검사해야함
-//            System.out.println("가입완료");
-////            if(userinfoRepository.findByEmail(googleIDToken.getBody().getEmail())->에서 resType이 GOOGLE인 경우 equals("GOOGLE"))
-//            throw new RuntimeException("이미 가입된 유저입니다.");
-//        }
-        System.out.println("singup3");
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder,"GOOGLE");
-        System.out.println("singup4");
+
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
 
@@ -67,40 +57,20 @@ public class AuthService {
 
         //가입이 안되어 있는 경우
         if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(), "GOOGLE")){
-            System.out.println("가입이 안되어 있음");
             signupWithGoogle(googleIDToken);
         }
 
-        System.out.println("가입이 되어 있음 ");
-        System.out.println(googleIDToken.getBody().getEmail());
-
-
         UserRequestDto userRequestDto = new UserRequestDto(googleIDToken.getBody().getEmail(), "googleLogin");
-
-        System.out.println("유저 리퀘스트 생성 성공??");
 
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
         UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
-
-
-        System.out.println(authenticationToken.getName());
-        System.out.println(authenticationToken.getCredentials());
-        System.out.println(authenticationToken.getPrincipal());
-        System.out.println(authenticationToken.getAuthorities());
-        System.out.println(authenticationToken.getDetails());
-        System.out.println(authenticationToken.getClass());
-        System.out.println("1??");
 
         // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
         //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
-        System.out.println("2??");
-
         // 3. token 생성
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
-
-        System.out.println("3??");
 
         // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
         RefreshToken refreshToken = RefreshToken.builder()
@@ -109,13 +79,8 @@ public class AuthService {
                 .expiration(tokenProviderUtil.getRefreshTokenExpireTime())
                 .build();
 
-        System.out.println("4??");
-
         // 5. 토큰 저장 테이블 저장
         refreshTokenRepository.save(refreshToken);
-
-
-        System.out.println("5??");
 
         // 6. redis 저장
         refreshTokenRedisRepository.save(refreshToken.transferRedisToken());
@@ -137,14 +102,6 @@ public class AuthService {
     public TokenDto login(UserRequestDto userRequestDto){
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
         UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
-
-        System.out.println(authenticationToken.getName());
-        System.out.println(authenticationToken.getCredentials());
-        System.out.println(authenticationToken.getPrincipal());
-        System.out.println(authenticationToken.getAuthorities());
-        System.out.println(authenticationToken.getDetails());
-        System.out.println(authenticationToken.getClass());
-
 
         // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
         //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
