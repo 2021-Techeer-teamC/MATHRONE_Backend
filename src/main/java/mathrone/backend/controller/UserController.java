@@ -66,7 +66,7 @@ public class UserController {
 
 
     @PostMapping(value = "/oauth/callback/google", headers = {"Content-type=application/json"})
-    public ResponseEntity<UserResponseDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
+    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
         System.out.println("usercontroller");
         ResponseEntity<ResponseTokenDTO> res = snsLoginService.getToken(requestCodeDto.getCode());
 
@@ -79,7 +79,7 @@ public class UserController {
         System.out.println(res2);
 
 
-        return ResponseEntity.ok(authService.signupWithGoogle(res2));
+        return ResponseEntity.ok(authService.googleLogin(res2));
     }
 
 //    @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
