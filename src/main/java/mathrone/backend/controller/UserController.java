@@ -66,13 +66,20 @@ public class UserController {
 
 
     @PostMapping(value = "/oauth/callback/google", headers = {"Content-type=application/json"})
-    public ResponseEntity<ResponseTokenDTO> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
+    public ResponseEntity<UserResponseDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
         System.out.println("usercontroller");
-        System.out.println(requestCodeDto.getCode());
         ResponseEntity<ResponseTokenDTO> res = snsLoginService.getToken(requestCodeDto.getCode());
-        ResponseEntity<GoogleIDToken>res2 = snsLoginService.getGoogleIDToken(res);
 
-        return snsLoginService.getToken(requestCodeDto.getCode());
+        System.out.println("get Token response");
+        System.out.println(res);
+
+        System.out.println("start getGoogleIDToken");
+        ResponseEntity<GoogleIDToken>res2 = snsLoginService.getGoogleIDToken(res);
+        System.out.println("end getGoogleIDToken");
+        System.out.println(res2);
+
+
+        return ResponseEntity.ok(authService.signupWithGoogle(res2));
     }
 
 //    @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
