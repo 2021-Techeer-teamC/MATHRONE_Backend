@@ -49,15 +49,18 @@ public class UserInfo {
 
     private String role;
 
+    private String resType;
+
 //    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)  //영속화 설정
 //    private List<ProblemTry> problemTryList = new LinkedList<ProblemTry>();
 
     @Builder
-    public UserInfo(String email, String password, String role, String id) {
+    public UserInfo(String email, String password, String role, String id, String resType) {
         this.email = email;
         this.password = password;
         this.role = role;
         this.id = id;
+        this.resType = resType;
     }
 
 
@@ -72,6 +75,14 @@ public class UserInfo {
 
     //GETTER SETTER
 
+
+    public String getResType() {
+        return resType;
+    }
+
+    public void setResType(String resType) {
+        this.resType = resType;
+    }
 
     public int getUserId() {
         return userId;
