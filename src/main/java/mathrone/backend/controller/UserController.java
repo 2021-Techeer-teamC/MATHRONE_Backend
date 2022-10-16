@@ -15,7 +15,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 @RestController
-//@RequestMapping("/user")
+@RequestMapping("/user")
 @RequiredArgsConstructor
 public class UserController {
     private final AuthService authService;
