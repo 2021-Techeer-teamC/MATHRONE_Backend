@@ -1,5 +1,6 @@
 package mathrone.backend.controller.dto.OauthDTO;
 
+import lombok.Getter;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value; //이 Value annotation을 사용해야한다.. 다른거 썼다가 null뜸
 
