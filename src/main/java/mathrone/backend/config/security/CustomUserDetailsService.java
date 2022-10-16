@@ -1,5 +1,6 @@
 package mathrone.backend.config.security;
 
+import jnr.ffi.annotations.In;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.repository.UserInfoRepository;
@@ -20,6 +21,7 @@ import java.util.List;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserInfoRepository userRepository;
+
 
     @Override
 //    @Cacheable(value = CacheKey.USER, key = "#email", unless = "#result == null")
