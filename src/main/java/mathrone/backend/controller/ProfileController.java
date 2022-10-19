@@ -3,7 +3,7 @@ package mathrone.backend.controller;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import mathrone.backend.controller.dto.UserProblemTryDTO;
-import mathrone.backend.controller.dto.UserTriedProblemForGraphResponseDto;
+import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto;
 import mathrone.backend.domain.UserProfile;
 import mathrone.backend.service.AuthService;
 import mathrone.backend.service.ProfileService;
@@ -41,7 +41,7 @@ public class ProfileController {
 
     @ApiOperation(value = "유저가 시도한 문제 중 틀린 문제를 가져오는 그래프")
     @GetMapping("/problem/analysis")
-    public ResponseEntity<UserTriedProblemForGraphResponseDto> getTriedProblemForGraph(@RequestHeader String accessToken){
+    public ResponseEntity<UserFailedTriedWorkbookResponseDto> getTriedProblemForGraph(@RequestHeader String accessToken){
         return ResponseEntity.ok(profileService.getTriedProblemForGraph(accessToken));
     }
 
