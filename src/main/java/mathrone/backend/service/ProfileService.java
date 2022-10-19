@@ -3,19 +3,28 @@ package mathrone.backend.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
 import mathrone.backend.controller.dto.UserProblemTryDTO;
-import mathrone.backend.controller.dto.UserTriedProblemForGraphResponseDto;
+import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto;
+import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto.UserFailedTriedChapterDto;
+import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto.UserFailedTriedWorkbookDto;
+import mathrone.backend.domain.ChapterInfo;
 import mathrone.backend.domain.ProblemTry;
+import mathrone.backend.domain.UserFailedTriedWorkbookRedis;
+import mathrone.backend.domain.UserFailedTriedWorkbookRedis.UserFailedTriedChapterR;
+import mathrone.backend.domain.UserFailedTriedWorkbookRedis.UserFailedTriedWorkbookR;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.domain.UserProfile;
 import mathrone.backend.domain.UserRank;
 import mathrone.backend.domain.WorkBookInfo;
+import mathrone.backend.repository.ChapterRepository;
 import mathrone.backend.repository.ProblemRepository;
 import mathrone.backend.repository.ProblemTryRepository;
+import mathrone.backend.repository.UserFailedTriedWorkbookRedisRepository;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.WorkBookRepository;
 import mathrone.backend.util.TokenProviderUtil;
@@ -32,19 +41,22 @@ public class ProfileService {
     private final ProblemRepository problemRepository;
     private final ProblemTryRepository problemTryRepository;
     private final WorkBookRepository workBookRepository;
+    private final ChapterRepository chapterRepository;
 
 
     public ProfileService(UserInfoRepository userInfoRepository,
         RedisTemplate<String, String> redisTemplate,
         TokenProviderUtil tokenProviderUtil,
         ProblemRepository problemRepository,
-        ProblemTryRepository problemTryRepository, WorkBookRepository workBookRepository) {
+        ProblemTryRepository problemTryRepository, WorkBookRepository workBookRepository,
+        ChapterRepository chapterRepository) {
         this.userInfoRepository = userInfoRepository;
         this.zSetOperations = redisTemplate.opsForZSet();
         this.tokenProviderUtil = tokenProviderUtil;
         this.problemRepository = problemRepository;
         this.problemTryRepository = problemTryRepository;
         this.workBookRepository = workBookRepository;
+        this.chapterRepository = chapterRepository;
     }
 
     //userId를 받아와서 전송
@@ -96,7 +108,7 @@ public class ProfileService {
     }
 
 
-    public UserTriedProblemForGraphResponseDto getTriedProblemForGraph(String accessToken) {
+    public UserFailedTriedWorkbookResponseDto getTriedProblemForGraph(String accessToken) {
         if (!tokenProviderUtil.validateToken(accessToken)) {
             throw new RuntimeException("Access Token 이 유효하지 않습니다.");
         }
@@ -111,52 +123,61 @@ public class ProfileService {
             throw new RuntimeException("유저의 등급이 premium이 아닙니다.");
         }
 
-        Optional<List<ProblemTry>> UserTriedProblemExisted = problemTryRepository.findProblemTryByUserAndIscorrect(
+        Optional<List<ProblemTry>> userFailedTriedProblemExisted = problemTryRepository.findProblemTryByUserAndIscorrect(
             user, false);
 
         // 3. user가 푼 문제 중, 틀린 문제가 존재하는지 여부 체크
-        if (UserTriedProblemExisted.isEmpty()) {
+        if (userFailedTriedProblemExisted.isEmpty()) {
             throw new RuntimeException("유저가 틀린 문제에 대한 데이터가 존재하지 않습니다");
         }
-        List<ProblemTry> UserTriedProblem = UserTriedProblemExisted.get();
+        List<ProblemTry> userFailedTriedProblemList = userFailedTriedProblemExisted.get();
 
-        // key = graph row, value = graph column(chapter List)
-        Map<String, Map<Integer, List<String>>> triedProblemList = new TreeMap<>();
+        Map<String, Map<String, Integer>> userFailedTriedWorkbooks = new HashMap<>();
 
         // 4. 유저가 시도한 문제를 문제집에 맞게 분류
-        for (ProblemTry problemTry : UserTriedProblem) {
-            String[] problemInfo = problemTry.getProblem().getProblemId().split("-");
+        for (ProblemTry userFailedTriedProblem : userFailedTriedProblemList) {
+            String[] problemInfo = userFailedTriedProblem.getProblem().getProblemId().split("-");
             String workbookNum = problemInfo[0];
-            int chapterNum = Integer.parseInt(problemInfo[1]);
-            String problemNum = problemTry.getProblem().getProblemId();
+            String chapterNum = problemInfo[1];
 
-            if (!triedProblemList.containsKey(workbookNum)) {
-                Map<Integer, List<String>> chapterInfo = new TreeMap();
-                List<String> problemList = new ArrayList<>();
-                problemList.add(problemNum);
+            if (!userFailedTriedWorkbooks.containsKey(workbookNum)) {
+                Map<String, Integer> userFailedTriedChapters = new HashMap<>();
 
-                chapterInfo.put(chapterNum, problemList);
-                triedProblemList.put(workbookNum, chapterInfo);
+                // graph를 위한 workbook data 생성
+                userFailedTriedChapters.put(chapterNum, 1);
+                userFailedTriedWorkbooks.put(workbookNum, userFailedTriedChapters);
+
             } else {
-                Map<Integer, List<String>> TriedChapterList = triedProblemList.get(workbookNum);
-                if (!TriedChapterList.containsKey(chapterNum)) {
-                    List<String> problemList = new ArrayList();
-                    problemList.add(problemNum);
+                Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(workbookNum);
 
-                    TriedChapterList.put(chapterNum, problemList);
+                if (!userFailedTriedChapters.containsKey(chapterNum)) {
+                    // graph를 위한 chapter data 생성
+                    userFailedTriedChapters.put(chapterNum, 1);
                 } else {
-                    TriedChapterList.get(chapterNum).add(problemNum);
+                    // graph를 위한 problem count update
+                    userFailedTriedChapters.put(chapterNum,userFailedTriedChapters.get(chapterNum)+1);
                 }
             }
 
         }
 
-        UserTriedProblemForGraphResponseDto userTriedProblemForGraphResponseDto = new UserTriedProblemForGraphResponseDto();
+        UserFailedTriedWorkbookResponseDto userTriedProblemForGraphResponseDto = new UserFailedTriedWorkbookResponseDto();
 
-        for (String it : triedProblemList.keySet()) {
+        for (String it : userFailedTriedWorkbooks.keySet()) {
             WorkBookInfo workbook = workBookRepository.findByWorkbookId(it);
-            userTriedProblemForGraphResponseDto.
-                getTriedWorkbook().put(workbook.getTitle(), triedProblemList.get(it));
+            Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(it);
+
+            List<UserFailedTriedChapterDto> triedChapterList = new LinkedList<>();
+
+            for (String chapterId : userFailedTriedChapters.keySet()){
+                triedChapterList.add(new UserFailedTriedChapterDto(chapterId, userFailedTriedChapters.get(chapterId)));
+
+            }
+
+            userTriedProblemForGraphResponseDto.getFailedTriedWorkbookList().add(
+                new UserFailedTriedWorkbookDto(workbook.getTitle(), triedChapterList));
+
+
         }
 
         return userTriedProblemForGraphResponseDto;
