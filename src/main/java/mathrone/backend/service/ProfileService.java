@@ -42,6 +42,7 @@ public class ProfileService {
     private final ProblemTryRepository problemTryRepository;
     private final WorkBookRepository workBookRepository;
     private final ChapterRepository chapterRepository;
+    private final UserFailedTriedWorkbookRedisRepository userFailedTriedWorkbookRedisRepository;
 
 
     public ProfileService(UserInfoRepository userInfoRepository,
@@ -49,7 +50,8 @@ public class ProfileService {
         TokenProviderUtil tokenProviderUtil,
         ProblemRepository problemRepository,
         ProblemTryRepository problemTryRepository, WorkBookRepository workBookRepository,
-        ChapterRepository chapterRepository) {
+        ChapterRepository chapterRepository,
+        UserFailedTriedWorkbookRedisRepository userFailedTriedWorkbookRedisRepository) {
         this.userInfoRepository = userInfoRepository;
         this.zSetOperations = redisTemplate.opsForZSet();
         this.tokenProviderUtil = tokenProviderUtil;
@@ -57,6 +59,7 @@ public class ProfileService {
         this.problemTryRepository = problemTryRepository;
         this.workBookRepository = workBookRepository;
         this.chapterRepository = chapterRepository;
+        this.userFailedTriedWorkbookRedisRepository = userFailedTriedWorkbookRedisRepository;
     }
 
     //userId를 받아와서 전송
@@ -133,15 +136,24 @@ public class ProfileService {
         List<ProblemTry> userFailedTriedProblemList = userFailedTriedProblemExisted.get();
 
         Map<String, Map<String, Integer>> userFailedTriedWorkbooks = new HashMap<>();
+        Map<String, Map<String, List<String>>> userFailedTriedWorkbooksForRedis = new HashMap<>();
 
         // 4. 유저가 시도한 문제를 문제집에 맞게 분류
         for (ProblemTry userFailedTriedProblem : userFailedTriedProblemList) {
             String[] problemInfo = userFailedTriedProblem.getProblem().getProblemId().split("-");
             String workbookNum = problemInfo[0];
             String chapterNum = problemInfo[1];
+            String problemNum = userFailedTriedProblem.getProblem().getProblemId();
 
             if (!userFailedTriedWorkbooks.containsKey(workbookNum)) {
                 Map<String, Integer> userFailedTriedChapters = new HashMap<>();
+                Map<String, List<String>> userFailedTriedChaptersForRedis = new HashMap();
+
+                // redis에 저장할 workbook data 생성
+                List<String> problemList = new ArrayList<>();
+                problemList.add(problemNum);
+                userFailedTriedChaptersForRedis.put(chapterNum, problemList);
+                userFailedTriedWorkbooksForRedis.put(workbookNum, userFailedTriedChaptersForRedis);
 
                 // graph를 위한 workbook data 생성
                 userFailedTriedChapters.put(chapterNum, 1);
@@ -149,11 +161,22 @@ public class ProfileService {
 
             } else {
                 Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(workbookNum);
+                Map<String, List<String>> userFailedTriedChaptersForRedis = userFailedTriedWorkbooksForRedis.get(
+                    workbookNum);
 
                 if (!userFailedTriedChapters.containsKey(chapterNum)) {
+
+                    // redis에 저장할 chapter data 생성
+                    List<String> problemList = new ArrayList();
+                    problemList.add(problemNum);
+                    userFailedTriedChaptersForRedis.put(chapterNum, problemList);
+
                     // graph를 위한 chapter data 생성
                     userFailedTriedChapters.put(chapterNum, 1);
                 } else {
+                    // redis에 저장할 problem list update
+                    userFailedTriedChaptersForRedis.get(chapterNum).add(problemNum);
+
                     // graph를 위한 problem count update
                     userFailedTriedChapters.put(chapterNum,userFailedTriedChapters.get(chapterNum)+1);
                 }
@@ -162,21 +185,35 @@ public class ProfileService {
         }
 
         UserFailedTriedWorkbookResponseDto userTriedProblemForGraphResponseDto = new UserFailedTriedWorkbookResponseDto();
+        List<UserFailedTriedWorkbookR> userFailedTriedWorkbookListForRedis = new LinkedList<>();
 
         for (String it : userFailedTriedWorkbooks.keySet()) {
             WorkBookInfo workbook = workBookRepository.findByWorkbookId(it);
             Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(it);
+            Map<String, List<String>> userFailedTriedChaptersForRedis = userFailedTriedWorkbooksForRedis.get(it);
 
             List<UserFailedTriedChapterDto> triedChapterList = new LinkedList<>();
+            List<UserFailedTriedChapterR> userFailedTriedChapterRList = new LinkedList<>();
 
             for (String chapterId : userFailedTriedChapters.keySet()){
                 triedChapterList.add(new UserFailedTriedChapterDto(chapterId, userFailedTriedChapters.get(chapterId)));
 
+                ChapterInfo chapter = chapterRepository.findByChapterId(chapterId).get();
+                userFailedTriedChapterRList.add(
+                    new UserFailedTriedChapterR(chapterId, chapter.getChapter(),
+                        userFailedTriedChaptersForRedis.get(chapterId)));
             }
 
             userTriedProblemForGraphResponseDto.getFailedTriedWorkbookList().add(
                 new UserFailedTriedWorkbookDto(workbook.getTitle(), triedChapterList));
 
+            userFailedTriedWorkbookRedisRepository.save(
+                UserFailedTriedWorkbookRedis.builder()
+                    .userId(userId)
+                    .expiration(5000L)
+                    .userFailedTriedWorkbookList(userFailedTriedWorkbookListForRedis)
+                    .build()
+            );
 
         }
 
