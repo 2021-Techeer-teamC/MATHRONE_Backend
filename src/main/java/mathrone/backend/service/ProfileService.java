@@ -135,6 +135,7 @@ public class ProfileService {
         }
         List<ProblemTry> userFailedTriedProblemList = userFailedTriedProblemExisted.get();
 
+        // ResonseDto와 UserFailedTriedWorkbookRedis 객체를 만들기 전 유저가 시도한 문제들을 분류하기 위한 변수 선언
         Map<String, Map<String, Integer>> userFailedTriedWorkbooks = new HashMap<>();
         Map<String, Map<String, List<String>>> userFailedTriedWorkbooksForRedis = new HashMap<>();
 
@@ -145,77 +146,94 @@ public class ProfileService {
             String chapterNum = problemInfo[1];
             String problemNum = userFailedTriedProblem.getProblem().getProblemId();
 
+            // 4-1. 해당 workbook이 분류중인 workbook list에 없는 경우
             if (!userFailedTriedWorkbooks.containsKey(workbookNum)) {
                 Map<String, Integer> userFailedTriedChapters = new HashMap<>();
                 Map<String, List<String>> userFailedTriedChaptersForRedis = new HashMap();
 
-                // redis에 저장할 workbook data 생성
+                // UserFailedTriedWorkbookRedis를 위한 workbook, chapter 분류
                 List<String> problemList = new ArrayList<>();
                 problemList.add(problemNum);
                 userFailedTriedChaptersForRedis.put(chapterNum, problemList);
                 userFailedTriedWorkbooksForRedis.put(workbookNum, userFailedTriedChaptersForRedis);
 
-                // graph를 위한 workbook data 생성
+                // responseDTO를 위한 workbook, chapter 분류
                 userFailedTriedChapters.put(chapterNum, 1);
                 userFailedTriedWorkbooks.put(workbookNum, userFailedTriedChapters);
 
+            // 4-2. 해당 workbook이 분류중인 workbook list에 존재할 때
             } else {
                 Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(workbookNum);
                 Map<String, List<String>> userFailedTriedChaptersForRedis = userFailedTriedWorkbooksForRedis.get(
                     workbookNum);
 
+                // 4-2-1 해당 chapter가 분류중인 chapter list에 없는 경우
                 if (!userFailedTriedChapters.containsKey(chapterNum)) {
 
-                    // redis에 저장할 chapter data 생성
+                    // UserFailedTriedWorkbookRedis를 위한 chapter 분류
                     List<String> problemList = new ArrayList();
                     problemList.add(problemNum);
                     userFailedTriedChaptersForRedis.put(chapterNum, problemList);
 
-                    // graph를 위한 chapter data 생성
+                    // responseDTO를 위한 chapter 분류
                     userFailedTriedChapters.put(chapterNum, 1);
+
+                // 4-2-2 해당 chapter가 분류중인 chapter list에 존재할 때
                 } else {
-                    // redis에 저장할 problem list update
+                    // UserFailedTriedWorkbookRedis를 위한 chapter update
                     userFailedTriedChaptersForRedis.get(chapterNum).add(problemNum);
 
-                    // graph를 위한 problem count update
+                    // responseDTO를 위한 chapter update
                     userFailedTriedChapters.put(chapterNum,userFailedTriedChapters.get(chapterNum)+1);
                 }
             }
 
         }
 
+        // responseDTO 와 redis에 저장할 변수 선언
         UserFailedTriedWorkbookResponseDto userTriedProblemForGraphResponseDto = new UserFailedTriedWorkbookResponseDto();
         List<UserFailedTriedWorkbookR> userFailedTriedWorkbookListForRedis = new LinkedList<>();
 
-        for (String it : userFailedTriedWorkbooks.keySet()) {
-            WorkBookInfo workbook = workBookRepository.findByWorkbookId(it);
-            Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(it);
-            Map<String, List<String>> userFailedTriedChaptersForRedis = userFailedTriedWorkbooksForRedis.get(it);
+        // 5. 분류된 problem들을 responseDTO와 UserFailedTriedWorkbookRedis에 적용
+        for (String workbookId : userFailedTriedWorkbooks.keySet()) {
+            WorkBookInfo workbook = workBookRepository.findByWorkbookId(workbookId);
+            Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(workbookId);
+            Map<String, List<String>> userFailedTriedChaptersForRedis = userFailedTriedWorkbooksForRedis.get(workbookId);
 
+            // responseDTO와 UserFailedTriedWorkbookRedis에 적용하기 위한 chapter list 변수 선언
             List<UserFailedTriedChapterDto> triedChapterList = new LinkedList<>();
             List<UserFailedTriedChapterR> userFailedTriedChapterRList = new LinkedList<>();
 
+            // workbook의 chapter별 problem들을 responseDTO와 UserFailedTriedWorkbookRedis에 적용
             for (String chapterId : userFailedTriedChapters.keySet()){
                 triedChapterList.add(new UserFailedTriedChapterDto(chapterId, userFailedTriedChapters.get(chapterId)));
 
+                // chapter의 chapterTitle을 위해 chapterId에 해당하는 객체 가져옴 (추후 chapter title이 필요한지 검토하기)
                 ChapterInfo chapter = chapterRepository.findByChapterId(chapterId).get();
+
                 userFailedTriedChapterRList.add(
                     new UserFailedTriedChapterR(chapterId, chapter.getChapter(),
                         userFailedTriedChaptersForRedis.get(chapterId)));
             }
 
+
             userTriedProblemForGraphResponseDto.getFailedTriedWorkbookList().add(
                 new UserFailedTriedWorkbookDto(workbook.getTitle(), triedChapterList));
 
-            userFailedTriedWorkbookRedisRepository.save(
-                UserFailedTriedWorkbookRedis.builder()
-                    .userId(userId)
-                    .expiration(5000L)
-                    .userFailedTriedWorkbookList(userFailedTriedWorkbookListForRedis)
-                    .build()
-            );
-
+            userFailedTriedWorkbookListForRedis.add(
+                new UserFailedTriedWorkbookR(workbookId, workbook.getTitle(),
+                    userFailedTriedChapterRList));
         }
+
+        // 6. Redis에 userFailedTriedWorkbookRedis 객체 저장
+        userFailedTriedWorkbookRedisRepository.save(
+            UserFailedTriedWorkbookRedis.builder()
+                .userId(userId)
+                // TTL 시간은 추후에 상의하여 다시 설정하기
+                .expiration(300L)
+                .userFailedTriedWorkbookList(userFailedTriedWorkbookListForRedis)
+                .build()
+        );
 
         return userTriedProblemForGraphResponseDto;
     }
