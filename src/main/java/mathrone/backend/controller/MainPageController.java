@@ -42,6 +42,4 @@ public class MainPageController {
 //        return mainPageService.getRecentTry();
 //    }
 
-    public static class SnsLoginController {
-    }
 }
