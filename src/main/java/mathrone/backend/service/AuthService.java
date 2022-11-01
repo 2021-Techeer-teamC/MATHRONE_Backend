@@ -100,7 +100,7 @@ public class AuthService {
         // resType에 대한 구분을 enum class로 다루는 방안에 대해 토의하기
         if (resType.equals("MATHRONE")) {
             // accountId가 존재하지 않는 경우에 대한 예외처리 작성하기
-            userinfoRepository.deleteByAccountIdAndResType(accountId, resType).isPresent();
+            userinfoRepository.deleteByAccountIdAndResType(accountId, resType);
         }
     }
 
@@ -138,48 +138,54 @@ public class AuthService {
     }
 
     @Transactional
-    public void logout(TokenRequestDto tokenRequestDto) {
-        // 1. access token 유효성 검사
-        if (!tokenProviderUtil.validateToken(tokenRequestDto.getAccessToken())) {
+    public void logout(HttpServletRequest request) {
+        // 1. Request Header 에서 access token 빼기
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        // 2. access token 유효성 검사
+        if (!tokenProviderUtil.validateToken(accessToken)) {
             throw new RuntimeException("Access Token 이 유효하지 않습니다.");
         }
-        String accessToken = tokenRequestDto.getAccessToken();
 
-        // 2. access token으로부터 user id 가져오기 (email x)
+        // 3. access token으로부터 user id 가져오기 (email x)
         String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
 
-        // 3. logout token의 유효기간은 access token의 남은 기간동안 유지되어야 함
+        // 4. logout token의 유효기간은 access token의 남은 기간동안 유지되어야 함
         long remainAccessTokenExpiration = tokenProviderUtil.getRemainExpiration(accessToken);
 
-        // 4. refreshToken table에 존재하는 해당 유저의 refreshToken 정보 삭제
+        // 5. refreshToken table에 존재하는 해당 유저의 refreshToken 정보 삭제
         refreshTokenRepository.deleteByUserId(userId);
 
-        // 5. redis에 존재하는 refreshToken 삭제
+        // 6. redis에 존재하는 refreshToken 삭제
         refreshTokenRedisRepository.deleteById(userId);
 
-        // 6. logout token를 redis에 저장 (이후 로그아웃된 유저의 AccessToken으로 접근 방지를 위함)
+        // 7. logout token를 redis에 저장 (이후 로그아웃된 유저의 AccessToken으로 접근 방지를 위함)
         logoutAccessTokenRedisRepository.save(
             LogoutAccessToken.of(accessToken, userId, remainAccessTokenExpiration));
     }
 
 
     @Transactional
-    public TokenDto reissue(TokenRequestDto tokenRequestDto) {
+    public TokenDto reissue(HttpServletRequest request, String refreshToken) {
+
         // 1. Refresh token 검증
-        if (!tokenProviderUtil.validateToken(tokenRequestDto.getRefreshToken())) {
+        if (!tokenProviderUtil.validateToken(refreshToken)) {
             throw new RuntimeException("Refresh Token 이 유효하지 않습니다.");
         }
 
-        // 2. Access Token 에서 Member ID 가져오기
-        Authentication authentication = tokenProviderUtil.getAuthentication(
-            tokenRequestDto.getAccessToken());
+        // 2. Request Header 에서 access token 빼기
+        String accessToken = tokenProviderUtil.resolveToken(request);
 
-        // 3. 저장소에서 Member ID 를 기반으로 Refresh Token 값 가져오기
-        RefreshToken refreshToken = refreshTokenRepository.findByUserId(authentication.getName())
+        // 3. Access Token 에서 Member ID 가져오기
+        Authentication authentication = tokenProviderUtil.getAuthentication(
+            accessToken);
+
+        // 4. 저장소에서 Member ID 를 기반으로 Refresh Token 값 가져오기
+        RefreshToken storedRefreshToken = refreshTokenRepository.findByUserId(authentication.getName())
             .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
 
         // 4. Refresh Token 일치 여부 검사
-        if (!refreshToken.getRefreshToken().equals(tokenRequestDto.getRefreshToken())) {
+        if (!storedRefreshToken.getRefreshToken().equals(refreshToken)) {
             throw new RuntimeException("토큰의 유저 정보가 일치하지 않습니다.");
         }
 
@@ -187,7 +193,7 @@ public class AuthService {
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
 
         // 6. 저장소 정보 업데이트
-        RefreshToken newRefreshToken = refreshToken.updateValue(tokenDto.getRefreshToken(),
+        RefreshToken newRefreshToken = storedRefreshToken.updateValue(tokenDto.getRefreshToken(),
             tokenProviderUtil.getRefreshTokenExpireTime());
 
         // redis와 gcp에 모두 refresh token을 저장.
