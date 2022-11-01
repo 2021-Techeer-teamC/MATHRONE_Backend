@@ -46,9 +46,14 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
   implementation 'org.junit.jupiter:junit-jupiter:5.4.2'
-  
+
   testImplementation 'org.springframework.boot:spring-boot-starter-test'
   testImplementation 'org.apache.httpcomponents:httpclient'
+
+	//google login
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+
 }
 
 dependencyManagement {
