@@ -2,6 +2,7 @@ package mathrone.backend.service;
 
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.*;
+import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.domain.token.LogoutAccessToken;
 import mathrone.backend.domain.token.RefreshToken;
 import mathrone.backend.domain.UserInfo;
@@ -10,6 +11,7 @@ import mathrone.backend.repository.tokenRepository.LogoutAccessTokenRedisReposit
 import mathrone.backend.util.TokenProviderUtil;
 import mathrone.backend.repository.tokenRepository.RefreshTokenRedisRepository;
 import mathrone.backend.repository.tokenRepository.RefreshTokenRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -33,13 +35,60 @@ public class AuthService {
 
     @Transactional
     public UserResponseDto signup(UserSignUpDto userSignUpDto){
-        if (userinfoRepository.existsByEmail(userSignUpDto.getEmail())){
+        if (userinfoRepository.existsByEmailAndResType(userSignUpDto.getEmail(),"MATHRONE")){ // && type이 MATHRONE인 경우도 같이 검사해야함.. -> 같은 이메일로 여러 sns시스템을 이용할 수 있기 때문
+//            if(userinfoRepository.findByEmail(userSignUpDto.getEmail()) -> 이거에서 resType이 MATHRONE인경우)
             throw new RuntimeException("이미 가입된 유저입니다.");
         }
-        UserInfo newUser = userSignUpDto.toUser(passwordEncoder);
+        UserInfo newUser = userSignUpDto.toUser(passwordEncoder,"MATHRONE"); //MATHRONE user로 가입시켜주기
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
 
+    @Transactional
+    public UserResponseDto signupWithGoogle(ResponseEntity<GoogleIDToken> googleIDToken){
+
+        UserSignUpDto userSignUpDto = new UserSignUpDto(googleIDToken.getBody().getEmail(), "googleLogin", googleIDToken.getBody().getEmail()); //id와 email을 email로 채워서 만들기
+        UserInfo newUser = userSignUpDto.toUser(passwordEncoder,"GOOGLE");
+
+        return UserResponseDto.of(userinfoRepository.save(newUser));
+    }
+
+    @Transactional
+    public TokenDto googleLogin(ResponseEntity<GoogleIDToken> googleIDToken){
+
+        //가입이 안되어 있는 경우
+        if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(), "GOOGLE")){
+            signupWithGoogle(googleIDToken);
+        }
+
+        UserRequestDto userRequestDto = new UserRequestDto(googleIDToken.getBody().getEmail(), "googleLogin");
+
+        // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
+        UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
+
+        // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
+        //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
+        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+
+        // 3. token 생성
+        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
+
+        // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
+        RefreshToken refreshToken = RefreshToken.builder()
+                .userid(authentication.getName())
+                .refreshToken(tokenDto.getRefreshToken())
+                .expiration(tokenProviderUtil.getRefreshTokenExpireTime())
+                .build();
+
+        // 5. 토큰 저장 테이블 저장
+        refreshTokenRepository.save(refreshToken);
+
+        // 6. redis 저장
+        refreshTokenRedisRepository.save(refreshToken.transferRedisToken());
+
+        return tokenDto;
+    }
+
+    //delete by mail에도 문제가 있다 / resType추가로 변경해야함
     @Transactional
     public void deleteUser(String email) {
         userinfoRepository.deleteByEmail(email);
@@ -57,6 +106,8 @@ public class AuthService {
         // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
         //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+
+
 
         // 3. token 생성
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
