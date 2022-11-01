@@ -1,6 +1,11 @@
 package mathrone.backend.util;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
@@ -8,11 +13,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.stream.Collectors;
-
+import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import mathrone.backend.controller.dto.TokenDto;
 import mathrone.backend.controller.dto.UserResponseDto;
-import mathrone.backend.config.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,6 +26,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 // 실제 인증에 대한 부분 중 인증 전 객체를 받아 인증된 객체를 반환하는 역할
 @Slf4j
@@ -33,15 +38,14 @@ public class TokenProviderUtil {
     private static final String BEARER_TYPE = "Bearer";     // token 인증 타입(jwt 토큰을 의미)
     private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24;       // 1일
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24 * 7;  // 7일
+    public static final String AUTHORIZATION_HEADER = "Authorization";  // http header 종류
+    public static final String BEARER_PREFIX = "Bearer";    // http 인증 type
 
     // key는 HS512 알고리즘을 사용함
     private final Key key;
-    private final CustomUserDetailsService customUserDetailsService;
 
-    public TokenProviderUtil(CustomUserDetailsService customUserDetailsService
-                         , @Value("${key}") String secretKey
+    public TokenProviderUtil(@Value("${key}") String secretKey
     ){
-        this.customUserDetailsService = customUserDetailsService;
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
@@ -74,7 +78,7 @@ public class TokenProviderUtil {
                 .accessToken(accessToken)
                 .accessTokenExpiresIn(accessTokenExpires.getTime())
                 .refreshToken(refreshToken)
-                .userInfo(UserResponseDto.builder().id(authentication.getName()).build())
+                .userInfo(UserResponseDto.builder().accountId(authentication.getName()).build())
                 .build();
     }
 
@@ -139,4 +143,14 @@ public class TokenProviderUtil {
         // redis의 단위는 초로, 밀리초를 초로 변환하는 과정의 오차를 감안하기 위해 1초 더함.
         return ((currentTime.getTime() - now.getTime())/1000)+1;
     }
+
+    // Request Header의 토큰 정보 가져오는 메소드
+    public String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
+        if (StringUtils.hasText(bearerToken) &&
+            bearerToken.startsWith(BEARER_PREFIX))
+            return bearerToken.substring(7);
+        return null;
+    }
+
 }
