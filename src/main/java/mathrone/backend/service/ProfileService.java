@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.Optional;
 import mathrone.backend.controller.dto.UserProblemTryDTO;
@@ -69,6 +70,7 @@ public class ProfileService {
         //유저 정보 받아오기
         UserInfo userinfo = userInfoRepository.findByUserId(Integer.parseInt(userId));
         //랭크 정보 받아오기
+        // 해당 user가 랭크 정보가 없는 경우, 이에 대한 예외처리 필요
         ObjectNode node = getMyRank(userinfo.getUserId());
 
         //랭크 정보를 DTO에 담기
@@ -76,7 +78,7 @@ public class ProfileService {
             node.findValue("score").toString(), node.findValue("try").toString());
 
         //최종 Profile 생성
-        UserProfile res = new UserProfile(userinfo.getUserId(), userinfo.getId(),
+        UserProfile res = new UserProfile(userinfo.getUserId(), userinfo.getAccountId(),
             userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
             userinfo.isPremium(), userinfo.getEmail(), userinfo.getPhoneNum(),
             userinfo.getUserImg(), userinfo.getRole(), r);
@@ -99,7 +101,10 @@ public class ProfileService {
         return userInfoRepository.getById(userId);
     }
 
-    public List<UserProblemTryDTO> getTryProblem(String accessToken) {
+    public List<UserProblemTryDTO> getTryProblem(HttpServletRequest request) {
+        // 1. Request Header 에서 access token 빼기
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
         if (!tokenProviderUtil.validateToken(accessToken)) {
             throw new RuntimeException("Access Token 이 유효하지 않습니다.");
         }
@@ -111,17 +116,20 @@ public class ProfileService {
     }
 
 
-    public UserFailedTriedWorkbookResponseDto getTriedProblemForGraph(String accessToken) {
+    public UserFailedTriedWorkbookResponseDto getTriedProblemForGraph(HttpServletRequest request) {
+        // 1. Request Header 에서 access token 빼기
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
         if (!tokenProviderUtil.validateToken(accessToken)) {
             throw new RuntimeException("Access Token 이 유효하지 않습니다.");
         }
-        // 1. access token으로부터 user id 가져오기 (email x)
+        // 2. access token으로부터 user id 가져오기 (email x)
         Integer userId = Integer.parseInt(
             tokenProviderUtil.getAuthentication(accessToken).getName());
 
         UserInfo user = userInfoRepository.findByUserId(userId);
 
-        // 2. check premium
+        // 3. check premium
         if (!user.isPremium()) {
             throw new RuntimeException("유저의 등급이 premium이 아닙니다.");
         }
@@ -129,7 +137,7 @@ public class ProfileService {
         Optional<List<ProblemTry>> userFailedTriedProblemExisted = problemTryRepository.findProblemTryByUserAndIscorrect(
             user, false);
 
-        // 3. user가 푼 문제 중, 틀린 문제가 존재하는지 여부 체크
+        // 4. user가 푼 문제 중, 틀린 문제가 존재하는지 여부 체크
         if (userFailedTriedProblemExisted.isEmpty()) {
             throw new RuntimeException("유저가 틀린 문제에 대한 데이터가 존재하지 않습니다");
         }
@@ -139,17 +147,17 @@ public class ProfileService {
         Map<String, Map<String, Integer>> userFailedTriedWorkbooks = new HashMap<>();
         Map<String, Map<String, List<String>>> userFailedTriedWorkbooksForRedis = new HashMap<>();
 
-        // 4. 유저가 시도한 문제를 문제집에 맞게 분류
+        // 5. 유저가 시도한 문제를 문제집에 맞게 분류
         for (ProblemTry userFailedTriedProblem : userFailedTriedProblemList) {
             String[] problemInfo = userFailedTriedProblem.getProblem().getProblemId().split("-");
             String workbookNum = problemInfo[0];
             String chapterNum = problemInfo[1];
             String problemNum = userFailedTriedProblem.getProblem().getProblemId();
 
-            // 4-1. 해당 workbook이 분류중인 workbook list에 없는 경우
+            // 5-1. 해당 workbook이 분류중인 workbook list에 없는 경우
             if (!userFailedTriedWorkbooks.containsKey(workbookNum)) {
-                Map<String, Integer> userFailedTriedChapters = new HashMap<>();
-                Map<String, List<String>> userFailedTriedChaptersForRedis = new HashMap();
+                Map<String, Integer> userFailedTriedChapters = new HashMap<String, Integer>();
+                Map<String, List<String>> userFailedTriedChaptersForRedis = new HashMap<String, List<String>>();
 
                 // UserFailedTriedWorkbookRedis를 위한 workbook, chapter 분류
                 List<String> problemList = new ArrayList<>();
@@ -161,30 +169,32 @@ public class ProfileService {
                 userFailedTriedChapters.put(chapterNum, 1);
                 userFailedTriedWorkbooks.put(workbookNum, userFailedTriedChapters);
 
-            // 4-2. 해당 workbook이 분류중인 workbook list에 존재할 때
+                // 5-2. 해당 workbook이 분류중인 workbook list에 존재할 때
             } else {
-                Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(workbookNum);
+                Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(
+                    workbookNum);
                 Map<String, List<String>> userFailedTriedChaptersForRedis = userFailedTriedWorkbooksForRedis.get(
                     workbookNum);
 
-                // 4-2-1 해당 chapter가 분류중인 chapter list에 없는 경우
+                // 5-2-1 해당 chapter가 분류중인 chapter list에 없는 경우
                 if (!userFailedTriedChapters.containsKey(chapterNum)) {
 
                     // UserFailedTriedWorkbookRedis를 위한 chapter 분류
-                    List<String> problemList = new ArrayList();
+                    List<String> problemList = new ArrayList<String>();
                     problemList.add(problemNum);
                     userFailedTriedChaptersForRedis.put(chapterNum, problemList);
 
                     // responseDTO를 위한 chapter 분류
                     userFailedTriedChapters.put(chapterNum, 1);
 
-                // 4-2-2 해당 chapter가 분류중인 chapter list에 존재할 때
+                    // 5-2-2 해당 chapter가 분류중인 chapter list에 존재할 때
                 } else {
                     // UserFailedTriedWorkbookRedis를 위한 chapter update
                     userFailedTriedChaptersForRedis.get(chapterNum).add(problemNum);
 
                     // responseDTO를 위한 chapter update
-                    userFailedTriedChapters.put(chapterNum,userFailedTriedChapters.get(chapterNum)+1);
+                    userFailedTriedChapters.put(chapterNum,
+                        userFailedTriedChapters.get(chapterNum) + 1);
                 }
             }
 
@@ -194,19 +204,21 @@ public class ProfileService {
         UserFailedTriedWorkbookResponseDto userTriedProblemForGraphResponseDto = new UserFailedTriedWorkbookResponseDto();
         List<UserFailedTriedWorkbookR> userFailedTriedWorkbookListForRedis = new LinkedList<>();
 
-        // 5. 분류된 problem들을 responseDTO와 UserFailedTriedWorkbookRedis에 적용
+        // 6. 분류된 problem들을 responseDTO와 UserFailedTriedWorkbookRedis에 적용
         for (String workbookId : userFailedTriedWorkbooks.keySet()) {
             WorkBookInfo workbook = workBookRepository.findByWorkbookId(workbookId);
             Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(workbookId);
-            Map<String, List<String>> userFailedTriedChaptersForRedis = userFailedTriedWorkbooksForRedis.get(workbookId);
+            Map<String, List<String>> userFailedTriedChaptersForRedis = userFailedTriedWorkbooksForRedis.get(
+                workbookId);
 
             // responseDTO와 UserFailedTriedWorkbookRedis에 적용하기 위한 chapter list 변수 선언
             List<UserFailedTriedChapterDto> triedChapterList = new LinkedList<>();
             List<UserFailedTriedChapterR> userFailedTriedChapterRList = new LinkedList<>();
 
             // workbook의 chapter별 problem들을 responseDTO와 UserFailedTriedWorkbookRedis에 적용
-            for (String chapterId : userFailedTriedChapters.keySet()){
-                triedChapterList.add(new UserFailedTriedChapterDto(chapterId, userFailedTriedChapters.get(chapterId)));
+            for (String chapterId : userFailedTriedChapters.keySet()) {
+                triedChapterList.add(new UserFailedTriedChapterDto(chapterId,
+                    userFailedTriedChapters.get(chapterId)));
 
                 // chapter의 chapterTitle을 위해 chapterId에 해당하는 객체 가져옴 (추후 chapter title이 필요한지 검토하기)
                 ChapterInfo chapter = chapterRepository.findByChapterId(chapterId).get();
@@ -215,7 +227,6 @@ public class ProfileService {
                     new UserFailedTriedChapterR(chapterId, chapter.getChapter(),
                         userFailedTriedChaptersForRedis.get(chapterId)));
             }
-
 
             userTriedProblemForGraphResponseDto.getFailedTriedWorkbookList().add(
                 new UserFailedTriedWorkbookDto(workbook.getTitle(), triedChapterList));

@@ -11,9 +11,10 @@ import mathrone.backend.domain.UserInfo;
 @NoArgsConstructor
 @Builder
 public class UserResponseDto {
-    private Object id;
 
-    public static UserResponseDto of(UserInfo userInfo){
-        return new UserResponseDto(userInfo.getId());
+    private String accountId;
+
+    public static UserResponseDto of(UserInfo userInfo) {
+        return new UserResponseDto(userInfo.getAccountId());
     }
 }
