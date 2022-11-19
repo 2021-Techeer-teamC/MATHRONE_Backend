@@ -22,11 +22,12 @@ public class LogoutAccessToken {
     @TimeToLive
     private Long expiration;
 
-    public static LogoutAccessToken of(String accessToken, String accessId, Long remainExpirationMillSecond) {
+    public static LogoutAccessToken of(String accessToken, String accessId,
+        Long remainExpirationMillSecond) {
         return LogoutAccessToken.builder()
-                .id(accessToken)
-                .accessId(accessId)
-                .expiration(remainExpirationMillSecond)
-                .build();
+            .id(accessToken)
+            .accessId(accessId)
+            .expiration(remainExpirationMillSecond)
+            .build();
     }
 }

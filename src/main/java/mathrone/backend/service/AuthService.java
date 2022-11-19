@@ -181,7 +181,8 @@ public class AuthService {
             accessToken);
 
         // 4. 저장소에서 Member ID 를 기반으로 Refresh Token 값 가져오기
-        RefreshToken storedRefreshToken = refreshTokenRepository.findByUserId(authentication.getName())
+        RefreshToken storedRefreshToken = refreshTokenRepository.findByUserId(
+                authentication.getName())
             .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
 
         // 4. Refresh Token 일치 여부 검사

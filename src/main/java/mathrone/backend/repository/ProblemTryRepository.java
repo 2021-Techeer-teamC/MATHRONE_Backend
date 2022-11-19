@@ -11,6 +11,5 @@ public interface ProblemTryRepository extends JpaRepository<ProblemTry, Long> {
 
     Optional<ProblemTry> findAllByProblemAndUser(Problem problem, UserInfo userInfo);
 
-//    List<ProblemTry> findDistinctTop10();
-
+    Optional<List<ProblemTry>> findProblemTryByUserAndIscorrect(UserInfo userInfo, Boolean iscorrect);
 }

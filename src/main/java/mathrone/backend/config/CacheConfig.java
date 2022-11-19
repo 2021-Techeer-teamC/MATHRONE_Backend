@@ -2,6 +2,7 @@ package mathrone.backend.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.CacheKeyPrefix;
@@ -17,6 +18,7 @@ import java.time.Duration;
 // cache 사용을 위한 key와 default 만료 시간 설정
 @Configuration
 @RequiredArgsConstructor
+@EnableCaching
 public class CacheConfig {
 
     @Bean   // local cache가 아닌 redis에 저장하도록 하기 위함

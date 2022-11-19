@@ -13,7 +13,7 @@ public class UserRequestDto {
     private String accountId;
     private String password;
 
-    public UsernamePasswordAuthenticationToken of(){
+    public UsernamePasswordAuthenticationToken of() {
         return new UsernamePasswordAuthenticationToken(accountId, password);
     }
 }
