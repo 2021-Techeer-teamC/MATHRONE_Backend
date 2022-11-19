@@ -17,7 +17,9 @@ import javax.persistence.*;
 @Getter
 @Setter
 public class UserInfo {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) //JPA 사용시 필요)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) //JPA 사용시 필요)
     @Column(name = "user_id")
     private int userId;
 
@@ -61,7 +63,7 @@ public class UserInfo {
     }
 
     //업데이트 될만한 거
-    public UserInfo update(String userImg, boolean premium){
+    public UserInfo update(String userImg, boolean premium) {
         this.userImg = userImg;
         this.premium = premium;
 

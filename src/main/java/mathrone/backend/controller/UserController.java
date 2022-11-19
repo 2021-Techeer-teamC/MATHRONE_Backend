@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import mathrone.backend.controller.dto.OauthDTO.*;
 
 import java.util.List;
-
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
@@ -56,7 +55,8 @@ public class UserController {
     }
 
     @PostMapping(value = "/reissue")
-    public ResponseEntity<TokenDto> reissue(HttpServletRequest request, @RequestHeader String refreshToken) {
+    public ResponseEntity<TokenDto> reissue(HttpServletRequest request,
+        @RequestHeader String refreshToken) {
         return ResponseEntity.ok(authService.reissue(request, refreshToken));
     }
 

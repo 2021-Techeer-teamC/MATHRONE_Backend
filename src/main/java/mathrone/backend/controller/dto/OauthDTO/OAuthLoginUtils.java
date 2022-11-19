@@ -36,10 +36,6 @@ public class OAuthLoginUtils {
     private String grantType; // 어떤 방식으로 Google/사용자/나의 서비스 가 소통을 할것인지 방식을 선택한다(4가지 방식이 있는데 대표적으로 auth code방식이 있음 )
 
 
-
-
-
-
     public String getGoogleAuthUrl() {
         return googleAuthUrl;
     }

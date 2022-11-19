@@ -33,11 +33,11 @@ public class MainPageService {
     private final ProblemTryRepository problemTryRepository;
 
     public MainPageService(UserWorkbookRelRepository workBookRelRepository,
-            WorkBookRepository workBookRepository, WorkbookLevelRepository workbookLevelRepository,
-            WorkBookRecommendRepository workBookRecommendRepository,
-            LevelRepository levelRepository,
-            ProblemRepository problemRepository, ChapterRepository chapterRepository,
-            ProblemTryRepository problemTryRepository) {
+        WorkBookRepository workBookRepository, WorkbookLevelRepository workbookLevelRepository,
+        WorkBookRecommendRepository workBookRecommendRepository,
+        LevelRepository levelRepository,
+        ProblemRepository problemRepository, ChapterRepository chapterRepository,
+        ProblemTryRepository problemTryRepository) {
 
         this.workBookRelRepository = workBookRelRepository;
         this.workBookRepository = workBookRepository;
