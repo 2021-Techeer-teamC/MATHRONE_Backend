@@ -24,6 +24,7 @@ public class UserInfo {
     private int userId;
 
     @NotNull
+    @Column(name = "account_id")
     private String id;
 
     @NotNull
@@ -49,6 +50,7 @@ public class UserInfo {
 
     private String role;
 
+    @Column(name = "register_type")
     private String resType;
 
 //    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)  //영속화 설정
