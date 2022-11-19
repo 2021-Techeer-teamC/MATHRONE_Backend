@@ -29,7 +29,8 @@ public class ProfileController {
     @RequestMapping(value = "/myprofile", method = RequestMethod.GET)
     public UserProfile getProfile(@RequestHeader String accessToken
     ) {
-        return profileService.getProfile(authService.getUserIdFromAT(accessToken));
+        String access = authService.getUserIdFromAT(accessToken);
+        return profileService.getProfile(access);
     }
 
     @ApiOperation(value = "유저가 시도한 문제 반환")
