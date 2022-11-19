@@ -37,14 +37,18 @@ public class ProfileService {
     public UserProfile getProfile(
         String userId) {//이 부분 수정이 필요! (현재 userId가 pk가 아닌 id로 되어있어서 임시로 이렇게 찾는 방법으로 해둠)
 
+
         //유저 정보 받아오기
         UserInfo userinfo = userInfoRepository.findByUserId(Integer.parseInt(userId));
+
         //랭크 정보 받아오기
         ObjectNode node = getMyRank(userinfo.getUserId());
+
 
         //랭크 정보를 DTO에 담기
         UserRank r = new UserRank(node.findValue("rank").toString(),
             node.findValue("score").toString(), node.findValue("try").toString());
+
 
         //최종 Profile 생성
         UserProfile res = new UserProfile(userinfo.getUserId(), userinfo.getId(),
@@ -52,11 +56,12 @@ public class ProfileService {
             userinfo.isPremium(), userinfo.getEmail(), userinfo.getPhoneNum(),
             userinfo.getUserImg(), userinfo.getRole(), r);
 
+
         return res;
     }
 
 
-    public ObjectNode getMyRank(Integer user_id) { // 리더보드에 필요한 나의 rank 조회
+    public ObjectNode getMyRank(Integer user_id){ // 리더보드에 필요한 나의 rank 조회
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
         node.put("rank", zSetOperations.reverseRank("test", user_id.toString()) + 1);
