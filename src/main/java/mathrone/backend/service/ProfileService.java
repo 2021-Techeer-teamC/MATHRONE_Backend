@@ -3,6 +3,7 @@ package mathrone.backend.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import mathrone.backend.controller.dto.UserProblemTryDTO;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.domain.UserProfile;
@@ -40,6 +41,7 @@ public class ProfileService {
         //유저 정보 받아오기
         UserInfo userinfo = userInfoRepository.findByUserId(Integer.parseInt(userId));
         //랭크 정보 받아오기
+        // 해당 user가 랭크 정보가 없는 경우, 이에 대한 예외처리 필요
         ObjectNode node = getMyRank(userinfo.getUserId());
 
         //랭크 정보를 DTO에 담기
@@ -47,7 +49,7 @@ public class ProfileService {
             node.findValue("score").toString(), node.findValue("try").toString());
 
         //최종 Profile 생성
-        UserProfile res = new UserProfile(userinfo.getUserId(), userinfo.getId(),
+        UserProfile res = new UserProfile(userinfo.getUserId(), userinfo.getAccountId(),
             userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
             userinfo.isPremium(), userinfo.getEmail(), userinfo.getPhoneNum(),
             userinfo.getUserImg(), userinfo.getRole(), r);
@@ -65,19 +67,15 @@ public class ProfileService {
         return node;
     }
 
+    public List<UserProblemTryDTO> getTryProblem(HttpServletRequest request) {
+        // 1. Request Header 에서 access token 빼기
+        String accessToken = tokenProviderUtil.resolveToken(request);
 
-    public UserInfo getUserInfo(long userId) {
-        return userInfoRepository.getById(userId);
-    }
-
-    public List<UserProblemTryDTO> getTryProblem(String accessToken) {
         if(!tokenProviderUtil.validateToken(accessToken)){
             throw new RuntimeException("Access Token 이 유효하지 않습니다.");
         }
         // 2. access token으로부터 user id 가져오기 (email x)
         String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
-
-
 
         return problemRepository.findUserTryProblem(
             Integer.parseInt(userId));
