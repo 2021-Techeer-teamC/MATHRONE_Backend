@@ -1,5 +1,8 @@
 package mathrone.backend.service;
 
+import static mathrone.backend.domain.enums.UserResType.GOOGLE;
+import static mathrone.backend.domain.enums.UserResType.MATHRONE;
+
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.*;
@@ -38,11 +41,11 @@ public class AuthService {
     public UserResponseDto signup(UserSignUpDto userSignUpDto) {
         // && type이 MATHRONE인 경우도 같이 검사 -> 같은 id로 여러 sns시스템을 이용할 수 있기 때문
         if (userinfoRepository.existsUserInfoByAccountIdAndResType(userSignUpDto.getAccountId(),
-            "MATHRONE")) {
+            MATHRONE.getTypeName())) {
             throw new RuntimeException("이미 가입된 유저입니다.");
         }
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder,
-            "MATHRONE"); //MATHRONE user로 가입시켜주기
+            MATHRONE.getTypeName()); //MATHRONE user로 가입시켜주기
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
 
@@ -51,7 +54,7 @@ public class AuthService {
 
         UserSignUpDto userSignUpDto = new UserSignUpDto(googleIDToken.getBody().getEmail(),
             "googleLogin", googleIDToken.getBody().getEmail()); //id와 email을 email로 채워서 만들기
-        UserInfo newUser = userSignUpDto.toUser(passwordEncoder, "GOOGLE");
+        UserInfo newUser = userSignUpDto.toUser(passwordEncoder, GOOGLE.getTypeName());
 
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
@@ -61,7 +64,7 @@ public class AuthService {
 
         //가입이 안되어 있는 경우
         if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
-            "GOOGLE")) {
+            GOOGLE.getTypeName())) {
             signupWithGoogle(googleIDToken);
         }
 
@@ -98,7 +101,7 @@ public class AuthService {
     @Transactional
     public void deleteUser(String accountId, String resType) {
         // resType에 대한 구분을 enum class로 다루는 방안에 대해 토의하기
-        if (resType.equals("MATHRONE")) {
+        if (resType.equals(MATHRONE.getTypeName())) {
             // accountId가 존재하지 않는 경우에 대한 예외처리 작성하기
             userinfoRepository.deleteByAccountIdAndResType(accountId, resType);
         }
