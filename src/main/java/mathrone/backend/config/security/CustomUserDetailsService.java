@@ -18,11 +18,11 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserInfoRepository userRepository;
 
+
     @Override
-//    @Cacheable(value = CacheKey.USER, key = "#email", unless = "#result == null")
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        UserInfo isExist = userRepository.findByEmail(email).orElseThrow(() ->
-            new UsernameNotFoundException("유저를 찾을 수 없습니다. 이메일을 다시 확인해주세요."));
+    public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
+        UserInfo isExist = userRepository.findByAccountId(id).orElseThrow(() ->
+            new UsernameNotFoundException("유저를 찾을 수 없습니다. 아이디를 다시 확인해주세요."));
         return User.builder()
             .username(String.valueOf(isExist.getUserId()))
             .password(isExist.getPassword())

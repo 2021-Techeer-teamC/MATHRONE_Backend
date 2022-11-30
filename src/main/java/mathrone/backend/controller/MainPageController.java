@@ -1,6 +1,5 @@
 package mathrone.backend.controller;
 
-import mathrone.backend.controller.dto.RecentTryDto;
 import mathrone.backend.controller.dto.CarouselResponseDto;
 import mathrone.backend.domain.userWorkbookData;
 import mathrone.backend.service.MainPageService;
