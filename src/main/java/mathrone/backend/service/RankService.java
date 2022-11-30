@@ -36,7 +36,7 @@ public class RankService {
         for(ZSetOperations.TypedTuple<String> str : rankSet) {
             ObjectNode node = mapper.createObjectNode();
             int temp = Integer.parseInt(str.getValue());
-            node.put("user_name", userInfoRepository.findByUserId(temp).getId());
+            node.put("user_name", userInfoRepository.findByUserId(temp).getAccountId());
             node.put("correct_count", str.getScore());
             node.put("try_count", userInfoRepository.getTryByUserID(temp));
             arrayNode.add(node);
@@ -55,7 +55,7 @@ public class RankService {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
         node.put("rank", zSetOperations.reverseRank("test", Integer.toString(userId)) + 1);
-        node.put("user_name", userInfoRepository.findByUserId(userId + 1).getId());
+        node.put("user_name", userInfoRepository.findByUserId(userId).getAccountId());
         node.put("correct_count", zSetOperations.score("test", Integer.toString(userId)));
         node.put("try_count", userInfoRepository.getTryByUserID(userId));
         return node;
