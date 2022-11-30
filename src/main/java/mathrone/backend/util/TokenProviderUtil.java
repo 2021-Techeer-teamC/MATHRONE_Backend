@@ -39,7 +39,7 @@ public class TokenProviderUtil {
     private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24;       // 1일
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24 * 7;  // 7일
     public static final String AUTHORIZATION_HEADER = "Authorization";  // http header 종류
-    public static final String BEARER_PREFIX = "Bearer";    // http 인증 type
+//    public static final String BEARER_PREFIX = "Bearer";    // http 인증 type
 
     // key는 HS512 알고리즘을 사용함
     private final Key key;
@@ -147,9 +147,8 @@ public class TokenProviderUtil {
     // Request Header의 토큰 정보 가져오는 메소드
     public String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
-        if (StringUtils.hasText(bearerToken) &&
-            bearerToken.startsWith(BEARER_PREFIX)) {
-            return bearerToken.substring(7);
+        if (StringUtils.hasText(bearerToken)) {
+            return bearerToken;
         }
         return null;
     }
