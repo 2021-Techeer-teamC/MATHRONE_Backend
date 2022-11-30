@@ -41,14 +41,20 @@ public class ProfileService {
         //유저 정보 받아오기
         UserInfo userinfo = userInfoRepository.findByUserId(Integer.parseInt(userId));
 
-        //랭크 정보 받아오기
-        ObjectNode node = getMyRank(userinfo.getUserId());
+        int user_exp = userinfo.getExp();
 
+        //rank 초기값 null
+        UserRank r = new UserRank("null","null","null");
 
-        //랭크 정보를 DTO에 담기
-        UserRank r = new UserRank(node.findValue("rank").toString(),
-            node.findValue("score").toString(), node.findValue("try").toString());
+        if(user_exp > 0){ //exp가 0 이상인 경우에만 rank존재
+            //랭크 정보 받아오기
+            ObjectNode node = getMyRank(userinfo.getUserId());
 
+            r.setRank(node.findValue("rank").toString());
+            r.setScore(node.findValue("score").toString());
+            r.setScore(node.findValue("try").toString());
+
+        }
 
         //최종 Profile 생성
         UserProfile res = new UserProfile(userinfo.getUserId(), userinfo.getId(),
