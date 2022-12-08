@@ -2,6 +2,8 @@ package mathrone.backend.config.security;
 
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.domain.UserInfo;
+import mathrone.backend.error.exception.ErrorCode;
+import mathrone.backend.error.exception.UserException;
 import mathrone.backend.repository.UserInfoRepository;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,7 +24,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
         UserInfo isExist = userRepository.findByAccountId(id).orElseThrow(() ->
-            new UsernameNotFoundException("유저를 찾을 수 없습니다. 아이디를 다시 확인해주세요."));
+            new UserException(ErrorCode.ACCOUNT_NOT_FOUND));
         return User.builder()
             .username(String.valueOf(isExist.getUserId()))
             .password(isExist.getPassword())
