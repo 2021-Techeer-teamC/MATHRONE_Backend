@@ -10,13 +10,18 @@ import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.controller.dto.OauthDTO.OAuthLoginUtils;
 import mathrone.backend.controller.dto.OauthDTO.RequestTokenDTO;
 import mathrone.backend.controller.dto.OauthDTO.ResponseTokenDTO;
+import mathrone.backend.error.exception.ErrorCode;
+import mathrone.backend.error.exception.UserException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import static mathrone.backend.domain.enums.UserResType.GOOGLE;
 
 
 @Service
@@ -90,15 +95,23 @@ public class SnsLoginService {
 
         String resultJson = restTemplate.getForObject(requestUrl, String.class);
 
-        if (resultJson != null) {
-            GoogleIDToken userInfoDto = objectMapper.readValue(resultJson, new TypeReference<GoogleIDToken>() {
-            });
 
-            return ResponseEntity.ok().body(userInfoDto);
-        } else {
-            throw new Exception("Google OAuth failed!");
-        }
+        resultNull(resultJson); //resultjson이 null이면 여기서 에러 발생
+
+        //null이 아니면 정상 작동
+        GoogleIDToken userInfoDto = objectMapper.readValue(resultJson, new TypeReference<GoogleIDToken>() {});
+
+        return ResponseEntity.ok().body(userInfoDto);
+
 
     }
+
+
+    public void resultNull(String resultJson){
+        if(resultJson==null){
+            throw new UserException(ErrorCode.GOOGLE_SERVER_ERROR);
+        }
+    }
+
 
 }
