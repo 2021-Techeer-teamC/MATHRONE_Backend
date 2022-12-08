@@ -2,8 +2,6 @@ package mathrone.backend.domain;
 
 import com.sun.istack.NotNull;
 import com.vladmihalcea.hibernate.type.array.IntArrayType;
-import java.util.LinkedList;
-import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +23,7 @@ public class UserInfo {
 
     @NotNull
     @Column(name = "account_id")
-    private String id;
+    private String accountId;
 
     @NotNull
     private String password;
@@ -53,18 +51,14 @@ public class UserInfo {
     @Column(name = "register_type")
     private String resType;
 
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)  //영속화 설정
-//    private List<ProblemTry> problemTryList = new LinkedList<ProblemTry>();
-
     @Builder
-    public UserInfo(String email, String password, String role, String id, String resType) {
+    public UserInfo(String email, String password, String role, String accountId, String resType) {
         this.email = email;
         this.password = password;
         this.role = role;
-        this.id = id;
+        this.accountId = accountId;
         this.resType = resType;
     }
-
 
     //업데이트 될만한 거
     public UserInfo update(String userImg, boolean premium){
@@ -73,98 +67,5 @@ public class UserInfo {
 
         return this;
     }
-
-
-    //GETTER SETTER
-
-
-    public String getResType() {
-        return resType;
-    }
-
-    public void setResType(String resType) {
-        this.resType = resType;
-    }
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getProfileImg() {
-        return profileImg;
-    }
-
-    public void setProfileImg(String profileImg) {
-        this.profileImg = profileImg;
-    }
-
-    public int getExp() {
-        return exp;
-    }
-
-    public void setExp(int exp) {
-        this.exp = exp;
-    }
-
-    public boolean isPremium() {
-        return premium;
-    }
-
-    public void setPremium(boolean premium) {
-        this.premium = premium;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhoneNum() {
-        return phoneNum;
-    }
-
-    public void setPhoneNum(String phoneNum) {
-        this.phoneNum = phoneNum;
-    }
-
-    public String getUserImg() {
-        return userImg;
-    }
-
-    public void setUserImg(String userImg) {
-        this.userImg = userImg;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
 
 }
