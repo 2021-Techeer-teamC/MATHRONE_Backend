@@ -4,6 +4,8 @@ import static mathrone.backend.domain.enums.UserResType.GOOGLE;
 import static mathrone.backend.domain.enums.UserResType.MATHRONE;
 
 import javax.servlet.http.HttpServletRequest;
+
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.*;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
@@ -21,6 +23,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.transaction.Transactional;
 import java.util.List;
@@ -50,52 +53,71 @@ public class AuthService {
     }
 
     @Transactional
-    public UserResponseDto signupWithGoogle(ResponseEntity<GoogleIDToken> googleIDToken) {
+    public UserResponseDto signupWithGoogle(ResponseEntity<GoogleIDToken> googleIDToken, String accountID) throws Exception {
 
-        UserSignUpDto userSignUpDto = new UserSignUpDto(googleIDToken.getBody().getEmail(),
-            "googleLogin", googleIDToken.getBody().getEmail()); //id와 email을 email로 채워서 만들기
-        UserInfo newUser = userSignUpDto.toUser(passwordEncoder, GOOGLE.getTypeName());
 
-        return UserResponseDto.of(userinfoRepository.save(newUser));
+        //가입정보가 존재하지 않는 경우 -> 가입진행
+        if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
+                GOOGLE.getTypeName())) {
+
+            //입력받아온 accountID를 이용하여 로그인
+            UserSignUpDto userSignUpDto = new UserSignUpDto(accountID,
+                    "googleLogin", googleIDToken.getBody().getEmail()); //id와 email을 email로 채워서 만들기
+            UserInfo newUser = userSignUpDto.toUser(passwordEncoder, GOOGLE.getTypeName());
+
+            return UserResponseDto.of(userinfoRepository.save(newUser));
+
+
+        } else { //가입정보가 존재하는 경우 -> 이미 가입된 회원
+            throw new Exception("이미 존재하는 회원입니다.");
+        }
+
     }
 
     @Transactional
-    public TokenDto googleLogin(ResponseEntity<GoogleIDToken> googleIDToken) {
+    public TokenDto googleLogin(ResponseEntity<GoogleIDToken> googleIDToken)  throws Exception {
 
-        //가입이 안되어 있는 경우
-        if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
-            GOOGLE.getTypeName())) {
-            signupWithGoogle(googleIDToken);
+        //가입정보가 존재하는 경우
+        if (userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
+                GOOGLE.getTypeName())) {
+
+            UserRequestDto userRequestDto = new UserRequestDto(googleIDToken.getBody().getEmail(),
+                    "googleLogin");
+
+            // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
+            UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
+
+            // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
+            //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
+            Authentication authentication = authenticationManagerBuilder.getObject()
+                    .authenticate(authenticationToken);
+
+            // 3. token 생성
+            TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
+
+            // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
+            RefreshToken refreshToken = RefreshToken.builder()
+                    .userid(authentication.getName())
+                    .refreshToken(tokenDto.getRefreshToken())
+                    .expiration(tokenProviderUtil.getRefreshTokenExpireTime())
+                    .build();
+
+            // 5. 토큰 저장 테이블 저장
+            refreshTokenRepository.save(refreshToken);
+
+            // 6. redis 저장
+            refreshTokenRedisRepository.save(refreshToken.transferRedisToken());
+
+            return tokenDto;
+
+
+        } else { //가입 정보가 존재 안하는경우
+            throw new Exception("존재하지 않는 회원입니다. sns회원가입을 먼저 진행해주세요.");
         }
 
-        UserRequestDto userRequestDto = new UserRequestDto(googleIDToken.getBody().getEmail(),
-            "googleLogin");
 
-        // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
-        UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
 
-        // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
-        //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
-        Authentication authentication = authenticationManagerBuilder.getObject()
-            .authenticate(authenticationToken);
 
-        // 3. token 생성
-        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
-
-        // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
-        RefreshToken refreshToken = RefreshToken.builder()
-            .userid(authentication.getName())
-            .refreshToken(tokenDto.getRefreshToken())
-            .expiration(tokenProviderUtil.getRefreshTokenExpireTime())
-            .build();
-
-        // 5. 토큰 저장 테이블 저장
-        refreshTokenRepository.save(refreshToken);
-
-        // 6. redis 저장
-        refreshTokenRedisRepository.save(refreshToken.transferRedisToken());
-
-        return tokenDto;
     }
 
     @Transactional
@@ -112,32 +134,38 @@ public class AuthService {
     }
 
     @Transactional
-    public TokenDto login(UserRequestDto userRequestDto) {
-        // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
-        UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
+    public TokenDto login(UserRequestDto userRequestDto) throws Exception{
 
-        // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
-        //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
-        Authentication authentication = authenticationManagerBuilder.getObject()
-            .authenticate(authenticationToken);
 
-        // 3. token 생성
-        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
 
-        // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
-        RefreshToken refreshToken = RefreshToken.builder()
-            .userid(authentication.getName())
-            .refreshToken(tokenDto.getRefreshToken())
-            .expiration(tokenProviderUtil.getRefreshTokenExpireTime())
-            .build();
+            // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
+            UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
 
-        // 5. 토큰 저장 테이블 저장
-        refreshTokenRepository.save(refreshToken);
+            // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
+            //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
+            Authentication authentication = authenticationManagerBuilder.getObject()
+                    .authenticate(authenticationToken);
 
-        // 6. redis 저장
-        refreshTokenRedisRepository.save(refreshToken.transferRedisToken());
+            // 3. token 생성
+            TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
 
-        return tokenDto;
+            // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
+            RefreshToken refreshToken = RefreshToken.builder()
+                    .userid(authentication.getName())
+                    .refreshToken(tokenDto.getRefreshToken())
+                    .expiration(tokenProviderUtil.getRefreshTokenExpireTime())
+                    .build();
+
+            // 5. 토큰 저장 테이블 저장
+            refreshTokenRepository.save(refreshToken);
+
+            // 6. redis 저장
+            refreshTokenRedisRepository.save(refreshToken.transferRedisToken());
+
+            return tokenDto;
+
+
+
     }
 
     @Transactional
