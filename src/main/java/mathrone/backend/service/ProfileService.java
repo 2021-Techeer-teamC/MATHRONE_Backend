@@ -45,7 +45,7 @@ public class ProfileService {
         int user_exp = userinfo.getExp();
 
         //rank 초기값 null
-        UserRank r = new UserRank("null","null","null");
+        UserRank r = new UserRank(null,null,null);
 
         if(user_exp > 0){ //exp가 0 이상인 경우에만 rank존재
             //랭크 정보 받아오기
@@ -53,7 +53,7 @@ public class ProfileService {
 
             r.setRank(node.findValue("rank").toString());
             r.setScore(node.findValue("score").toString());
-            r.setScore(node.findValue("try").toString());
+            r.setTrycnt(node.findValue("try").toString());
 
         }
 
