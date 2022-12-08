@@ -38,7 +38,7 @@ public class UserController {
     }
 
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<TokenDto> login(@RequestBody UserRequestDto userRequestDto) {
+    public ResponseEntity<TokenDto> login(@RequestBody UserRequestDto userRequestDto) throws Exception{
         return ResponseEntity.ok(authService.login(userRequestDto));
     }
 
@@ -61,9 +61,29 @@ public class UserController {
     }
 
 
+    //구글 회원가입
     @PostMapping(value = "/oauth/callback/google", headers = {"Content-type=application/json"})
-    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto)
+    public ResponseEntity<UserResponseDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto, String accountID)
         throws Exception {
+        System.out.println("usercontroller");
+        ResponseEntity<ResponseTokenDTO> res = snsLoginService.getToken(requestCodeDto.getCode());
+
+        System.out.println("get Token response");
+        System.out.println(res);
+
+        System.out.println("start getGoogleIDToken");
+        ResponseEntity<GoogleIDToken> res2 = snsLoginService.getGoogleIDToken(res);
+        System.out.println("end getGoogleIDToken");
+        System.out.println(res2);
+
+        return ResponseEntity.ok(authService.signupWithGoogle(res2, accountID));
+    }
+
+
+    //구글 로그인
+    @PostMapping(value = "/snslogin", headers = {"Content-type=application/json"})
+    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto)
+            throws Exception {
         System.out.println("usercontroller");
         ResponseEntity<ResponseTokenDTO> res = snsLoginService.getToken(requestCodeDto.getCode());
 
@@ -77,6 +97,8 @@ public class UserController {
 
         return ResponseEntity.ok(authService.googleLogin(res2));
     }
+
+
 
 //    @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
 //    public ResponseEntity<TokenDto> login (@RequestBody UserRequestDto userRequestDto) {
