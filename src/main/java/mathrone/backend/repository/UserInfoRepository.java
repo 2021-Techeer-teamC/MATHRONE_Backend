@@ -17,7 +17,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
     @Query(value = "SELECT COUNT(*) FROM problem_try WHERE user_id=:userId GROUP BY user_id", nativeQuery = true)
     Long getTryByUserID(int userId);
 
-    boolean existsUserInfoByAccountIdAndResType(String accountId, String resType);
+    boolean existsUserInfoByAccountId(String accountId);
 
     boolean existsByEmailAndResType(String email, String resType);
 
