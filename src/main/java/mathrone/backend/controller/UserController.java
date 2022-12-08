@@ -55,32 +55,21 @@ public class UserController {
     }
 
     @PostMapping(value = "/reissue")
-    public ResponseEntity<TokenDto> reissue(HttpServletRequest request,
-        @RequestHeader String refreshToken) {
+    public ResponseEntity<TokenDto> reissue(HttpServletRequest request, @RequestHeader String refreshToken) {
         return ResponseEntity.ok(authService.reissue(request, refreshToken));
     }
 
 
     @PostMapping(value = "/oauth/callback/google", headers = {"Content-type=application/json"})
-    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto)
-        throws Exception {
-        System.out.println("usercontroller");
+    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
+
         ResponseEntity<ResponseTokenDTO> res = snsLoginService.getToken(requestCodeDto.getCode());
 
-        System.out.println("get Token response");
-        System.out.println(res);
-
-        System.out.println("start getGoogleIDToken");
-        ResponseEntity<GoogleIDToken> res2 = snsLoginService.getGoogleIDToken(res);
-        System.out.println("end getGoogleIDToken");
-        System.out.println(res2);
+        ResponseEntity<GoogleIDToken>res2 = snsLoginService.getGoogleIDToken(res);
 
         return ResponseEntity.ok(authService.googleLogin(res2));
     }
 
-//    @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
-//    public ResponseEntity<TokenDto> login (@RequestBody UserRequestDto userRequestDto) {
-//        return ResponseEntity.ok(authService.login(userRequestDto));
-//    }
+
 
 }
