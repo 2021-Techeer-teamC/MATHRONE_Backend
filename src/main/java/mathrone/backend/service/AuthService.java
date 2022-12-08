@@ -12,6 +12,8 @@ import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.domain.token.LogoutAccessToken;
 import mathrone.backend.domain.token.RefreshToken;
 import mathrone.backend.domain.UserInfo;
+import mathrone.backend.error.exception.ErrorCode;
+import mathrone.backend.error.exception.UserException;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.tokenRepository.LogoutAccessTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
@@ -42,11 +44,9 @@ public class AuthService {
 
     @Transactional
     public UserResponseDto signup(UserSignUpDto userSignUpDto) {
-        // && type이 MATHRONE인 경우도 같이 검사 -> 같은 id로 여러 sns시스템을 이용할 수 있기 때문
-        if (userinfoRepository.existsUserInfoByAccountIdAndResType(userSignUpDto.getAccountId(),
-            MATHRONE.getTypeName())) {
-            throw new RuntimeException("이미 가입된 유저입니다.");
-        }
+        // user account ID가 존재하는지 검사
+        validateUserAccountId(userSignUpDto.getAccountId());
+
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder,
             MATHRONE.getTypeName()); //MATHRONE user로 가입시켜주기
         return UserResponseDto.of(userinfoRepository.save(newUser));
@@ -259,4 +259,9 @@ public class AuthService {
 
     }
 
+    public void validateUserAccountId(String userAccountId) {
+        if (userinfoRepository.existsUserInfoByAccountId(userAccountId)){
+            throw new UserException(ErrorCode.ACCOUNT_IS_DUPLICATION);
+        }
+    }
 }
