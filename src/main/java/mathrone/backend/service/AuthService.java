@@ -53,33 +53,28 @@ public class AuthService {
     }
 
     @Transactional
-    public UserResponseDto signupWithGoogle(ResponseEntity<GoogleIDToken> googleIDToken, String accountID) throws Exception {
+    public UserResponseDto signupWithGoogle(ResponseEntity<GoogleIDToken> googleIDToken, String accountID) {
 
+        //이미 가입된 구글계정인지 확인
+        validateGoogleAccount(googleIDToken);//이미 가입기록이 있으면 여기서 에러
 
-        //가입정보가 존재하지 않는 경우 -> 가입진행
-        if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
-                GOOGLE.getTypeName())) {
+        //유효한 accountID인지 확인(이미 존재하는 아이디인지)
+        validateUserAccountId(accountID); //이미 존재하는 아이디면 여기서 에러
 
-            //입력받아온 accountID를 이용하여 로그인
-            UserSignUpDto userSignUpDto = new UserSignUpDto(accountID,
+        //아니면 회원가입 진행
+        //입력받아온 accountID를 이용하여 회원가입
+        UserSignUpDto userSignUpDto = new UserSignUpDto(accountID,
                     "googleLogin", googleIDToken.getBody().getEmail()); //id와 email을 email로 채워서 만들기
-            UserInfo newUser = userSignUpDto.toUser(passwordEncoder, GOOGLE.getTypeName());
+        UserInfo newUser = userSignUpDto.toUser(passwordEncoder, GOOGLE.getTypeName());
 
-            return UserResponseDto.of(userinfoRepository.save(newUser));
-
-
-        } else { //가입정보가 존재하는 경우 -> 이미 가입된 회원
-            throw new Exception("이미 존재하는 회원입니다.");
-        }
+        return UserResponseDto.of(userinfoRepository.save(newUser));
 
     }
 
     @Transactional
     public TokenDto googleLogin(ResponseEntity<GoogleIDToken> googleIDToken)  throws Exception {
 
-        //가입정보가 존재하는 경우
-        if (userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
-                GOOGLE.getTypeName())) {
+            
 
             UserRequestDto userRequestDto = new UserRequestDto(googleIDToken.getBody().getEmail(),
                     "googleLogin");
@@ -109,13 +104,6 @@ public class AuthService {
             refreshTokenRedisRepository.save(refreshToken.transferRedisToken());
 
             return tokenDto;
-
-
-        } else { //가입 정보가 존재 안하는경우
-            throw new Exception("존재하지 않는 회원입니다. sns회원가입을 먼저 진행해주세요.");
-        }
-
-
 
 
     }
@@ -264,4 +252,24 @@ public class AuthService {
             throw new UserException(ErrorCode.ACCOUNT_IS_DUPLICATION);
         }
     }
+
+
+    public void existUserAccountId(String userAccountId) {
+        if (!userinfoRepository.existsUserInfoByAccountId(userAccountId)){
+            throw new UserException(ErrorCode.ACCOUNT_NOT_FOUND);
+        }
+    }
+
+    public void validateGoogleAccount(ResponseEntity<GoogleIDToken> googleIDToken) {
+
+        if(userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
+                GOOGLE.getTypeName())){
+            throw new UserException(ErrorCode.GOOGLE_ACCOUNT_IS_DUPLICATION);
+        }
+
+    }
+
+
+
+
 }
