@@ -53,6 +53,8 @@ dependencies {
     //google login
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
+    // DataTime formatter
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.11.4'
 
 }
 
