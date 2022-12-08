@@ -49,8 +49,8 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/check/accountId", headers = {"Content-type=application/json"})
-    public ResponseEntity<Void> validateUserAccountId(@RequestBody String userAccountId) {
+    @GetMapping(value = "/check/accountId", headers = {"Content-type=application/json"})
+    public ResponseEntity<Void> validateUserAccountId(@RequestParam String userAccountId) {
         authService.validateUserAccountId(userAccountId);
         return ResponseEntity.ok().build();
     }
