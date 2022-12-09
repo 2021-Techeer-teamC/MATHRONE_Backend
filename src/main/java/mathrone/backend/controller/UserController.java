@@ -49,6 +49,12 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping(value = "/check/accountId", headers = {"Content-type=application/json"})
+    public ResponseEntity<Void> validateUserAccountId(@RequestParam String userAccountId) {
+        authService.validateUserAccountId(userAccountId);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping(value = "/signup", headers = {"Content-type=application/json"})
     public ResponseEntity<UserResponseDto> signUp(@RequestBody UserSignUpDto userSignUpDto) {
         return ResponseEntity.ok(authService.signup(userSignUpDto));
