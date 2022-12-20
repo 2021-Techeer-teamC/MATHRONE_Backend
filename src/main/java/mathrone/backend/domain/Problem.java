@@ -82,8 +82,8 @@ public class Problem {
     @Column(name = "level_of_diff")
     private int levelOfDiff;
 
-    @Column(name = "category")
-    private boolean category;
+    @Column(name = "is_multiple")
+    private boolean is_multiple;
 
 //    @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true) //영속화 설정
 //    private List<ProblemTry> problemTryList = new LinkedList<>();   // null 에러 방지
