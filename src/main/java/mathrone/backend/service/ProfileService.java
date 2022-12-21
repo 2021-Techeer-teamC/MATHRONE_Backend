@@ -106,10 +106,6 @@ public class ProfileService {
         return node;
     }
 
-    public List<UserProblemTryDTO> getTryProblem(HttpServletRequest request) {
-        // 1. Request Header 에서 access token 빼기
-        String accessToken = tokenProviderUtil.resolveToken(request);
-
     public UserInfo getUserInfo(long userId) {
         return userInfoRepository.getById(userId);
     }
