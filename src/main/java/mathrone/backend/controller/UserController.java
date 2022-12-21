@@ -38,7 +38,7 @@ public class UserController {
     }
 
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<TokenDto> login(@RequestBody UserRequestDto userRequestDto) {
+    public ResponseEntity<TokenDto> login(@RequestBody UserRequestDto userRequestDto) throws Exception {
         return ResponseEntity.ok(authService.login(userRequestDto));
     }
 
