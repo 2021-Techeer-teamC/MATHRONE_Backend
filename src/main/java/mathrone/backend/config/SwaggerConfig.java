@@ -21,13 +21,13 @@ import java.util.List;
 @Component
 public class SwaggerConfig {
 
-    private static final String APIKEY_NAME = "Access Token";
+    private static final String JWT_KEY = "Authorization";
 
     @Bean
     public Docket api2() {
         return new Docket(DocumentationType.OAS_30)
                 .securityContexts(Arrays.asList(securityContext()))
-                .securitySchemes(Arrays.asList(apiKey()))
+                .securitySchemes(Arrays.asList(authorizationKey()))
                 .useDefaultResponseMessages(false)
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("mathrone.backend.controller"))
@@ -49,11 +49,11 @@ public class SwaggerConfig {
         AuthorizationScope authorizationScope = new AuthorizationScope("global", "accessEverything");
         AuthorizationScope[] authorizationScopes = new AuthorizationScope[1];
         authorizationScopes[0] = authorizationScope;
-        return Arrays.asList(new SecurityReference(APIKEY_NAME, authorizationScopes));
+        return Arrays.asList(new SecurityReference(JWT_KEY, authorizationScopes));
     }
 
-    private ApiKey apiKey() {
-        return new ApiKey(APIKEY_NAME, "Authorization", "header");
+    private ApiKey authorizationKey() {
+        return new ApiKey(JWT_KEY, "Authorization", "header");
     }
 
 }
