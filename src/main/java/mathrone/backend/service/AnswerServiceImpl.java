@@ -78,7 +78,7 @@ public class AnswerServiceImpl implements AnswerService {
             problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
                 .problemId(problem.getProblemId())
                 .solution(problem.getSolution())
-                .answer(isCorrect).build());
+                .answer(solutionProblem.getAnswer()).build());
         }
         return problemGradeResponseDtoList;
     }

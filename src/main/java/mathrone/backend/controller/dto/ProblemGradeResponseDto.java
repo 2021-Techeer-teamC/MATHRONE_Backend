@@ -15,5 +15,5 @@ import lombok.Setter;
 public class ProblemGradeResponseDto {
     private String problemId;
     private int solution;
-    private boolean answer;
+    private int answer;
 }
