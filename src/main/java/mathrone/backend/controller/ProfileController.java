@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -45,5 +46,11 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.getTriedProblemForGraph(request));
     }
 
+    @ApiOperation(value = "유저가 시도한 문제 중 특정 단원의 틀린 문제 정보 반환")
+    @GetMapping("/problem/analysis/list")
+    public ResponseEntity<Object> getTriedProblemListOfChapter(
+        HttpServletRequest request, @RequestParam String chapterId) {
+        return ResponseEntity.ok(profileService.getTriedProblemListOfChapter(request, chapterId));
+    }
 
 }

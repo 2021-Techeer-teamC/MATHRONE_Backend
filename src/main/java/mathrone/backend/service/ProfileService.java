@@ -258,4 +258,28 @@ public class ProfileService {
         return userTriedProblemForGraphResponseDto;
     }
 
+    public Object getTriedProblemListOfChapter(HttpServletRequest request, String chapterId) {
+        // 1. Request Header 에서 access token 빼기
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        if (!tokenProviderUtil.validateToken(accessToken)) {
+            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
+        }
+        // 2. access token으로부터 user id 가져오기 (email x)
+        Integer userId = Integer.parseInt(
+            tokenProviderUtil.getAuthentication(accessToken).getName());
+
+        UserInfo user = userInfoRepository.findByUserId(userId);
+
+        // 3. check premium
+        if (!user.isPremium()) {
+            throw new RuntimeException("유저의 등급이 premium이 아닙니다.");
+        }
+
+        UserFailedTriedWorkbookRedis userFailedTriedWorkbook = userFailedTriedWorkbookRedisRepository.findById(
+            userId).get();
+
+
+        return null;
+    }
 }
