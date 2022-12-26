@@ -51,8 +51,11 @@ public class AnswerServiceImpl implements AnswerService {
                 problem.getProblemId());
             Problem registedProblem = problemRepository.findByProblemId(problem.getProblemId());
             boolean isCorrect = false;
-            if (solutionProblem.getAnswer() == problem.getSolution()) {
+            if (solutionProblem.getAnswer() == Integer.parseInt(problem.getSolution())) {
                 isCorrect = true;
+            }
+            if (problem.getSolution().equals("00")){
+                continue;
             }
 
             Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
@@ -61,10 +64,10 @@ public class AnswerServiceImpl implements AnswerService {
             if (registedProblemTry.isPresent()) {
                 ProblemTry problemTry = registedProblemTry.get();
                 problemTry.setIscorrect(isCorrect);
-                problemTry.setAnswerSubmitted(problem.getSolution());
+                problemTry.setAnswerSubmitted(Integer.parseInt(problem.getSolution()));
             } else {
                 ProblemTry problemTry = ProblemTry.builder()
-                    .answerSubmitted(problem.getSolution())
+                    .answerSubmitted(Integer.parseInt(problem.getSolution()))
                     .iscorrect(isCorrect)
                     .user(user)
                     .problem(registedProblem)
@@ -77,7 +80,7 @@ public class AnswerServiceImpl implements AnswerService {
 
             problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
                 .problemId(problem.getProblemId())
-                .solution(problem.getSolution())
+                .solution(Integer.parseInt(problem.getSolution()))
                 .answer(solutionProblem.getAnswer()).build());
         }
         return problemGradeResponseDtoList;
