@@ -25,7 +25,7 @@ import mathrone.backend.domain.WorkBookInfo;
 import mathrone.backend.repository.ChapterRepository;
 import mathrone.backend.repository.ProblemRepository;
 import mathrone.backend.repository.ProblemTryRepository;
-import mathrone.backend.repository.UserFailedTriedWorkbookRedisRepository;
+import mathrone.backend.repository.redisRepository.UserFailedTriedWorkbookRedisRepository;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.WorkBookRepository;
 import mathrone.backend.util.TokenProviderUtil;
