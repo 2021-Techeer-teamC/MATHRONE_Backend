@@ -16,6 +16,6 @@ public class ProblemGradeRequestDto {
     @Getter
     public static class problemSolve{
         private String problemId;
-        private int solution;
+        private String solution;
     }
 }
