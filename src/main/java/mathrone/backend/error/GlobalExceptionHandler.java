@@ -15,9 +15,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 
     @ExceptionHandler(value = {CustomException.class})
-    public ResponseEntity<ErrorResponse> handleUserException(CustomException ue) {
+    public ResponseEntity<ErrorResponse> handleCustomException(CustomException ue) {
         StackTraceElement ste = ue.getStackTrace()[0];
-        log.info("[{}-{}] : User Error, {}",ste.getClassName(), ste.getLineNumber(), ue.getMessage());
+        log.info("[{}-{}] : {}",ste.getClassName(), ste.getLineNumber(), ue.getMessage());
         return ErrorResponse.toResponseEntity(ue.getErrorCode());
     }
 
