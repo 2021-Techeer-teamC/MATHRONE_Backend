@@ -281,11 +281,12 @@ public class ProfileService {
         UserFailedTriedWorkbookRedis userFailedTriedWorkbook = userFailedTriedWorkbookRedisRepository.findById(
             userId).orElseThrow(() -> new CustomException(EMPTY_FAILED_PROBLEM_IN_REDIS));
 
-        // 5. 유저가 틀린 문제 중 특정 문제집의 특정 챕터의 문제 반환
+        // 5. 유저가 틀린 문제 중 특정 문제집의 데이터 존재 여부 체크
         UserFailedTriedWorkbookR userFailedTriedWorkbookR = Optional.ofNullable(
             userFailedTriedWorkbook.getUserFailedTriedWorkbookList().get(workbookId)).orElseThrow(
                 () -> new CustomException(NONEXISTENT_FAILED_WORKBOOK));
 
+        // 6. 유저가 틀린 문제 중 특정 챕터의 데이터 존재 여부 체크
         UserFailedTriedChapterR userFailedTriedChapterR = Optional.ofNullable(
             userFailedTriedWorkbookR.getUserFailedTriedChapterList().get(chapterId)).orElseThrow(
                 () -> new CustomException(NONEXISTENT_FAILED_CHAPTER));
