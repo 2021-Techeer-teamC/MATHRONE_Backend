@@ -165,8 +165,8 @@ public class ProfileService {
 
             // 5-1. 해당 workbook이 분류중인 workbook list에 없는 경우
             if (!userFailedTriedWorkbooks.containsKey(workbookNum)) {
-                Map<String, Integer> userFailedTriedChapters = new HashMap<String, Integer>();
-                Map<String, List<String>> userFailedTriedChaptersForRedis = new HashMap<String, List<String>>();
+                Map<String, Integer> userFailedTriedChapters = new HashMap<>();
+                Map<String, List<String>> userFailedTriedChaptersForRedis = new HashMap<>();
 
                 // UserFailedTriedWorkbookRedis를 위한 workbook, chapter 분류
                 List<String> problemList = new ArrayList<>();
@@ -189,7 +189,7 @@ public class ProfileService {
                 if (!userFailedTriedChapters.containsKey(chapterNum)) {
 
                     // UserFailedTriedWorkbookRedis를 위한 chapter 분류
-                    List<String> problemList = new ArrayList<String>();
+                    List<String> problemList = new ArrayList<>();
                     problemList.add(problemNum);
                     userFailedTriedChaptersForRedis.put(chapterNum, problemList);
 
@@ -211,7 +211,7 @@ public class ProfileService {
 
         // responseDTO 와 redis에 저장할 변수 선언
         UserFailedTriedWorkbookResponseDto userTriedProblemForGraphResponseDto = new UserFailedTriedWorkbookResponseDto();
-        List<UserFailedTriedWorkbookR> userFailedTriedWorkbookListForRedis = new LinkedList<>();
+        Map<String, UserFailedTriedWorkbookR> userFailedTriedWorkbookListForRedis = new HashMap<>();
 
         // 6. 분류된 problem들을 responseDTO와 UserFailedTriedWorkbookRedis에 적용
         for (String workbookId : userFailedTriedWorkbooks.keySet()) {
@@ -220,9 +220,9 @@ public class ProfileService {
             Map<String, List<String>> userFailedTriedChaptersForRedis = userFailedTriedWorkbooksForRedis.get(
                 workbookId);
 
-            // responseDTO와 UserFailedTriedWorkbookRedis에 적용하기 위한 chapter list 변수 선언
+            // responseDTO와 UserFailedTriedWorkbookRedis에 적용하기 위한 chapter 선언
             List<UserFailedTriedChapterDto> triedChapterList = new LinkedList<>();
-            List<UserFailedTriedChapterR> userFailedTriedChapterRList = new LinkedList<>();
+            Map<String, UserFailedTriedChapterR> userFailedTriedChapterRList = new HashMap<>();
 
             // workbook의 chapter별 problem들을 responseDTO와 UserFailedTriedWorkbookRedis에 적용
             for (String chapterId : userFailedTriedChapters.keySet()) {
@@ -232,16 +232,15 @@ public class ProfileService {
                 // chapter의 chapterTitle을 위해 chapterId에 해당하는 객체 가져옴 (추후 chapter title이 필요한지 검토하기)
                 ChapterInfo chapter = chapterRepository.findByChapterId(chapterId).get();
 
-                userFailedTriedChapterRList.add(
-                    new UserFailedTriedChapterR(chapterId, chapter.getChapter(),
+                userFailedTriedChapterRList.put(chapterId, new UserFailedTriedChapterR(chapter.getChapter(),
                         userFailedTriedChaptersForRedis.get(chapterId)));
             }
 
             userTriedProblemForGraphResponseDto.getFailedTriedWorkbookList().add(
                 new UserFailedTriedWorkbookDto(workbook.getTitle(), triedChapterList));
 
-            userFailedTriedWorkbookListForRedis.add(
-                new UserFailedTriedWorkbookR(workbookId, workbook.getTitle(),
+            userFailedTriedWorkbookListForRedis.put(workbookId,
+                new UserFailedTriedWorkbookR(workbook.getTitle(),
                     userFailedTriedChapterRList));
         }
 
@@ -280,6 +279,6 @@ public class ProfileService {
             userId).get();
 
 
-        return null;
+        return userFailedTriedWorkbook;
     }
 }

@@ -1,5 +1,6 @@
 package mathrone.backend.domain;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -14,7 +15,7 @@ import org.springframework.data.redis.core.TimeToLive;
 @AllArgsConstructor
 @Builder
 @RedisHash(CacheKey.TriedWorkBook)
-public class UserFailedTriedWorkbookRedis {
+public class UserFailedTriedWorkbookRedis implements Serializable {
     @Id
     Integer userId;
 
