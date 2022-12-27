@@ -3,6 +3,7 @@ package mathrone.backend.controller;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import mathrone.backend.controller.dto.UserFailedTriedProblemsOfChapterDto;
 import mathrone.backend.controller.dto.UserProblemTryDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto;
 import mathrone.backend.domain.UserProfile;
@@ -48,9 +49,9 @@ public class ProfileController {
 
     @ApiOperation(value = "유저가 시도한 문제 중 특정 단원의 틀린 문제 정보 반환")
     @GetMapping("/problem/analysis/list")
-    public ResponseEntity<Object> getTriedProblemListOfChapter(
-        HttpServletRequest request, @RequestParam String chapterId) {
-        return ResponseEntity.ok(profileService.getTriedProblemListOfChapter(request, chapterId));
+    public ResponseEntity<UserFailedTriedProblemsOfChapterDto> getUserFailedProblemsOfChapterOfWorkbook(
+        HttpServletRequest request, @RequestParam String workbookId, @RequestParam String chapterId) {
+        return ResponseEntity.ok(profileService.getUserFailedProblemsOfChapterOfWorkbook(request, workbookId, chapterId));
     }
 
 }

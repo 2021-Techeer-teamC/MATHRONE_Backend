@@ -9,6 +9,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.Optional;
+import mathrone.backend.controller.dto.UserFailedTriedProblemsOfChapterDto;
 import mathrone.backend.controller.dto.UserProblemTryDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto.UserFailedTriedChapterDto;
@@ -67,16 +68,15 @@ public class ProfileService {
     public UserProfile getProfile(
         String userId) {//이 부분 수정이 필요! (현재 userId가 pk가 아닌 id로 되어있어서 임시로 이렇게 찾는 방법으로 해둠)
 
-
         //유저 정보 받아오기
         UserInfo userinfo = userInfoRepository.findByUserId(Integer.parseInt(userId));
 
         int user_exp = userinfo.getExp();
 
         //rank 초기값 null
-        UserRank r = new UserRank(null,null,null);
+        UserRank r = new UserRank(null, null, null);
 
-        if(user_exp > 0){ //exp가 0 이상인 경우에만 rank존재
+        if (user_exp > 0) { //exp가 0 이상인 경우에만 rank존재
             //랭크 정보 받아오기
             ObjectNode node = getMyRank(userinfo.getUserId());
 
@@ -92,12 +92,11 @@ public class ProfileService {
             userinfo.isPremium(), userinfo.getEmail(), userinfo.getPhoneNum(),
             userinfo.getUserImg(), userinfo.getRole(), r);
 
-
         return res;
     }
 
 
-    public ObjectNode getMyRank(Integer user_id){ // 리더보드에 필요한 나의 rank 조회
+    public ObjectNode getMyRank(Integer user_id) { // 리더보드에 필요한 나의 rank 조회
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
         node.put("rank", zSetOperations.reverseRank("test", user_id.toString()) + 1);
@@ -229,10 +228,11 @@ public class ProfileService {
                 triedChapterList.add(new UserFailedTriedChapterDto(chapterId,
                     userFailedTriedChapters.get(chapterId)));
 
-                // chapter의 chapterTitle을 위해 chapterId에 해당하는 객체 가져옴 (추후 chapter title이 필요한지 검토하기)
+                // chapter의 chapterTitle을 위해 chapterId에 해당하는 객체 가져옴
                 ChapterInfo chapter = chapterRepository.findByChapterId(chapterId).get();
 
-                userFailedTriedChapterRList.put(chapterId, new UserFailedTriedChapterR(chapter.getChapter(),
+                userFailedTriedChapterRList.put(chapterId,
+                    new UserFailedTriedChapterR(chapter.getChapter(),
                         userFailedTriedChaptersForRedis.get(chapterId)));
             }
 
@@ -257,7 +257,8 @@ public class ProfileService {
         return userTriedProblemForGraphResponseDto;
     }
 
-    public Object getTriedProblemListOfChapter(HttpServletRequest request, String chapterId) {
+    public UserFailedTriedProblemsOfChapterDto getUserFailedProblemsOfChapterOfWorkbook(
+        HttpServletRequest request, String workbookId, String chapterId) {
         // 1. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
@@ -275,10 +276,24 @@ public class ProfileService {
             throw new RuntimeException("유저의 등급이 premium이 아닙니다.");
         }
 
-        UserFailedTriedWorkbookRedis userFailedTriedWorkbook = userFailedTriedWorkbookRedisRepository.findById(
-            userId).get();
+        Optional<UserFailedTriedWorkbookRedis> userFailedTriedWorkbook = userFailedTriedWorkbookRedisRepository.findById(
+            userId);
 
+        if (userFailedTriedWorkbook.isEmpty()) {
+            throw new RuntimeException("Redis 에 유저가 시도한 문제 중 틀린 문제 정보가 존재하지 않습니다.");
+        }
 
-        return userFailedTriedWorkbook;
+        // 4. 유저가 시도한 문제 중 특정 문제집의 특정 챕터의 문제 반환
+        UserFailedTriedWorkbookR userFailedTriedWorkbookR = userFailedTriedWorkbook.get()
+            .getUserFailedTriedWorkbookList().get(workbookId);
+
+        UserFailedTriedChapterR userFailedTriedChapterR = userFailedTriedWorkbookR.getUserFailedTriedChapterList()
+            .get(chapterId);
+
+        return UserFailedTriedProblemsOfChapterDto.builder()
+            .workbookTitle(userFailedTriedWorkbookR.getWorkbookTitle())
+            .chapterTitle(userFailedTriedChapterR.getChapterTitle())
+            .problems(userFailedTriedChapterR.getTriedProblem())
+            .build();
     }
 }
