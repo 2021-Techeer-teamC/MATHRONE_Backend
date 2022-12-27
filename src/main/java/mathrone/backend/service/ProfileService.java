@@ -238,7 +238,7 @@ public class ProfileService {
             }
 
             userTriedProblemForGraphResponseDto.getFailedTriedWorkbookList().add(
-                new UserFailedTriedWorkbookDto(workbook.getTitle(), triedChapterList));
+                new UserFailedTriedWorkbookDto(workbookId, workbook.getTitle(), triedChapterList));
 
             userFailedTriedWorkbookListForRedis.put(workbookId,
                 new UserFailedTriedWorkbookR(workbook.getTitle(),
