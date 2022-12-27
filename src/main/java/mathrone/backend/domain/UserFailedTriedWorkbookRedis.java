@@ -1,6 +1,7 @@
 package mathrone.backend.domain;
 
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,16 +21,15 @@ public class UserFailedTriedWorkbookRedis {
     @TimeToLive
     private Long expiration;
 
-    List<UserFailedTriedWorkbookR> userFailedTriedWorkbookList;
+    Map<String, UserFailedTriedWorkbookR> userFailedTriedWorkbookList;
 
     @Getter
     @AllArgsConstructor
     public static class UserFailedTriedWorkbookR {
-        private String workbookId;
 
         private String workbookTitle;
 
-        List<UserFailedTriedChapterR> userFailedTriedChapterList;
+        Map<String, UserFailedTriedChapterR> userFailedTriedChapterList;
 
     }
 
@@ -37,7 +37,6 @@ public class UserFailedTriedWorkbookRedis {
     @AllArgsConstructor
     public static class UserFailedTriedChapterR {
 
-        private String chapterId;
         private String chapterTitle;
 
         List<String> triedProblem;
