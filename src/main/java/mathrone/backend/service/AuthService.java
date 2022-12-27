@@ -11,7 +11,7 @@ import mathrone.backend.domain.token.LogoutAccessToken;
 import mathrone.backend.domain.token.RefreshToken;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.error.exception.ErrorCode;
-import mathrone.backend.error.exception.UserException;
+import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.redisRepository.LogoutAccessTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
@@ -233,7 +233,7 @@ public class AuthService {
 
     public void validateUserAccountId(String userAccountId) {
         if (userinfoRepository.existsUserInfoByAccountId(userAccountId)){
-            throw new UserException(ErrorCode.ACCOUNT_IS_DUPLICATION);
+            throw new CustomException(ErrorCode.ACCOUNT_IS_DUPLICATION);
         }
     }
 }
