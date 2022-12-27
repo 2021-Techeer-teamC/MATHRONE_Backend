@@ -9,7 +9,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.Optional;
-import mathrone.backend.controller.dto.UserProblemTryDTO;
+import mathrone.backend.controller.dto.UserProblemTryDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto.UserFailedTriedChapterDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto.UserFailedTriedWorkbookDto;
@@ -110,7 +110,7 @@ public class ProfileService {
         return userInfoRepository.getById(userId);
     }
 
-    public List<UserProblemTryDTO> getTryProblem(HttpServletRequest request) {
+    public List<UserProblemTryDto> getTryProblem(HttpServletRequest request) {
         // 1. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 

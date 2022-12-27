@@ -15,13 +15,13 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import mathrone.backend.controller.dto.UserProblemTryDTO;
+import mathrone.backend.controller.dto.UserProblemTryDto;
 import org.hibernate.annotations.TypeDef;
 
 @SqlResultSetMapping(
     name = "problemTryDTOMapping",
     classes = @ConstructorResult(
-        targetClass = UserProblemTryDTO.class,
+        targetClass = UserProblemTryDto.class,
         columns = {
             @ColumnResult(name = "problemId", type = String.class),
             @ColumnResult(name = "problemNum", type = Integer.class),
@@ -35,7 +35,7 @@ import org.hibernate.annotations.TypeDef;
 )
 
 @NamedNativeQuery(name = "Problem.findUserTryProblem",
-    resultClass = UserProblemTryDTO.class,
+    resultClass = UserProblemTryDto.class,
     resultSetMapping = "problemTryDTOMapping",
     query = "select P.problem_id as problemId,"
         + "P.problem_num as problemNum,"
