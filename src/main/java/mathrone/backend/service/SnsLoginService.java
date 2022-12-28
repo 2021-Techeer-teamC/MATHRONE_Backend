@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
+import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoOAuthLoginUtils;
 import mathrone.backend.controller.dto.OauthDTO.OAuthLoginUtils;
 import mathrone.backend.controller.dto.OauthDTO.RequestTokenDTO;
@@ -28,6 +29,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 
 @Service
@@ -122,13 +126,18 @@ public class SnsLoginService {
         try{
 
             System.out.println("1");
+
         RestTemplate rt = new RestTemplate();
+
+
+            System.out.println("2");
 
         // 해더 만들기
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
 
-            System.out.println("2");
+
+            System.out.println("3");
 
         // 바디 만들기 (HashMap 사용 불가!)
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -138,99 +147,108 @@ public class SnsLoginService {
         params.add("client_secret", kakaoOAuthLoginUtils.getClientSecret());
         params.add("code", code);
 
-            System.out.println("3");
+
+            System.out.println("4");
 
         // 해더와 바디를 하나의 오브젝트로 만들기
         HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest =
                 new HttpEntity<>(params, headers);
+
+
+            System.out.println("5");
 
         // Http 요청하고 리턴값을 response 변수로 받기
         ResponseEntity<String> apiResponseJson = rt.exchange(
                 "https://kauth.kakao.com/oauth/token", // Host
                 HttpMethod.POST, // Request Method
                 kakaoTokenRequest,	// RequestBody
-                String.class);	// return Object
+                String.class
+        );	// return Object
 
-            System.out.println("4");
 
-        System.out.println(apiResponseJson);
+            System.out.println("6");
 
-//        RestTemplate restTemplate = new RestTemplate();
-//        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
-//
-//        System.out.println("1");
-//
-//        KakaoTokenRequestDTO requestParams = KakaoTokenRequestDTO.builder()
-//                .grant_type(kakaoOAuthLoginUtils.getGrantType())
-//                .client_id(kakaoOAuthLoginUtils.getClientId())
-//                .redirect_uri(kakaoOAuthLoginUtils.getKakaoRedirectUri())
-//                .client_secret(kakaoOAuthLoginUtils.getClientSecret())
-//                .code(code)
-//                .build();
-//
-//
-////        System.out.println(requestParams.getCode());
-////        System.out.println(requestParams.getGrantType());
-////        System.out.println(requestParams.getClientId());
-////        System.out.println(requestParams.getRedirectURI());
-//
-//        System.out.println("2");
-//
-//        try {
-//            // Http Header 설정
-//
-//            System.out.println("3");
-//
-//            /*
-//            error 401 unauthorized
-//            https://devtalk.kakao.com/t/koe010-bad-client-credentials/115388
-//             */
-//
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setContentType(MediaType.valueOf(MediaType.APPLICATION_FORM_URLENCODED_VALUE));
-////            headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8"); //encoder error
-//
-//            System.out.println("4");
-//
-//            HttpEntity<KakaoTokenRequestDTO> httpRequestEntity = new HttpEntity<>(requestParams, headers);
-//
-//            System.out.println(httpRequestEntity.getBody());
-//            System.out.println(httpRequestEntity.getHeaders());
-//
-//            System.out.println("5");
-//
-//            ResponseEntity<String> apiResponseJson = restTemplate.exchange(
-//                    "https://kauth.kakao.com/oauth/token",
-//                    HttpMethod.POST,
-//                    httpRequestEntity,
-//                    String.class
-//            );
-//
-//            System.out.println(apiResponseJson);
-//            System.out.println("6");
-//
-            System.out.println("5");
             // ObjectMapper를 통해 String to Object로 변환
             ObjectMapper objectMapper = new ObjectMapper();
 
+            System.out.println("7");
+
             objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+
+            System.out.println("8");
 
             objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL); // NULL이 아닌 값만 응답받기(NULL인 경우는 생략)
 
-            System.out.println("7");
+            System.out.println("9");
 
             KakaoTokenResponseDTO kakaoLoginResponse = objectMapper.readValue(apiResponseJson.getBody(), new TypeReference<KakaoTokenResponseDTO>() {
             });
-//
-//            System.out.println("8");
-//
+
+            System.out.println("10");
+            System.out.println(kakaoLoginResponse.getId_token());
+            System.out.println(kakaoLoginResponse.getAccess_token());
+
             return ResponseEntity.ok().body(kakaoLoginResponse);
-//
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-//
+
         return ResponseEntity.badRequest().body(null);
+
+    }
+
+
+    public ResponseEntity<KakaoIDToken> decodeIdToken(String idToken) throws JsonProcessingException {
+
+        System.out.println(idToken);
+        Map<String, Object> map = new HashMap<String, Object>();
+        System.out.println("1");
+        //1. ID토큰을 온점(.)을 기준으로 헤더,페이로드,서명을 분리
+//        Map<String, Object> map = new HashMap<String, Object>();
+        String[] params = idToken.split("\\."); //escape 필수
+
+        System.out.println("2");
+
+        for(int i=0;i<3;i++){
+            System.out.println("???");
+            System.out.println(params[i]);
+        }
+
+        System.out.println("3");
+        //2. 페이로드를 Base64방식으로 디코드
+        Base64.Decoder decoder = Base64.getDecoder();
+        String payload = new String(decoder.decode(params[1])); //0 : header / 1 : payload / 2 : signature
+
+        System.out.println("4");
+        //3.
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> returnMap = mapper.readValue(payload, Map.class);
+
+        for( Map.Entry<String, Object> entry : returnMap.entrySet() ){
+            String strKey = entry.getKey();
+            String strValue = String.valueOf(entry.getValue());
+            System.out.println( strKey +":"+ strValue );
+        }
+
+
+
+//
+//        for(String param : params){
+//            String name = param.split("=")[0];
+//            String value = param.split("=")[1];
+//            map.put(name, value);
+//        }
+//
+//        String token = MapUtils.getString(map, "id_token");
+//        String[] check = token.split("\\.");
+//        Base64.Decoder decoder = Base64.getDecoder();
+//        String payload = new String(decoder.decode(check[1]));
+//
+//        ObjectMapper mapper = new ObjectMapper();
+//        Map<String, Object> returnMap = mapper.readValue(payload, Map.class);
+
+        return null;
 
     }
 
