@@ -7,20 +7,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class KakaoTokenResponseDTO {
 
-    private String tokenType;
+    private String token_type;
 
-    private String accessToken;
+    private String access_token;
 
-    private String idToken;
+    private String id_token;
 
-    private Integer expiresIn;
+    private Integer expires_in;
 
-    private String refreshToken;
+    private String refresh_token;
 
-    private Integer refreshTokenExpiresIn;
+    private Integer refresh_token_expires_in;
 
     private String scope;
-
 
 
 }
