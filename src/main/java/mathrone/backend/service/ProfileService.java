@@ -6,6 +6,7 @@ import static mathrone.backend.error.exception.ErrorCode.INVALID_ACCESS_TOKEN;
 import static mathrone.backend.error.exception.ErrorCode.NONEXISTENT_FAILED_CHAPTER;
 import static mathrone.backend.error.exception.ErrorCode.NONEXISTENT_FAILED_WORKBOOK;
 import static mathrone.backend.error.exception.ErrorCode.NOT_FOUND_CHAPTER;
+import static mathrone.backend.error.exception.ErrorCode.NOT_FOUND_WORKBOOK;
 import static mathrone.backend.error.exception.ErrorCode.NOT_PREMIUM;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -157,7 +158,8 @@ public class ProfileService {
 
         // 5. 유저가 시도한 문제를 문제집에 맞게 분류
         for (ProblemTry userFailedTriedProblem : userFailedTriedProblemList) {
-            String[] problemInfo = userFailedTriedProblem.getProblem().getProblemId().split("-");
+            String[] problemInfo = userFailedTriedProblem.getProblem().getProblemId()
+                .split("-");
             String workbookNum = problemInfo[0];
             String chapterNum = problemInfo[1];
             String problemNum = userFailedTriedProblem.getProblem().getProblemId();
@@ -209,13 +211,17 @@ public class ProfileService {
         }
 
         // responseDTO 와 redis에 저장할 변수 선언
-        UserFailedTriedWorkbookResponseDto userTriedProblemForGraphResponseDto = new UserFailedTriedWorkbookResponseDto();
+        UserFailedTriedWorkbookResponseDto userFailedTriedWorkbookResponseDto = new UserFailedTriedWorkbookResponseDto();
         Map<String, UserFailedTriedWorkbookR> userFailedTriedWorkbookListForRedis = new HashMap<>();
 
         // 6. 분류된 problem들을 responseDTO와 UserFailedTriedWorkbookRedis에 적용
         for (String workbookId : userFailedTriedWorkbooks.keySet()) {
-            WorkBookInfo workbook = workBookRepository.findByWorkbookId(workbookId);
-            Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(workbookId);
+
+            WorkBookInfo workbook = workBookRepository.findById(workbookId).
+                orElseThrow(() -> new CustomException(NOT_FOUND_WORKBOOK));
+
+            Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(
+                workbookId);
             Map<String, List<String>> userFailedTriedChaptersForRedis = userFailedTriedWorkbooksForRedis.get(
                 workbookId);
 
@@ -237,8 +243,9 @@ public class ProfileService {
                         userFailedTriedChaptersForRedis.get(chapterId)));
             }
 
-            userTriedProblemForGraphResponseDto.getFailedTriedWorkbookList().add(
-                new UserFailedTriedWorkbookDto(workbookId, workbook.getTitle(), triedChapterList));
+            userFailedTriedWorkbookResponseDto.getFailedTriedWorkbookList().add(
+                new UserFailedTriedWorkbookDto(workbookId, workbook.getTitle(),
+                    triedChapterList));
 
             userFailedTriedWorkbookListForRedis.put(workbookId,
                 new UserFailedTriedWorkbookR(workbook.getTitle(),
@@ -249,13 +256,14 @@ public class ProfileService {
         userFailedTriedWorkbookRedisRepository.save(
             UserFailedTriedWorkbookRedis.builder()
                 .userId(userId)
-                // TTL 시간은 추후에 상의하여 다시 설정하기
-                .expiration(300L)
+                // 10분
+                .expiration(600L)
                 .userFailedTriedWorkbookList(userFailedTriedWorkbookListForRedis)
                 .build()
         );
 
-        return userTriedProblemForGraphResponseDto;
+        return userFailedTriedWorkbookResponseDto;
+
     }
 
     public UserFailedTriedProblemsOfChapterDto getUserFailedProblemsOfChapterOfWorkbook(
@@ -284,12 +292,12 @@ public class ProfileService {
         // 5. 유저가 틀린 문제 중 특정 문제집의 데이터 존재 여부 체크
         UserFailedTriedWorkbookR userFailedTriedWorkbookR = Optional.ofNullable(
             userFailedTriedWorkbook.getUserFailedTriedWorkbookList().get(workbookId)).orElseThrow(
-                () -> new CustomException(NONEXISTENT_FAILED_WORKBOOK));
+            () -> new CustomException(NONEXISTENT_FAILED_WORKBOOK));
 
         // 6. 유저가 틀린 문제 중 특정 챕터의 데이터 존재 여부 체크
         UserFailedTriedChapterR userFailedTriedChapterR = Optional.ofNullable(
             userFailedTriedWorkbookR.getUserFailedTriedChapterList().get(chapterId)).orElseThrow(
-                () -> new CustomException(NONEXISTENT_FAILED_CHAPTER));
+            () -> new CustomException(NONEXISTENT_FAILED_CHAPTER));
 
         return UserFailedTriedProblemsOfChapterDto.builder()
             .workbookTitle(userFailedTriedWorkbookR.getWorkbookTitle())
