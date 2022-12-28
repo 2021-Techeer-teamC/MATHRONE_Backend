@@ -21,6 +21,8 @@ public enum ErrorCode {
     NONEXISTENT_FAILED_WORKBOOK(NOT_FOUND, "Redis 에 유저가 틀린 문제 중 해당 문제집에 대한 틀린 문제 정보가 존재하지 않습니다"),
     NONEXISTENT_FAILED_CHAPTER(NOT_FOUND, "Redis 에 유저가 틀린 문제 중 해당 챕터에 대한 틀린 문제 정보가 존재하지 않습니다"),
 
+    // workbook
+    NOT_FOUND_WORKBOOK(NOT_FOUND, "해당 workbook이 존재하지 않습니다"),
 
     // chapter
     NOT_FOUND_CHAPTER(NOT_FOUND, "workbook에 chapter가 존재하지 않습니다. "),
