@@ -92,17 +92,17 @@ public class UserController {
         ResponseEntity<KakaoTokenResponseDTO> res = snsLoginService.getKakaoToken(requestCodeDto.getCode());
         ResponseEntity<KakaoIDToken> idInfo = snsLoginService.decodeIdToken(res.getBody().getId_token());
 
-        return ResponseEntity.ok(authService.kakaoLogin(idInfo));
+        return ResponseEntity.ok(authService.kakaoLogin(res,idInfo));
     }
 
 
 
 
-    @PostMapping(value = "/oauth/kakao/logout", headers = {"Content-type=application/json"})
-    public ResponseEntity<Void> kakaoLogout(HttpServletRequest request) {
-        authService.kakaoLogout(request);
-        return ResponseEntity.ok().build();
-    }
+//    @PostMapping(value = "/oauth/kakao/logout", headers = {"Content-type=application/json"})
+//    public ResponseEntity<Void> kakaoLogout(HttpServletRequest request) {
+//        authService.kakaoLogout(request);
+//        return ResponseEntity.ok().build();
+//    }
 
 
 
