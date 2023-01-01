@@ -5,13 +5,15 @@ import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.*;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
-import mathrone.backend.domain.enums.UserResType;
+import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
+import mathrone.backend.domain.token.KakaoRefreshTokenRedis;
 import mathrone.backend.domain.token.LogoutAccessToken;
 import mathrone.backend.domain.token.RefreshToken;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.error.exception.UserException;
 import mathrone.backend.repository.UserInfoRepository;
+import mathrone.backend.repository.tokenRepository.KakaoRefreshTokenRedisRepository;
 import mathrone.backend.repository.tokenRepository.LogoutAccessTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import mathrone.backend.repository.tokenRepository.RefreshTokenRedisRepository;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 
 import static mathrone.backend.domain.enums.UserResType.*;
 
@@ -39,6 +42,8 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
     private final LogoutAccessTokenRedisRepository logoutAccessTokenRedisRepository;
+
+    private final KakaoRefreshTokenRedisRepository kakaoRefreshTokenRedisRepository;
 
     @Transactional
     public UserResponseDto signup(UserSignUpDto userSignUpDto) {
@@ -110,19 +115,22 @@ public class AuthService {
     }
 
     @Transactional
-    public TokenDto kakaoLogin(ResponseEntity<KakaoIDToken> kakaoIDToken) {
+    public TokenDto kakaoLogin(ResponseEntity<KakaoTokenResponseDTO> kakaoTokenResponseDto, ResponseEntity<KakaoIDToken> kakaoIDToken) {
 
         //가입이 안되어 있는 경우 -> 자동가입 but accountID가 미설정되었음을 알려야함
         if (!userinfoRepository.existsByEmailAndResType(kakaoIDToken.getBody().getEmail(),
-                GOOGLE.getTypeName())) {
-            signupWithKakao(kakaoIDToken);
+                KAKAO.getTypeName())) {
+            signupWithKakao(kakaoIDToken); //카카오계정 으로 회원가입 진행
         }
+
 
         UserRequestDto userRequestDto = new UserRequestDto(kakaoIDToken.getBody().getEmail(),
                 "kakaoLogin");
 
+
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
         UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
+
 
         // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
         //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
@@ -132,6 +140,7 @@ public class AuthService {
         // 3. token 생성
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
 
+
         // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
         RefreshToken refreshToken = RefreshToken.builder()
                 .userid(authentication.getName())
@@ -139,13 +148,47 @@ public class AuthService {
                 .expiration(tokenProviderUtil.getRefreshTokenExpireTime())
                 .build();
 
+
         // 5. 토큰 저장 테이블 저장
         refreshTokenRepository.save(refreshToken);
+
 
         // 6. redis 저장
         refreshTokenRedisRepository.save(refreshToken.transferRedisToken());
 
+
+        // 7. kakao에서 발급한 refreshToken 저장
+        saveKakaoRefreshToken(kakaoTokenResponseDto, kakaoIDToken);
+
         return tokenDto;
+    }
+
+    @Transactional
+    public void saveKakaoRefreshToken(ResponseEntity<KakaoTokenResponseDTO> kakaoTokenResponseDto, ResponseEntity<KakaoIDToken> kakaoIdToken){
+
+
+        //user id알아내기
+        Optional<UserInfo> user = userinfoRepository.findByAccountId(kakaoIdToken.getBody().getEmail());
+
+
+        int userId = user.get().getUserId();
+
+
+        // kakao에서 발급한 refresh Token 및 만료시간
+        String refreshToken = kakaoTokenResponseDto.getBody().getRefresh_token();
+        Integer refreshTokenExpire = kakaoTokenResponseDto.getBody().getRefresh_token_expires_in();
+
+
+        //builder로 객체 생성
+        KakaoRefreshTokenRedis kakaoRefreshTokenRedis = KakaoRefreshTokenRedis.builder()
+                .id(Integer.toString(userId))
+                .refreshToken(refreshToken)
+                .expiration(refreshTokenExpire)
+                .build();
+
+
+        kakaoRefreshTokenRedisRepository.save(kakaoRefreshTokenRedis);
+
     }
 
 
