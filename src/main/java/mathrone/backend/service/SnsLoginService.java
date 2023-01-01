@@ -125,10 +125,12 @@ public class SnsLoginService {
     //kakao token얻기
     public ResponseEntity<KakaoTokenResponseDTO> getKakaoToken(String code) throws JsonProcessingException {
 
+
         try{
 
 
         RestTemplate rt = new RestTemplate();
+        rt.setRequestFactory(new HttpComponentsClientHttpRequestFactory()); //error message type및 description확인 가능
 
         // 해더 만들기
         HttpHeaders headers = new HttpHeaders();
@@ -142,6 +144,8 @@ public class SnsLoginService {
         params.add("redirect_uri", kakaoOAuthLoginUtils.getKakaoRedirectUri());
         params.add("client_secret", kakaoOAuthLoginUtils.getClientSecret());
         params.add("code", code);
+
+
 
         // 해더와 바디를 하나의 오브젝트로 만들기
         HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest =
@@ -157,6 +161,7 @@ public class SnsLoginService {
         );	// return Object
 
 
+
             // ObjectMapper를 통해 String to Object로 변환
             ObjectMapper objectMapper = new ObjectMapper();
 
@@ -167,6 +172,7 @@ public class SnsLoginService {
 
             KakaoTokenResponseDTO kakaoLoginResponse = objectMapper.readValue(apiResponseJson.getBody(), new TypeReference<KakaoTokenResponseDTO>() {
             });
+
 
             return ResponseEntity.ok().body(kakaoLoginResponse);
 
@@ -184,13 +190,14 @@ public class SnsLoginService {
 
         Map<String, Object> map = new HashMap<String, Object>();
 
+
         //1. ID토큰을 온점(.)을 기준으로 헤더,페이로드,서명을 분리
         String[] params = idToken.split("\\."); //escape 필수
-
 
         //2. 페이로드를 Base64방식으로 디코드
         Base64.Decoder decoder = Base64.getDecoder();
         String payload = new String(decoder.decode(params[1])); //0 : header / 1 : payload / 2 : signature
+
 
         /*
         {
