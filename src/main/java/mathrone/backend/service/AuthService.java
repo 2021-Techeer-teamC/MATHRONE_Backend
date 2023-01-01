@@ -138,7 +138,8 @@ public class AuthService {
                 .authenticate(authenticationToken);
 
         // 3. token 생성
-        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
+        TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication, kakaoTokenResponseDto);
+
 
 
         // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
