@@ -81,19 +81,32 @@ public class UserController {
         return ResponseEntity.ok(authService.signupWithGoogle(res2, accountID));
     }
 
+    //accoutID update
+    @PostMapping(value = "/update/accountID", headers = {"Content-type=application/json"})
+    public ResponseEntity<Void> updateAccountId(HttpServletRequest request, String accountID){
+        //accessToken을 통해 userID알아내기 (primary key)
+        UserInfo user = authService.findUserFromRequest(request);
+
+        //accountID update
+        authService.updateAccountID(accountID, user);
+
+        return ResponseEntity.ok().build();
+
+    }
+
 
     //구글 로그인
-    @PostMapping(value = "/snslogin", headers = {"Content-type=application/json"})
-    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
-
-        //get token from code
-        ResponseEntity<ResponseTokenDTO> res = snsLoginService.getToken(requestCodeDto.getCode());
-
-        //get id token from accesstoken
-        ResponseEntity<GoogleIDToken> res2 = snsLoginService.getGoogleIDToken(res);
-
-        //mathrone login with google id token
-        return ResponseEntity.ok(authService.googleLogin(res2));
-    }
+//    @PostMapping(value = "/snslogin", headers = {"Content-type=application/json"})
+//    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
+//
+//        //get token from code
+//        ResponseEntity<ResponseTokenDTO> res = snsLoginService.getToken(requestCodeDto.getCode());
+//
+//        //get id token from accesstoken
+//        ResponseEntity<GoogleIDToken> res2 = snsLoginService.getGoogleIDToken(res);
+//
+//        //mathrone login with google id token
+//        return ResponseEntity.ok(authService.googleLogin(res2));
+//    }
 
 }
