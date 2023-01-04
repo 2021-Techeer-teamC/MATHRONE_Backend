@@ -1,6 +1,8 @@
 package mathrone.backend.repository;
 
 import java.util.Optional;
+
+import jnr.ffi.annotations.In;
 import mathrone.backend.domain.UserInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +22,8 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
     boolean existsUserInfoByAccountId(String accountId);
 
     boolean existsByEmailAndResType(String email, String resType);
+
+    boolean existsByUserId(Integer userId);
 
     boolean existsByAccountId(String accountId);
 
