@@ -69,7 +69,7 @@ public class UserController {
 
     //구글 로그인 (회원가입이 되지 않은 경우 회원가입 까지 해주기)
     @PostMapping(value = "/oauth/callback/google", headers = {"Content-type=application/json"})
-    public ResponseEntity<UserResponseDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto, String accountID) throws Exception {
+    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto, String accountID) throws Exception {
 
         //get token from code
         ResponseEntity<ResponseTokenDTO> res = snsLoginService.getToken(requestCodeDto.getCode());
@@ -78,11 +78,11 @@ public class UserController {
         ResponseEntity<GoogleIDToken> res2 = snsLoginService.getGoogleIDToken(res);
 
         //mathrone signup with google id token
-        return ResponseEntity.ok(authService.signupWithGoogle(res2, accountID));
+        return ResponseEntity.ok(authService.googleLogin(res2));
     }
 
-    //accoutID update
-    @PostMapping(value = "/update/accountID", headers = {"Content-type=application/json"})
+    //accoutID update -> "PUT"으로 변경
+    @PostMapping(value = "/accountID", headers = {"Content-type=application/json"})
     public ResponseEntity<Void> updateAccountId(HttpServletRequest request, String accountID){
         //accessToken을 통해 userID알아내기 (primary key)
         UserInfo user = authService.findUserFromRequest(request);
