@@ -17,11 +17,12 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
     @Query(value = "SELECT COUNT(*) FROM problem_try WHERE user_id=:userId GROUP BY user_id", nativeQuery = true)
     Long getTryByUserID(int userId);
 
+
     boolean existsUserInfoByAccountId(String accountId);
 
     boolean existsByEmailAndResType(String email, String resType);
 
-    Optional<Void> deleteByAccountIdAndResType(String accountId, String resType);
+    Void deleteByAccountIdAndResType(String accountId, String resType);
 
 
 }

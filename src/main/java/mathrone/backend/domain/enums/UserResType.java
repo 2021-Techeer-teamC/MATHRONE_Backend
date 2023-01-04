@@ -4,8 +4,9 @@ package mathrone.backend.domain.enums;
 public enum UserResType {
 
     MATHRONE("MATHRONE"),
-    GOOGLE("GOOGLE");
-    
+    GOOGLE("GOOGLE"),
+    KAKAO("KAKAO");
+
     private final String typeName;
 
     UserResType(String name) {
