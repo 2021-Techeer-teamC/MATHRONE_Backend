@@ -74,12 +74,12 @@ public class TokenProviderUtil {
             .compact();
 
         return TokenDto.builder()
-            .grantType(BEARER_TYPE)
-            .accessToken(accessToken)
-            .accessTokenExpiresIn(accessTokenExpires.getTime())
-            .refreshToken(refreshToken)
-            .userInfo(UserResponseDto.builder().accountId(authentication.getName()).build())
-            .build();
+                .grantType(BEARER_TYPE)
+                .accessToken(accessToken)
+                .accessTokenExpiresIn(accessTokenExpires.getTime())
+                .refreshToken(refreshToken)
+                .userInfo(UserResponseDto.builder().accountId(authentication.getName()).build())
+                .build();
     }
 
     public Authentication getAuthentication(String accessToken) {
