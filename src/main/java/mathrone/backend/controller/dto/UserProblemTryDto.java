@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @NoArgsConstructor
 @Getter
 @Setter
-public class UserProblemTryDTO {
+public class UserProblemTryDto {
 
     private String problemId;
 

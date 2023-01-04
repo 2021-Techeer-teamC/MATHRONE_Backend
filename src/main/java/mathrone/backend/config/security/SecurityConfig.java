@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import mathrone.backend.config.jwt.JwtAccessDeniedHandler;
 import mathrone.backend.config.jwt.JwtAuthenticationEntryPoint;
 import mathrone.backend.config.jwt.JwtSecurityConfig;
-import mathrone.backend.repository.tokenRepository.LogoutAccessTokenRedisRepository;
+import mathrone.backend.repository.redisRepository.LogoutAccessTokenRedisRepository;
 //import mathrone.backend.service.GoogleOAuth2UserService;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.context.annotation.Bean;

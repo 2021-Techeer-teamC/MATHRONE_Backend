@@ -1,6 +1,6 @@
 package mathrone.backend.repository;
 
-import mathrone.backend.controller.dto.UserProblemTryDTO;
+import mathrone.backend.controller.dto.UserProblemTryDto;
 import mathrone.backend.domain.Problem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +16,6 @@ public interface ProblemRepository extends JpaRepository<Problem, Long> {
     Problem findByProblemId(String problemId);
 
     @Query(nativeQuery = true)
-    List<UserProblemTryDTO> findUserTryProblem(@Param(value = "userId") int userId);
+    List<UserProblemTryDto> findUserTryProblem(@Param(value = "userId") int userId);
 
 }

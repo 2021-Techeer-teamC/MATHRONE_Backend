@@ -15,7 +15,7 @@ public class UserFailedTriedWorkbookResponseDto {
     @AllArgsConstructor
     @Getter
     public static class UserFailedTriedWorkbookDto {
-
+        private String workbookId;
         private String workbookTitle;
         List<UserFailedTriedChapterDto> chapters;
     }
@@ -23,7 +23,7 @@ public class UserFailedTriedWorkbookResponseDto {
     @AllArgsConstructor
     @Getter
     public static class UserFailedTriedChapterDto {
-        private String id;
+        private String chapterId;
         private Integer failedProblemCount;
     }
 }

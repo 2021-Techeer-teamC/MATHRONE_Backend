@@ -22,7 +22,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
 
     boolean existsByEmailAndResType(String email, String resType);
 
-    Optional<Void> deleteByAccountIdAndResType(String accountId, String resType);
+    Void deleteByAccountIdAndResType(String accountId, String resType);
 
 
 }

@@ -1,4 +1,4 @@
-package mathrone.backend.repository.tokenRepository;
+package mathrone.backend.repository;
 
 import mathrone.backend.domain.token.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;

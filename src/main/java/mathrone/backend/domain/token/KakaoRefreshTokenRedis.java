@@ -3,7 +3,6 @@ package mathrone.backend.domain.token;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import mathrone.backend.config.CacheKey;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
