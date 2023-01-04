@@ -281,7 +281,49 @@ public class AuthService {
 
     }
 
+    //
+    public UserInfo findUserFromRequest(HttpServletRequest request) {
+        // 1. Request Header 에서 access token 빼기
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        if (!tokenProviderUtil.validateToken(accessToken)) {
+            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
+        }
+        // 2. access token으로부터 user id 가져오기 (email x)
+        Integer userId = Integer.parseInt(
+                tokenProviderUtil.getAuthentication(accessToken).getName());
+
+        // 3. userId를 이용해 user가져오기
+        UserInfo user = userinfoRepository.findByUserId(userId);
+
+        return user;
+
+    }
 
 
+
+    public void updateAccountID(String accountID, UserInfo user){
+
+        //정확하게 존재하는 유저가 아니라면 오류
+        validateUser(user);
+
+        //존재하는 accountID인 경우 오류
+        validateUserAccountId(accountID);
+
+        //어카운트 아이디 업데이트 진행
+        UserInfo newUser = user.updateAccountId(accountID);
+        userinfoRepository.save(newUser); //p key가 같은 것이 save되면 자동으로 update의 기능이 수행됨
+
+        // return을 void로 했는데 204 + empty() 를 보내도 괜찮다는
+        // 204 : No Content 클라이언트의 요청은 정상적이다. 하지만 컨텐츠를 제공하지 않습니다
+    }
+
+    public void validateUser(UserInfo user ) {
+
+        if(!userinfoRepository.existsByUserId(user.getUserId())){
+            throw new UserException(ErrorCode.USER_NOT_FOUND);
+        }
+
+    }
 
 }
