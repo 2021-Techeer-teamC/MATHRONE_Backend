@@ -74,8 +74,16 @@ public class AuthService {
     @Transactional
     public TokenDto googleLogin(ResponseEntity<GoogleIDToken> googleIDToken){
 
-        //가입이 되어 있는 계정이 아니면 에러
-        existGoogleAccount(googleIDToken);
+        //0. 가입이 되어 있는 계정이 아니면 회원가입을 자동으로 시켜주기
+        if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
+                GOOGLE.getTypeName())){
+            //타입 : 구글 && 이메일이 존재하지 않는 경우
+
+            //@을 기준으로 앞부분을 임시 아이디로 사용 -> 이 또한 중복이 있으면 가입이 막혀서 좋은 방법은 아닌 것 같음..
+            String[] emailSplit = googleIDToken.getBody().getEmail().split("@");
+            signupWithGoogle(googleIDToken, emailSplit[0]);
+
+        }
 
         UserRequestDto userRequestDto = new UserRequestDto(googleIDToken.getBody().getEmail(),
                     "googleLogin");
@@ -255,12 +263,13 @@ public class AuthService {
     }
 
     //가입이 진행된 구글 계정인지 확인 -> 가입이 된적 없으면 에러 (로그인 시도시)
-    public void existGoogleAccount(ResponseEntity<GoogleIDToken> googleIDToken) {
-        if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
-                GOOGLE.getTypeName())){
-            throw new UserException(ErrorCode.GOOGLE_ACCOUNT_NOT_FOUND);
-        }
-    }
+    // 로그인 시 가입된 적 없으면 자동 가입이 진행되므로 필요 없어짐
+//    public void existGoogleAccount(ResponseEntity<GoogleIDToken> googleIDToken) {
+//        if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
+//                GOOGLE.getTypeName())){
+//            throw new UserException(ErrorCode.GOOGLE_ACCOUNT_NOT_FOUND);
+//        }
+//    }
 
     //가입이 진행된 구글 계정인지 확인 -> 가입 된적 있으면 에러(회원가입 시도시)
     public void validateGoogleAccount(ResponseEntity<GoogleIDToken> googleIDToken) {
