@@ -15,10 +15,12 @@ import java.util.Date;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
 import mathrone.backend.controller.dto.TokenDto;
 import mathrone.backend.controller.dto.UserResponseDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -74,13 +76,49 @@ public class TokenProviderUtil {
             .compact();
 
         return TokenDto.builder()
+            .grantType(BEARER_TYPE)
+            .accessToken(accessToken)
+            .accessTokenExpiresIn(accessTokenExpires.getTime())
+            .refreshToken(refreshToken)
+            .userInfo(UserResponseDto.builder().accountId(authentication.getName()).build())
+            .snsInfo(null)
+            .build();
+    }
+
+
+    public TokenDto generateTokenWithSns(Authentication authentication, ResponseEntity<KakaoTokenResponseDTO> kakaoTokenResponseDTO) {
+        // 권한 가져오기
+        String auth = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
+
+        long now = (new Date()).getTime();
+
+        // access token
+        Date accessTokenExpires = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
+        String accessToken = Jwts.builder()
+                .setSubject(authentication.getName())
+                .claim(AUTHORITIES_KEY, auth)
+                .setExpiration(accessTokenExpires)
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
+
+        // refresh token (만료일자만 저장)
+        String refreshToken = Jwts.builder()
+                .setExpiration(new Date(now + REFRESH_TOKEN_EXPIRE_TIME))
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
+
+        return TokenDto.builder()
                 .grantType(BEARER_TYPE)
                 .accessToken(accessToken)
                 .accessTokenExpiresIn(accessTokenExpires.getTime())
                 .refreshToken(refreshToken)
                 .userInfo(UserResponseDto.builder().accountId(authentication.getName()).build())
+                .snsInfo(kakaoTokenResponseDTO.getBody())
                 .build();
     }
+
 
     public Authentication getAuthentication(String accessToken) {
         // 토큰 복호화 (내부 정보 가져옴)

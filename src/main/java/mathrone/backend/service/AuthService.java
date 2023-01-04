@@ -1,18 +1,19 @@
 package mathrone.backend.service;
 
-import static mathrone.backend.domain.enums.UserResType.GOOGLE;
-import static mathrone.backend.domain.enums.UserResType.MATHRONE;
-
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.*;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
+import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
+import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
+import mathrone.backend.domain.token.KakaoRefreshTokenRedis;
 import mathrone.backend.domain.token.LogoutAccessToken;
 import mathrone.backend.domain.token.RefreshToken;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.error.exception.UserException;
 import mathrone.backend.repository.UserInfoRepository;
+import mathrone.backend.repository.tokenRepository.KakaoRefreshTokenRedisRepository;
 import mathrone.backend.repository.tokenRepository.LogoutAccessTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import mathrone.backend.repository.tokenRepository.RefreshTokenRedisRepository;
@@ -32,6 +33,8 @@ import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+import static mathrone.backend.domain.enums.UserResType.*;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -43,6 +46,8 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
     private final LogoutAccessTokenRedisRepository logoutAccessTokenRedisRepository;
+
+    private final KakaoRefreshTokenRedisRepository kakaoRefreshTokenRedisRepository;
 
     @Transactional
     public UserResponseDto signup(UserSignUpDto userSignUpDto) {
@@ -60,6 +65,16 @@ public class AuthService {
         UserSignUpDto userSignUpDto = new UserSignUpDto(googleIDToken.getBody().getEmail(),
                 "googleLogin", googleIDToken.getBody().getEmail()); //id와 email을 email로 채워서 만들기
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder, GOOGLE.getTypeName());
+
+        return UserResponseDto.of(userinfoRepository.save(newUser));
+    }
+
+    @Transactional
+    public UserResponseDto signupWithKakao(ResponseEntity<KakaoIDToken> kakaoIDToken) {
+
+        UserSignUpDto userSignUpDto = new UserSignUpDto(kakaoIDToken.getBody().getEmail(),
+                "kakaoLogin", kakaoIDToken.getBody().getEmail()); //id와 email을 email로 채워서 만들기
+        UserInfo newUser = userSignUpDto.toUser(passwordEncoder, KAKAO.getTypeName());
 
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
@@ -102,6 +117,85 @@ public class AuthService {
 
         return tokenDto;
     }
+
+    @Transactional
+    public TokenDto kakaoLogin(ResponseEntity<KakaoTokenResponseDTO> kakaoTokenResponseDto, ResponseEntity<KakaoIDToken> kakaoIDToken) {
+
+        //가입이 안되어 있는 경우 -> 자동가입 but accountID가 미설정되었음을 알려야함
+        if (!userinfoRepository.existsByEmailAndResType(kakaoIDToken.getBody().getEmail(),
+                KAKAO.getTypeName())) {
+            signupWithKakao(kakaoIDToken); //카카오계정 으로 회원가입 진행
+        }
+
+
+        UserRequestDto userRequestDto = new UserRequestDto(kakaoIDToken.getBody().getEmail(),
+                "kakaoLogin");
+
+
+        // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
+        UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
+
+
+        // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
+        //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
+        Authentication authentication = authenticationManagerBuilder.getObject()
+                .authenticate(authenticationToken);
+
+        // 3. token 생성
+        TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication, kakaoTokenResponseDto);
+
+
+
+        // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
+        RefreshToken refreshToken = RefreshToken.builder()
+                .userid(authentication.getName())
+                .refreshToken(tokenDto.getRefreshToken())
+                .expiration(tokenProviderUtil.getRefreshTokenExpireTime())
+                .build();
+
+
+        // 5. 토큰 저장 테이블 저장
+        refreshTokenRepository.save(refreshToken);
+
+
+        // 6. redis 저장
+        refreshTokenRedisRepository.save(refreshToken.transferRedisToken());
+
+
+        // 7. kakao에서 발급한 refreshToken 저장
+        saveKakaoRefreshToken(kakaoTokenResponseDto, kakaoIDToken);
+
+        return tokenDto;
+    }
+
+    @Transactional
+    public void saveKakaoRefreshToken(ResponseEntity<KakaoTokenResponseDTO> kakaoTokenResponseDto, ResponseEntity<KakaoIDToken> kakaoIdToken){
+
+
+        //user id알아내기
+        Optional<UserInfo> user = userinfoRepository.findByAccountId(kakaoIdToken.getBody().getEmail());
+
+
+        int userId = user.get().getUserId();
+
+
+        // kakao에서 발급한 refresh Token 및 만료시간
+        String refreshToken = kakaoTokenResponseDto.getBody().getRefresh_token();
+        Integer refreshTokenExpire = kakaoTokenResponseDto.getBody().getRefresh_token_expires_in();
+
+
+        //builder로 객체 생성
+        KakaoRefreshTokenRedis kakaoRefreshTokenRedis = KakaoRefreshTokenRedis.builder()
+                .id(Integer.toString(userId))
+                .refreshToken(refreshToken)
+                .expiration(refreshTokenExpire)
+                .build();
+
+
+        kakaoRefreshTokenRedisRepository.save(kakaoRefreshTokenRedis);
+
+    }
+
 
     @Transactional
     public void deleteUser(String accountId, String resType) {
