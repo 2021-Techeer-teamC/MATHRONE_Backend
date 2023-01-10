@@ -69,7 +69,7 @@ public class UserController {
 
     //구글 로그인 (회원가입이 되지 않은 경우 회원가입 까지 해주기)
     @PostMapping(value = "/oauth/callback/google", headers = {"Content-type=application/json"})
-    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto, String accountID) throws Exception {
+    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
 
         //get token from code
         ResponseEntity<ResponseTokenDTO> res = snsLoginService.getToken(requestCodeDto.getCode());
