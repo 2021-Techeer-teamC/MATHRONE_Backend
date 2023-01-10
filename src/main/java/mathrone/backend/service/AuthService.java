@@ -19,6 +19,7 @@ import mathrone.backend.repository.tokenRepository.LogoutAccessTokenRedisReposit
 import mathrone.backend.util.TokenProviderUtil;
 import mathrone.backend.repository.tokenRepository.RefreshTokenRedisRepository;
 import mathrone.backend.repository.tokenRepository.RefreshTokenRepository;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -63,8 +64,8 @@ public class AuthService {
 
         //아니면 회원가입 진행
         //입력받아온 accountID를 이용하여 회원가입
-        UserSignUpDto userSignUpDto = new UserSignUpDto(accountID,
-                    "googleLogin", googleIDToken.getBody().getEmail()); //id와 email을 email로 채워서 만들기
+        UserSignUpDto userSignUpDto = new UserSignUpDto(googleIDToken.getBody().getEmail(),
+                    "googleLogin",accountID); //id와 email을 email로 채워서 만들기
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder, GOOGLE.getTypeName());
 
         return UserResponseDto.of(userinfoRepository.save(newUser));
@@ -74,22 +75,31 @@ public class AuthService {
     @Transactional
     public TokenDto googleLogin(ResponseEntity<GoogleIDToken> googleIDToken){
 
+
         //0. 가입이 되어 있는 계정이 아니면 회원가입을 자동으로 시켜주기
         if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
                 GOOGLE.getTypeName())){
             //타입 : 구글 && 이메일이 존재하지 않는 경우
 
-            //@을 기준으로 앞부분을 임시 아이디로 사용 -> 이 또한 중복이 있으면 가입이 막혀서 좋은 방법은 아닌 것 같음..
-            String[] emailSplit = googleIDToken.getBody().getEmail().split("@");
-            signupWithGoogle(googleIDToken, emailSplit[0]);
+            String tmpId;
+            //@로 시작하는 랜덤 아이디를 만들어 제공
+            do {
+                tmpId = "@" + RandomStringUtils.random(12, true, true);
+            }while(userinfoRepository.existsByAccountId(tmpId));//존재하지 않는 아이디일 때 까지 반복
+
+
+            signupWithGoogle(googleIDToken, tmpId);
 
         }
 
-        UserRequestDto userRequestDto = new UserRequestDto(googleIDToken.getBody().getEmail(),
+        UserInfo user = userinfoRepository.findByEmailAndResType(googleIDToken.getBody().getEmail(), GOOGLE.getTypeName());
+
+        UserRequestDto userRequestDto = new UserRequestDto(user.getAccountId(),
                     "googleLogin");
 
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
         UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
+
 
         // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
         //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
@@ -98,6 +108,7 @@ public class AuthService {
 
         // 3. token 생성
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
+
 
         // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
         RefreshToken refreshToken = RefreshToken.builder()
