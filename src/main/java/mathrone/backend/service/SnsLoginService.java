@@ -51,8 +51,6 @@ public class SnsLoginService {
 
         try {
             // Http Header 설정
-
-
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -60,12 +58,10 @@ public class SnsLoginService {
 
             ResponseEntity<String> apiResponseJson = restTemplate.postForEntity("https://accounts.google.com/o/oauth2/token", httpRequestEntity, String.class);
 
-
             // ObjectMapper를 통해 String to Object로 변환
             ObjectMapper objectMapper = new ObjectMapper();
 
             objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-
             objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL); // NULL이 아닌 값만 응답받기(NULL인 경우는 생략)
 
             ResponseTokenDTO googleLoginResponse = objectMapper.readValue(apiResponseJson.getBody(), new TypeReference<ResponseTokenDTO>() {
@@ -93,6 +89,7 @@ public class SnsLoginService {
         // JWT Token을 전달해 JWT 저장된 사용자 정보 확인
         String requestUrl = UriComponentsBuilder.fromHttpUrl(oAuthLoginUtils.getGoogleAuthUrl() + "/tokeninfo").queryParam("id_token", jwtToken).toUriString();
 
+
         String resultJson = restTemplate.getForObject(requestUrl, String.class);
 
 
@@ -100,6 +97,8 @@ public class SnsLoginService {
 
         //null이 아니면 정상 작동
         GoogleIDToken userInfoDto = objectMapper.readValue(resultJson, new TypeReference<GoogleIDToken>() {});
+
+
 
         return ResponseEntity.ok().body(userInfoDto);
 
