@@ -81,6 +81,20 @@ public class UserController {
         return ResponseEntity.ok(authService.googleLogin(res2));
     }
 
+    //구글 로그아웃
+//    @PostMapping(value = "/oauth/google/logout", headers = {"Content-type=application/json"})
+//    public ResponseEntity<Void> googleLogout(HttpServletRequest request) throws Exception {
+//
+//
+//
+//
+//
+//        authService.logout(request);
+//        return ResponseEntity.ok().build();
+//    }
+
+
+
     //accoutID update -> "PUT"으로 변경
     @PutMapping(value = "/accountID", headers = {"Content-type=application/json"})
     public ResponseEntity<Void> updateAccountId(HttpServletRequest request, String accountID){
