@@ -50,7 +50,7 @@ public class TokenProviderUtil {
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public TokenDto generateToken(Authentication authentication) {
+    public TokenDto generateToken(Authentication authentication, String accountId) {
         // 권한 가져오기
         String auth = authentication.getAuthorities().stream()
             .map(GrantedAuthority::getAuthority)
@@ -78,7 +78,12 @@ public class TokenProviderUtil {
             .accessToken(accessToken)
             .accessTokenExpiresIn(accessTokenExpires.getTime())
             .refreshToken(refreshToken)
-            .userInfo(UserResponseDto.builder().accountId(authentication.getName()).build())
+            .userInfo(
+                    UserResponseDto.builder()
+                            .userId(authentication.getName())
+                            .accountId(accountId)
+                            .build()
+            )
             .build();
     }
 

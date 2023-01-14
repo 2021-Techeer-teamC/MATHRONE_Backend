@@ -107,7 +107,7 @@ public class AuthService {
                     .authenticate(authenticationToken);
 
         // 3. token 생성
-        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
+        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication, userRequestDto.getAccountId());
 
 
         // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
@@ -155,7 +155,8 @@ public class AuthService {
                     .authenticate(authenticationToken);
 
             // 3. token 생성
-            TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
+            TokenDto tokenDto = tokenProviderUtil.generateToken(authentication, userRequestDto.getAccountId());
+
 
             // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
             RefreshToken refreshToken = RefreshToken.builder()
@@ -229,8 +230,11 @@ public class AuthService {
             throw new RuntimeException("토큰의 유저 정보가 일치하지 않습니다.");
         }
 
+        UserInfo user = findUserFromRequest(request);
+
         // 5. 새로운 토큰 생성
-        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication);
+        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication, user.getAccountId());
+
 
         // 6. 저장소 정보 업데이트
         RefreshToken newRefreshToken = storedRefreshToken.updateValue(tokenDto.getRefreshToken(),
