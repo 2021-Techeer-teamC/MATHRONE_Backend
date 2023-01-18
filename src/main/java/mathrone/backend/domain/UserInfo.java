@@ -70,6 +70,15 @@ public class UserInfo {
         return this;
     }
 
+
+    //accountID변경
+    public UserInfo updateAccountId(String accountId){
+        this.accountId = accountId;
+
+        return this;
+    }
+
+
     public int getUserId() {
         return userId;
     }
@@ -113,4 +122,5 @@ public class UserInfo {
     public String getResType() {
         return resType;
     }
+
 }
