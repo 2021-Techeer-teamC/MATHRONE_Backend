@@ -1,16 +1,25 @@
 package mathrone.backend.controller;
 
 import javax.servlet.http.HttpServletRequest;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.*;
+import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoAuthResponseDTO;
+import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
+import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenRequestDTO;
+import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.domain.token.RefreshToken;
 import mathrone.backend.service.AuthService;
 import mathrone.backend.service.SnsLoginService;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import mathrone.backend.controller.dto.OauthDTO.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 @RestController
@@ -39,6 +48,7 @@ public class UserController {
 
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<TokenDto> login(@RequestBody UserRequestDto userRequestDto) throws Exception{
+
         return ResponseEntity.ok(authService.login(userRequestDto));
     }
 
@@ -61,8 +71,7 @@ public class UserController {
     }
 
     @PostMapping(value = "/reissue")
-    public ResponseEntity<TokenDto> reissue(HttpServletRequest request,
-        @RequestHeader String refreshToken) {
+    public ResponseEntity<TokenDto> reissue(HttpServletRequest request, @RequestHeader String refreshToken) {
         return ResponseEntity.ok(authService.reissue(request, refreshToken));
     }
 
@@ -80,6 +89,7 @@ public class UserController {
         //mathrone signup with google id token
         return ResponseEntity.ok(authService.googleLogin(res2));
     }
+
 
     //구글 로그아웃
 //    @PostMapping(value = "/oauth/google/logout", headers = {"Content-type=application/json"})
@@ -121,6 +131,29 @@ public class UserController {
 //
 //        //mathrone login with google id token
 //        return ResponseEntity.ok(authService.googleLogin(res2));
+
+
+    @PostMapping(value = "/oauth/callback/kakao", headers = {"Content-type=application/json"})
+    public ResponseEntity<TokenDto> moveKakaoInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
+
+        ResponseEntity<KakaoTokenResponseDTO> res = snsLoginService.getKakaoToken(requestCodeDto.getCode());
+        ResponseEntity<KakaoIDToken> idInfo = snsLoginService.decodeIdToken(res.getBody().getId_token());
+
+        return ResponseEntity.ok(authService.kakaoLogin(res,idInfo));
+    }
+
+
+
+
+//    @PostMapping(value = "/oauth/kakao/logout", headers = {"Content-type=application/json"})
+//    public ResponseEntity<Void> kakaoLogout(HttpServletRequest request) {
+//        authService.kakaoLogout(request);
+//        return ResponseEntity.ok().build();
+
 //    }
+
+
+
+
 
 }
