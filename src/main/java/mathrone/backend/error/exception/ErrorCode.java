@@ -23,6 +23,16 @@ public enum ErrorCode {
     //google server error
     GOOGLE_SERVER_ERROR(UNAUTHORIZED, "해당 계정으로 가입이 진행되지 않았습니다. 회원가입을 진행한 후 로그인해주세요."),
 
+    //user login error
+    /*
+    1. 존재하지 않는 계정
+    2. 비밀번호가 일치하지 않는다
+    */
+
+    ACCOUNT_NOT_EXIST(UNAUTHORIZED,"존재하지 않는 계정입니다."),
+    PASSWORD_NOT_CORRECT(UNAUTHORIZED,"비밀번호를 다시 확인해주세요."),
+
+
     // Common
     SERVER_ERROR(INTERNAL_SERVER_ERROR, "예상치 못한 에러가 발생하였습니다.")
 
