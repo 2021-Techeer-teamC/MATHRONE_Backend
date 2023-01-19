@@ -49,7 +49,7 @@ public class SnsLoginService {
     // 객체화 (static)되지 않았기 때문에 객체화 부터 시켜주어야 쓸수 있다.
     private final OAuthLoginUtils oAuthLoginUtils;
     private final KakaoOAuthLoginUtils kakaoOAuthLoginUtils;
-    SnsLoginService(OAuthLoginUtils oAuthLoginUtils) {
+    SnsLoginService(OAuthLoginUtils oAuthLoginUtils, KakaoOAuthLoginUtils kakaoOAuthLoginUtils) {
         this.oAuthLoginUtils = oAuthLoginUtils;
         this.kakaoOAuthLoginUtils = kakaoOAuthLoginUtils;
     }
