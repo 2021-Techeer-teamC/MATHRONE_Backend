@@ -1,21 +1,18 @@
 package mathrone.backend.service;
-import static mathrone.backend.domain.enums.UserResType.GOOGLE;
-import static mathrone.backend.domain.enums.UserResType.MATHRONE;
 import javax.servlet.http.HttpServletRequest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.*;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
-import mathrone.backend.domain.token.LogoutAccessToken;
-import mathrone.backend.domain.token.RefreshToken;
+import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
+import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
+import mathrone.backend.domain.token.*;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.error.exception.UserException;
 import mathrone.backend.repository.UserInfoRepository;
-import mathrone.backend.repository.tokenRepository.LogoutAccessTokenRedisRepository;
+import mathrone.backend.repository.tokenRepository.*;
 import mathrone.backend.util.TokenProviderUtil;
-import mathrone.backend.repository.tokenRepository.RefreshTokenRedisRepository;
-import mathrone.backend.repository.tokenRepository.RefreshTokenRepository;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,9 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.transaction.Transactional;
 import java.util.List;
 
-
-import static mathrone.backend.domain.enums.UserResType.GOOGLE;
-import static mathrone.backend.domain.enums.UserResType.MATHRONE;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -58,7 +52,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 
+import static mathrone.backend.domain.enums.UserResType.*;
 
 
 @Service
@@ -72,8 +68,8 @@ public class AuthService {
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
     private final LogoutAccessTokenRedisRepository logoutAccessTokenRedisRepository;
     private final KakaoRefreshTokenRedisRepository kakaoRefreshTokenRedisRepository;
-    
-    
+
+
     @Transactional
     public UserResponseDto signup(UserSignUpDto userSignUpDto) {
         // user account ID가 존재하는지 검사
@@ -82,7 +78,7 @@ public class AuthService {
             MATHRONE.getTypeName()); //MATHRONE user로 가입시켜주기
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
-    
+
     @Transactional
     public UserResponseDto signupWithGoogle(ResponseEntity<GoogleIDToken> googleIDToken, String accountID) {
         //이미 가입된 구글계정인지 확인
