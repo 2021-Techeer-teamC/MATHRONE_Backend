@@ -13,8 +13,9 @@ import mathrone.backend.domain.UserInfo;
 public class UserResponseDto {
 
     private String accountId;
+    private String userId;
 
     public static UserResponseDto of(UserInfo userInfo) {
-        return new UserResponseDto(userInfo.getAccountId());
+        return new UserResponseDto(userInfo.getAccountId(), Integer.toString(userInfo.getUserId()));
     }
 }
