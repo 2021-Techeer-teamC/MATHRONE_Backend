@@ -42,8 +42,7 @@ public class UserController {
     }
 
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<TokenDto> login(@RequestBody UserRequestDto userRequestDto)
-        throws Exception {
+    public ResponseEntity<TokenDto> login(@RequestBody UserRequestDto userRequestDto) {
         return ResponseEntity.ok(authService.login(userRequestDto));
     }
 
@@ -72,16 +71,54 @@ public class UserController {
     }
 
 
+    //구글 로그인 (회원가입이 되지 않은 경우 회원가입 까지 해주기)
     @PostMapping(value = "/oauth/callback/google", headers = {"Content-type=application/json"})
     public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto)
         throws Exception {
 
+        //get token from code
         ResponseEntity<ResponseTokenDTO> res = snsLoginService.getToken(requestCodeDto.getCode());
 
+        //get id token from accesstoken
         ResponseEntity<GoogleIDToken> res2 = snsLoginService.getGoogleIDToken(res);
 
+        //mathrone signup with google id token
         return ResponseEntity.ok(authService.googleLogin(res2));
     }
+
+    //구글 로그아웃
+//    @PostMapping(value = "/oauth/google/logout", headers = {"Content-type=application/json"})
+//    public ResponseEntity<Void> googleLogout(HttpServletRequest request) throws Exception {
+//
+//        authService.logout(request);
+//        return ResponseEntity.ok().build();
+//    }
+
+    //accoutID update -> "PUT"으로 변경
+    @PutMapping(value = "/accountID", headers = {"Content-type=application/json"})
+    public ResponseEntity<Void> updateAccountId(HttpServletRequest request, String accountID) {
+        //accessToken을 통해 userID알아내기 (primary key)
+        UserInfo user = authService.findUserFromRequest(request);
+
+        //accountID update
+        authService.updateAccountID(accountID, user);
+
+        return ResponseEntity.ok().build();
+
+    }
+
+    //구글 로그인
+//    @PostMapping(value = "/snslogin", headers = {"Content-type=application/json"})
+//    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
+//
+//        //get token from code
+//        ResponseEntity<ResponseTokenDTO> res = snsLoginService.getToken(requestCodeDto.getCode());
+//
+//        //get id token from accesstoken
+//        ResponseEntity<GoogleIDToken> res2 = snsLoginService.getGoogleIDToken(res);
+//
+//        //mathrone login with google id token
+//        return ResponseEntity.ok(authService.googleLogin(res2));
 
 
     @PostMapping(value = "/oauth/callback/kakao", headers = {"Content-type=application/json"})
@@ -101,6 +138,5 @@ public class UserController {
 //        authService.kakaoLogout(request);
 //        return ResponseEntity.ok().build();
 //    }
-
 
 }
