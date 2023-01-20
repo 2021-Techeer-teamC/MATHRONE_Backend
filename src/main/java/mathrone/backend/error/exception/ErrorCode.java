@@ -17,6 +17,8 @@ public enum ErrorCode {
     GOOGLE_ACCOUNT_IS_DUPLICATION(UNAUTHORIZED, "이미 해당 구글계정으로 가입이 진행되었습니다."),
     GOOGLE_ACCOUNT_NOT_FOUND(UNAUTHORIZED, "해당 계정으로 가입이 진행되지 않았습니다. 회원가입을 진행한 후 로그인해주세요."),
 
+    KAKAO_ACCOUNT_IS_DUPLICATION(UNAUTHORIZED, "이미 해당 카카오계정으로 가입이 진행되었습니다."),
+    KAKAO_ACCOUNT_NOT_FOUND(UNAUTHORIZED, "해당 계정으로 가입이 진행되지 않았습니다. 회원가입을 진행한 후 로그인해주세요."),
 
     USER_NOT_FOUND(UNAUTHORIZED, "존재하지 않는 유저입니다."),
 
