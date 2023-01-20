@@ -87,7 +87,7 @@ public class UserController {
         ResponseEntity<GoogleIDToken> res2 = snsLoginService.getGoogleIDToken(res);
 
         //mathrone signup with google id token
-        return ResponseEntity.ok(authService.googleLogin(res2));
+        return ResponseEntity.ok(authService.googleLogin(res2,res));
     }
 
 
@@ -119,20 +119,8 @@ public class UserController {
     }
 
 
-    //구글 로그인
-//    @PostMapping(value = "/snslogin", headers = {"Content-type=application/json"})
-//    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
-//
-//        //get token from code
-//        ResponseEntity<ResponseTokenDTO> res = snsLoginService.getToken(requestCodeDto.getCode());
-//
-//        //get id token from accesstoken
-//        ResponseEntity<GoogleIDToken> res2 = snsLoginService.getGoogleIDToken(res);
-//
-//        //mathrone login with google id token
-//        return ResponseEntity.ok(authService.googleLogin(res2));
 
-
+    //카카오 로그인 (회원가입 안되어 있는 경우 회원가입도)
     @PostMapping(value = "/oauth/callback/kakao", headers = {"Content-type=application/json"})
     public ResponseEntity<TokenDto> moveKakaoInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
 
