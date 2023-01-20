@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
+import mathrone.backend.controller.dto.OauthDTO.ResponseTokenDTO;
+import mathrone.backend.controller.dto.OauthDTO.SnsInfo;
 import mathrone.backend.controller.dto.TokenDto;
 import mathrone.backend.controller.dto.UserResponseDto;
 import org.springframework.beans.factory.annotation.Value;
@@ -90,7 +92,7 @@ public class TokenProviderUtil {
     }
 
 
-    public TokenDto generateTokenWithSns(Authentication authentication, ResponseEntity<KakaoTokenResponseDTO> kakaoTokenResponseDTO) {
+    public TokenDto generateTokenWithSns(Authentication authentication, String accountId,String snsAccessToken) {
         // 권한 가져오기
         String auth = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -118,10 +120,20 @@ public class TokenProviderUtil {
                 .accessToken(accessToken)
                 .accessTokenExpiresIn(accessTokenExpires.getTime())
                 .refreshToken(refreshToken)
-                .userInfo(UserResponseDto.builder().accountId(authentication.getName()).build())
-                .snsInfo(kakaoTokenResponseDTO.getBody())
+                .userInfo(
+                        UserResponseDto.builder()
+                                .userId(authentication.getName())
+                                .accountId(accountId)
+                                .build()
+                )
+                .snsInfo(
+                        SnsInfo.builder()
+                                .snsAccessToken(snsAccessToken)
+                                .build()
+                )
                 .build();
     }
+
 
 
     public Authentication getAuthentication(String accessToken) {
