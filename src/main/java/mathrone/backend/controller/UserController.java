@@ -59,6 +59,24 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping(value = "/kakao/logout", headers = {"Content-type=application/json"})
+    public ResponseEntity<Void> logoutWithKakao(HttpServletRequest request
+    ) {
+        authService.logoutWithKakao(request);
+        return ResponseEntity.ok().build();
+    }
+
+
+    @PostMapping(value = "/google/logout", headers = {"Content-type=application/json"})
+    public ResponseEntity<Void> logoutWithGoogle(HttpServletRequest request
+    ) {
+        authService.logoutWithGoogle(request);
+        return ResponseEntity.ok().build();
+    }
+
+
+
+
     @GetMapping(value = "/check/accountId", headers = {"Content-type=application/json"})
     public ResponseEntity<Void> validateUserAccountId(@RequestParam String userAccountId) {
         authService.validateUserAccountId(userAccountId);
