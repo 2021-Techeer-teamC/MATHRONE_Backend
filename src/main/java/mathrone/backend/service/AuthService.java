@@ -292,24 +292,98 @@ public class AuthService {
     }
     @Transactional
     public void logout(HttpServletRequest request) {
+
         // 1. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
+
         // 2. access token 유효성 검사
         if (!tokenProviderUtil.validateToken(accessToken)) {
             throw new RuntimeException("Access Token 이 유효하지 않습니다.");
         }
+
         // 3. access token으로부터 user id 가져오기 (email x)
         String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
+
         // 4. logout token의 유효기간은 access token의 남은 기간동안 유지되어야 함
         long remainAccessTokenExpiration = tokenProviderUtil.getRemainExpiration(accessToken);
+
         // 5. refreshToken table에 존재하는 해당 유저의 refreshToken 정보 삭제
         refreshTokenRepository.deleteByUserId(userId);
+
         // 6. redis에 존재하는 refreshToken 삭제
         refreshTokenRedisRepository.deleteById(userId);
+
         // 7. logout token를 redis에 저장 (이후 로그아웃된 유저의 AccessToken으로 접근 방지를 위함)
         logoutAccessTokenRedisRepository.save(
             LogoutAccessToken.of(accessToken, userId, remainAccessTokenExpiration));
     }
+
+
+
+    @Transactional
+    public void logoutWithKakao(HttpServletRequest request) {
+
+        // 1. Request Header 에서 access token 빼기
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        // 2. access token 유효성 검사
+        if (!tokenProviderUtil.validateToken(accessToken)) {
+            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
+        }
+
+        // 3. access token으로부터 user id 가져오기 (email x)
+        String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
+
+        // 4. logout token의 유효기간은 access token의 남은 기간동안 유지되어야 함
+        long remainAccessTokenExpiration = tokenProviderUtil.getRemainExpiration(accessToken);
+
+        // 5. refreshToken table에 존재하는 해당 유저의 refreshToken 정보 삭제
+        refreshTokenRepository.deleteByUserId(userId);
+
+        // 6. redis에 존재하는 refreshToken 삭제
+        refreshTokenRedisRepository.deleteById(userId);
+
+        // 7. logout token를 redis에 저장 (이후 로그아웃된 유저의 AccessToken으로 접근 방지를 위함)
+        logoutAccessTokenRedisRepository.save(
+                LogoutAccessToken.of(accessToken, userId, remainAccessTokenExpiration));
+
+        // 8. kakaoRedisToken삭제
+        kakaoRefreshTokenRedisRepository.deleteById(userId);
+    }
+
+
+    @Transactional
+    public void logoutWithGoogle(HttpServletRequest request) {
+        // 1. Request Header 에서 access token 빼기
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        // 2. access token 유효성 검사
+        if (!tokenProviderUtil.validateToken(accessToken)) {
+            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
+        }
+
+        // 3. access token으로부터 user id 가져오기 (email x)
+        String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
+
+        // 4. logout token의 유효기간은 access token의 남은 기간동안 유지되어야 함
+        long remainAccessTokenExpiration = tokenProviderUtil.getRemainExpiration(accessToken);
+
+        // 5. refreshToken table에 존재하는 해당 유저의 refreshToken 정보 삭제
+        refreshTokenRepository.deleteByUserId(userId);
+
+        // 6. redis에 존재하는 refreshToken 삭제
+        refreshTokenRedisRepository.deleteById(userId);
+
+        // 7. logout token를 redis에 저장 (이후 로그아웃된 유저의 AccessToken으로 접근 방지를 위함)
+        logoutAccessTokenRedisRepository.save(
+                LogoutAccessToken.of(accessToken, userId, remainAccessTokenExpiration));
+
+
+        // 8. googleRedisToken삭제
+        googleRefreshTokenRedisRepository.deleteById(userId);
+    }
+
+
     @Transactional
     public TokenDto reissue(HttpServletRequest request, String refreshToken) {
         // 1. Refresh token 검증
