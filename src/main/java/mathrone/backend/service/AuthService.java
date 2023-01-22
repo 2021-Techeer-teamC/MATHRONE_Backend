@@ -1,6 +1,6 @@
 package mathrone.backend.service;
 import javax.servlet.http.HttpServletRequest;
-import com.fasterxml.jackson.core.type.TypeReference;
+
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.*;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
@@ -15,48 +15,24 @@ import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.tokenRepository.*;
 import mathrone.backend.util.TokenProviderUtil;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RestController;
+
 import javax.transaction.Transactional;
 import java.util.List;
 
 
-import javax.servlet.http.HttpServletRequest;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import lombok.RequiredArgsConstructor;
-import mathrone.backend.controller.dto.*;
-import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.domain.token.LogoutAccessToken;
 import mathrone.backend.domain.token.RefreshToken;
-import mathrone.backend.domain.UserInfo;
-import mathrone.backend.error.exception.ErrorCode;
-import mathrone.backend.error.exception.UserException;
-import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.tokenRepository.LogoutAccessTokenRedisRepository;
-import mathrone.backend.util.TokenProviderUtil;
 import mathrone.backend.repository.tokenRepository.RefreshTokenRedisRepository;
 import mathrone.backend.repository.tokenRepository.RefreshTokenRepository;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RestController;
-
-import javax.transaction.Transactional;
-import java.util.List;
-import java.util.Optional;
 
 import static mathrone.backend.domain.enums.UserResType.*;
-
 
 @Service
 @RequiredArgsConstructor
@@ -414,6 +390,40 @@ public class AuthService {
         refreshTokenRedisRepository.save(newRefreshToken.transferRedisToken());
         return tokenDto;
     }
+
+
+
+    @Transactional
+    public TokenDto kakaoReissue(HttpServletRequest request, ResponseEntity<KakaoTokenResponseDTO> reissue,ResponseEntity<KakaoIDToken> kakaoIdToken) {
+
+        // 2. Request Header 에서 access token 빼기
+        String accessToken = tokenProviderUtil.resolveToken(request);
+        // 3. Access Token 에서 Member ID 가져오기
+        Authentication authentication = tokenProviderUtil.getAuthentication(
+                accessToken);
+        // 4. 저장소에서 Member ID 를 기반으로 Refresh Token 값 가져오기
+        RefreshToken storedRefreshToken = refreshTokenRepository.findByUserId(
+                        authentication.getName())
+                .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
+
+        UserInfo user = findUserFromRequest(request);
+        // 5. 새로운 토큰 생성
+        TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication, user.getAccountId(), reissue.getBody().getAccess_token());
+        // 6. 저장소 정보 업데이트
+        RefreshToken newRefreshToken = storedRefreshToken.updateValue(tokenDto.getRefreshToken(),
+                tokenProviderUtil.getRefreshTokenExpireTime());
+        // redis와 gcp에 모두 refresh token을 저장.
+        refreshTokenRepository.save(newRefreshToken);
+        refreshTokenRedisRepository.save(newRefreshToken.transferRedisToken());
+
+        // 7. kakao에서 발급한 refreshToken 저장
+        saveKakaoRefreshToken(reissue, kakaoIdToken);
+
+        return tokenDto;
+    }
+
+
+
     // refresh Token table에 존재하는 refreshToken 전체 리스트 가져오기
     public List<RefreshToken> getRefreshList() {
         List<RefreshToken> list = refreshTokenRepository.findAll();
