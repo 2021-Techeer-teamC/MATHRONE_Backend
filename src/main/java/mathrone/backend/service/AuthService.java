@@ -424,6 +424,41 @@ public class AuthService {
 
 
 
+    @Transactional
+    public TokenDto googleReissue(HttpServletRequest request, ResponseEntity<ResponseTokenDTO> reissue, ResponseEntity<GoogleIDToken> googleIdToken) {
+
+        // 2. Request Header 에서 access token 빼기
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        // 3. Access Token 에서 Member ID 가져오기
+        Authentication authentication = tokenProviderUtil.getAuthentication(
+                accessToken);
+
+        // 4. 저장소에서 Member ID 를 기반으로 Refresh Token 값 가져오기
+        RefreshToken storedRefreshToken = refreshTokenRepository.findByUserId(
+                        authentication.getName())
+                .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
+
+        UserInfo user = findUserFromRequest(request);
+
+        // 5. 새로운 토큰 생성
+        TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication, user.getAccountId(), reissue.getBody().getAccessToken());
+
+        // 6. 저장소 정보 업데이트
+        RefreshToken newRefreshToken = storedRefreshToken.updateValue(tokenDto.getRefreshToken(),
+                tokenProviderUtil.getRefreshTokenExpireTime());
+
+        // redis와 gcp에 모두 refresh token을 저장.
+        refreshTokenRepository.save(newRefreshToken);
+
+        refreshTokenRedisRepository.save(newRefreshToken.transferRedisToken());
+
+        // 7. google 에서 발급한 refreshToken 저장
+        saveGoogleRefreshToken(googleIdToken,reissue);
+        return tokenDto;
+    }
+
+
     // refresh Token table에 존재하는 refreshToken 전체 리스트 가져오기
     public List<RefreshToken> getRefreshList() {
         List<RefreshToken> list = refreshTokenRepository.findAll();
