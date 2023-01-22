@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 
 @Component
+@Getter
 public class OAuthLoginUtils {
 
     @Value("${google.auth.url}")
