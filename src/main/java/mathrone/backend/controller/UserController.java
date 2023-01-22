@@ -103,6 +103,16 @@ public class UserController {
     }
 
 
+    @PostMapping(value = "/google/reissue")
+    public ResponseEntity<TokenDto> googleReissue(HttpServletRequest request, String userId) throws Exception {
+
+        ResponseEntity<ResponseTokenDTO> reissue = snsLoginService.googleReissue(userId);
+        ResponseEntity<GoogleIDToken> idInfo = snsLoginService.getGoogleIDToken(reissue);
+
+        return ResponseEntity.ok(authService.googleReissue(request,reissue, idInfo));
+    }
+
+
     //구글 로그인 (회원가입이 되지 않은 경우 회원가입 까지 해주기)
     @PostMapping(value = "/oauth/callback/google", headers = {"Content-type=application/json"})
     public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
