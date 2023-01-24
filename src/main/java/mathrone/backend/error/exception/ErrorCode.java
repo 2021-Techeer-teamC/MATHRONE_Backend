@@ -48,7 +48,10 @@ public enum ErrorCode {
     EMAIL_NOT_EXIST(UNAUTHORIZED, "존재하지 않는 아매알입니다."),
 
     // Common
-    SERVER_ERROR(INTERNAL_SERVER_ERROR, "예상치 못한 에러가 발생하였습니다.");
+    SERVER_ERROR(INTERNAL_SERVER_ERROR, "예상치 못한 에러가 발생하였습니다."),
+    AUTHENTICATION_ERROR(UNAUTHORIZED, "인증 정보가 유효하지 않습니다."),
+    ACCESS_DENIED_ERROR(FORBIDDEN, "해당 요청에 대한 접근 권한이 존재하지 않습니다.");
+
 
     private final HttpStatus httpStatus;
 
