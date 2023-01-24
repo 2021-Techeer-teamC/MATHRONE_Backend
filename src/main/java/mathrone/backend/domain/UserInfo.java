@@ -70,47 +70,12 @@ public class UserInfo {
         return this;
     }
 
-    public int getUserId() {
-        return userId;
+
+    //accountID변경
+    public UserInfo updateAccountId(String accountId){
+        this.accountId = accountId;
+
+        return this;
     }
 
-    public String getAccountId() {
-        return accountId;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getProfileImg() {
-        return profileImg;
-    }
-
-    public int getExp() {
-        return exp;
-    }
-
-    public boolean isPremium() {
-        return premium;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPhoneNum() {
-        return phoneNum;
-    }
-
-    public String getUserImg() {
-        return userImg;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public String getResType() {
-        return resType;
-    }
 }
