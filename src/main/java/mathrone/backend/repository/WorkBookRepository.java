@@ -2,22 +2,16 @@ package mathrone.backend.repository;
 
 import mathrone.backend.domain.PubCatPair;
 import mathrone.backend.domain.WorkBookInfo;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.Temporal;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.TemporalType;
 import java.util.List;
-import java.util.Map;
 
 @Repository
-public interface WorkBookRepository extends JpaRepository<WorkBookInfo, Long> {
+public interface WorkBookRepository extends JpaRepository<WorkBookInfo, String> {
 
     // 전체 문제집
     Page<WorkBookInfo> findAll(Pageable pageable);
