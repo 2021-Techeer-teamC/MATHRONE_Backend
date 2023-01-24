@@ -1,8 +1,6 @@
 package mathrone.backend.repository;
 
 import java.util.Optional;
-
-import jnr.ffi.annotations.In;
 import mathrone.backend.domain.UserInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -30,7 +28,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
 
     boolean existsByAccountId(String accountId);
 
-    Optional<Void> deleteByAccountIdAndResType(String accountId, String resType);
+    Void deleteByAccountIdAndResType(String accountId, String resType);
 
 
 }
