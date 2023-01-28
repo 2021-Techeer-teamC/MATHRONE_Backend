@@ -57,15 +57,15 @@ public class AuthService {
 
     @Transactional
     public UserResponseDto signupWithGoogle(ResponseEntity<GoogleIDToken> googleIDToken,
-        String accountID) {
+        String accountId) {
         //이미 가입된 구글계정인지 확인
         validateGoogleAccount(googleIDToken);//이미 가입기록이 있으면 여기서 에러
         //유효한 accountID인지 확인(이미 존재하는 아이디인지)
-        validateUserAccountId(accountID); //이미 존재하는 아이디면 여기서 에러
+        validateUserAccountId(accountId); //이미 존재하는 아이디면 여기서 에러
         //아니면 회원가입 진행
         //입력받아온 accountID를 이용하여 회원가입
         UserSignUpDto userSignUpDto = new UserSignUpDto(googleIDToken.getBody().getEmail(),
-            "googleLogin", accountID); //id와 email을 email로 채워서 만들기
+            "googleLogin", accountId); //id와 email을 email로 채워서 만들기
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder, GOOGLE.getTypeName());
 
         return UserResponseDto.of(userinfoRepository.save(newUser));
@@ -359,13 +359,13 @@ public class AuthService {
         throw new CustomException(ErrorCode.PASSWORD_NOT_CORRECT);
     }
 
-    public void updateAccountID(String accountID, UserInfo user) {
+    public void updateAccountId(String accountId, UserInfo user) {
         //정확하게 존재하는 유저가 아니라면 오류
         validateUser(user);
         //존재하는 accountID인 경우 오류
-        validateUserAccountId(accountID);
+        validateUserAccountId(accountId);
         //어카운트 아이디 업데이트 진행
-        UserInfo newUser = user.updateAccountId(accountID);
+        UserInfo newUser = user.updateAccountId(accountId);
         userinfoRepository.save(newUser); //p key가 같은 것이 save되면 자동으로 update의 기능이 수행됨
         // return을 void로 했는데 204 + empty() 를 보내도 괜찮다는
         // 204 : No Content 클라이언트의 요청은 정상적이다. 하지만 컨텐츠를 제공하지 않습니다
