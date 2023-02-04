@@ -95,13 +95,14 @@ public class UserController {
 //    }
 
     //accoutID update -> "PUT"으로 변경
-    @PutMapping(value = "/accountID", headers = {"Content-type=application/json"})
-    public ResponseEntity<Void> updateAccountId(HttpServletRequest request, String accountID) {
+    @PutMapping(value = "/accountId", headers = {"Content-type=application/json"})
+    public ResponseEntity<Void> updateAccountId(@RequestBody ChangeAccountIdDto accountId, HttpServletRequest request) {
+
         //accessToken을 통해 userID알아내기 (primary key)
         UserInfo user = authService.findUserFromRequest(request);
 
         //accountID update
-        authService.updateAccountID(accountID, user);
+        authService.updateAccountId(accountId.getAccountId(), user);
 
         return ResponseEntity.ok().build();
 
