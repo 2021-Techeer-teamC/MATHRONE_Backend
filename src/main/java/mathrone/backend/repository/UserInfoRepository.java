@@ -13,15 +13,22 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
 
     Optional<UserInfo> findByAccountId(String accountId);
 
+    UserInfo findByEmailAndResType(String email, String resType);
+
     // user_id를 통해서 user_nickname 조회
     @Query(value = "SELECT COUNT(*) FROM problem_try WHERE user_id=:userId GROUP BY user_id", nativeQuery = true)
     Long getTryByUserID(int userId);
+
 
     boolean existsUserInfoByAccountId(String accountId);
 
     boolean existsByEmailAndResType(String email, String resType);
 
-    Optional<Void> deleteByAccountIdAndResType(String accountId, String resType);
+    boolean existsByUserId(Integer userId);
+
+    boolean existsByAccountId(String accountId);
+
+    Void deleteByAccountIdAndResType(String accountId, String resType);
 
 
 }
