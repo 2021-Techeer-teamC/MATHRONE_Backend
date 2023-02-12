@@ -1,4 +1,4 @@
-package mathrone.backend.repository.tokenRepository;
+package mathrone.backend.repository.redisRepository;
 
 import mathrone.backend.domain.token.RefreshTokenRedis;
 import org.springframework.data.repository.CrudRepository;

@@ -1,7 +1,7 @@
 package mathrone.backend.config.jwt;
 
 import lombok.RequiredArgsConstructor;
-import mathrone.backend.repository.tokenRepository.LogoutAccessTokenRedisRepository;
+import mathrone.backend.repository.redisRepository.LogoutAccessTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
