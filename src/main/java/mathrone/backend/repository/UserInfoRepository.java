@@ -28,7 +28,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
 
     boolean existsByAccountId(String accountId);
 
-    Void deleteByAccountIdAndResType(String accountId, String resType);
+    void deleteByAccountIdAndResType(String accountId, String resType);
 
 
 }

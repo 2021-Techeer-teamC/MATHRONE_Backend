@@ -318,12 +318,6 @@ public class AuthService {
         }
     }
 
-    public void invalidateUserAccountId(String userAccountId) {
-        if (!userinfoRepository.existsUserInfoByAccountId(userAccountId)) {
-            throw new CustomException(ErrorCode.ACCOUNT_NOT_EXIST);
-        }
-    }
-
     //가입이 진행된 구글 계정인지 확인 -> 가입이 된적 없으면 에러 (로그인 시도시)
     // 로그인 시 가입된 적 없으면 자동 가입이 진행되므로 필요 없어짐
 //    public void existGoogleAccount(ResponseEntity<GoogleIDToken> googleIDToken) {
@@ -353,10 +347,6 @@ public class AuthService {
         // 3. userId를 이용해 user가져오기
         UserInfo user = userinfoRepository.findByUserId(userId);
         return user;
-    }
-
-    public void incorrectPassword() {
-        throw new CustomException(ErrorCode.PASSWORD_NOT_CORRECT);
     }
 
     public void updateAccountId(String accountId, UserInfo user) {

@@ -21,11 +21,15 @@ ext {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.projectlombok:lombok:1.18.20'
+    implementation 'org.projectlombok:lombok'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation group: 'org.springframework.cloud', name: 'spring-cloud-gcp-starter-sql-postgresql', version: '1.2.8.RELEASE'
     implementation group: 'com.vladmihalcea', name: 'hibernate-types-52', version: '2.10.4'
-    implementation 'com.google.cloud:spring-cloud-gcp-starter'
+
+    // lombok annotation 인식 에러 해결
+    annotationProcessor('org.projectlombok:lombok')
+
+    // postgresql
+    runtimeOnly 'org.postgresql:postgresql'
 
     // security dependency
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -35,9 +39,6 @@ dependencies {
     implementation group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.11.2'
     implementation group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.11.2'
 
-    // lombok annotation 인식 에러 해결
-    annotationProcessor('org.projectlombok:lombok')
-
     // swagger dependency
     implementation 'io.springfox:springfox-boot-starter:3.0.0'
     implementation 'io.springfox:springfox-swagger-ui:3.0.0'
@@ -45,16 +46,17 @@ dependencies {
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
-    implementation 'org.junit.jupiter:junit-jupiter:5.4.2'
-
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.apache.httpcomponents:httpclient'
-
     //google login
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
     // DataTime formatter
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.11.4'
+
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+
+    implementation 'org.junit.jupiter:junit-jupiter:5.4.2'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.apache.httpcomponents:httpclient'
 
 }
 
