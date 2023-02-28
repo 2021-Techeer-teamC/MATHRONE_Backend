@@ -28,8 +28,17 @@ public class AnswerServiceImpl implements AnswerService {
     private final ProblemTryRepository problemTryRepository;
     private final TokenProviderUtil tokenProviderUtil;
 
-    @Transactional
     public List<ProblemGradeResponseDto> gradeProblem(
+        ProblemGradeRequestDto problemGradeRequestDtoList, String accessToken){
+            if(problemGradeRequestDtoList.getIsAll())
+                return gradeProblemAll(problemGradeRequestDtoList, accessToken);
+            else
+                return gradeSolvedProblem(problemGradeRequestDtoList, accessToken);
+        }
+
+
+    @Transactional
+    public List<ProblemGradeResponseDto> gradeProblemAll(
         ProblemGradeRequestDto problemGradeRequestDtoList, String accessToken) {
 
         // token 검증
@@ -51,11 +60,9 @@ public class AnswerServiceImpl implements AnswerService {
                 problem.getProblemId());
             Problem registedProblem = problemRepository.findByProblemId(problem.getProblemId());
             boolean isCorrect = false;
+
             if (solutionProblem.getAnswer() == Integer.parseInt(problem.getSolution())) {
                 isCorrect = true;
-            }
-            if (problem.getSolution().equals("00")){
-                continue;
             }
 
             Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
@@ -82,6 +89,64 @@ public class AnswerServiceImpl implements AnswerService {
                 .problemId(problem.getProblemId())
                 .solution(Integer.parseInt(problem.getSolution()))
                 .answer(solutionProblem.getAnswer()).build());
+        }
+        return problemGradeResponseDtoList;
+    }
+
+    @Transactional
+    public List<ProblemGradeResponseDto> gradeSolvedProblem(
+            ProblemGradeRequestDto problemGradeRequestDtoList, String accessToken) {
+
+        // token 검증
+        if (!tokenProviderUtil.validateToken(accessToken)) {
+            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
+        }
+
+        // access token에서 userId 가져오기
+        Integer userId = Integer.parseInt(
+                tokenProviderUtil.getAuthentication(accessToken).getName());
+
+
+        List<ProblemGradeResponseDto> problemGradeResponseDtoList = new ArrayList<>();
+        List<ProblemGradeRequestDto.problemSolve> list = problemGradeRequestDtoList.getAnswerSubmitList();
+        UserInfo user = userInfoRepository.findByUserId(userId);
+
+        for (ProblemGradeRequestDto.problemSolve problem : list) {
+            Solution solutionProblem = solutionRepository.findSolutionByProblemId(
+                    problem.getProblemId());
+            Problem registedProblem = problemRepository.findByProblemId(problem.getProblemId());
+            boolean isCorrect = false;
+            if (problem.getSolution().equals("a")){
+                continue;
+            }
+            if (solutionProblem.getAnswer() == Integer.parseInt(problem.getSolution())) {
+                isCorrect = true;
+            }
+
+            Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
+                    registedProblem,
+                    user);
+            if (registedProblemTry.isPresent()) {
+                ProblemTry problemTry = registedProblemTry.get();
+                problemTry.setIscorrect(isCorrect);
+                problemTry.setAnswerSubmitted(Integer.parseInt(problem.getSolution()));
+            } else {
+                ProblemTry problemTry = ProblemTry.builder()
+                        .answerSubmitted(Integer.parseInt(problem.getSolution()))
+                        .iscorrect(isCorrect)
+                        .user(user)
+                        .problem(registedProblem)
+                        .build();
+
+                // user.getProblemTryList().add(problemTry);
+                // registedProblem.getProblemTryList().add(problemTry);
+                problemTryRepository.save(problemTry);
+            }
+
+            problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
+                    .problemId(problem.getProblemId())
+                    .solution(Integer.parseInt(problem.getSolution()))
+                    .answer(solutionProblem.getAnswer()).build());
         }
         return problemGradeResponseDtoList;
     }
