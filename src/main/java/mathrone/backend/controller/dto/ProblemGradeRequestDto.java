@@ -12,6 +12,7 @@ import lombok.Setter;
 @Setter
 public class ProblemGradeRequestDto {
     private List<problemSolve> answerSubmitList;
+    private Boolean isAll;
 
     @Getter
     public static class problemSolve{
