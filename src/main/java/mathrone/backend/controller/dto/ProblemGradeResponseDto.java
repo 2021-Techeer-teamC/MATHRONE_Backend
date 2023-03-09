@@ -14,6 +14,6 @@ import lombok.Setter;
 @Setter
 public class ProblemGradeResponseDto {
     private String problemId;
-    private int solution;
-    private int answer;
+    private Integer solution;
+    private Integer answer;
 }
