@@ -27,6 +27,7 @@ public class AnswerServiceImpl implements AnswerService {
     private final UserInfoRepository userInfoRepository;
     private final ProblemTryRepository problemTryRepository;
     private final TokenProviderUtil tokenProviderUtil;
+    private final RankService rankService;
 
     public List<ProblemGradeResponseDto> gradeProblem(
         ProblemGradeRequestDto problemGradeRequestDtoList, String accessToken){
@@ -41,6 +42,7 @@ public class AnswerServiceImpl implements AnswerService {
     public List<ProblemGradeResponseDto> gradeProblemAll(
         ProblemGradeRequestDto problemGradeRequestDtoList, String accessToken) {
 
+        Integer upScore=0;
         // token 검증
         if (!tokenProviderUtil.validateToken(accessToken)) {
             throw new RuntimeException("Access Token 이 유효하지 않습니다.");
@@ -60,36 +62,40 @@ public class AnswerServiceImpl implements AnswerService {
                 problem.getProblemId());
             Problem registedProblem = problemRepository.findByProblemId(problem.getProblemId());
             boolean isCorrect = false;
-
-            if (solutionProblem.getAnswer() == Integer.parseInt(problem.getSolution())) {
-                isCorrect = true;
-            }
+            ProblemTry problemTry;
 
             Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
-                registedProblem,
-                user);
+                    registedProblem,
+                    user);
             if (registedProblemTry.isPresent()) {
-                ProblemTry problemTry = registedProblemTry.get();
+                problemTry = registedProblemTry.get();
                 problemTry.setIscorrect(isCorrect);
-                problemTry.setAnswerSubmitted(Integer.parseInt(problem.getSolution()));
-            } else {
-                ProblemTry problemTry = ProblemTry.builder()
-                    .answerSubmitted(Integer.parseInt(problem.getSolution()))
-                    .iscorrect(isCorrect)
-                    .user(user)
-                    .problem(registedProblem)
-                    .build();
 
-                // user.getProblemTryList().add(problemTry);
-                // registedProblem.getProblemTryList().add(problemTry);
-                problemTryRepository.save(problemTry);
+            } else {
+                problemTry = ProblemTry.builder()
+                        .iscorrect(isCorrect)
+                        .user(user)
+                        .problem(registedProblem)
+                        .build();
             }
+            try {
+                if (solutionProblem.getAnswer() == Integer.parseInt(problem.getSolution())) {
+                    isCorrect = true;
+                    upScore++;
+                    problemTry.setAnswerSubmitted(Integer.parseInt(problem.getSolution()));
+                }
+            }
+            catch(Exception e){
+                problemTry.setAnswerSubmitted(null);
+            }
+            problemTryRepository.save(problemTry);
 
             problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
                 .problemId(problem.getProblemId())
-                .solution(Integer.parseInt(problem.getSolution()))
+                .solution(problemTry.getAnswerSubmitted())
                 .answer(solutionProblem.getAnswer()).build());
         }
+        rankService.setRank(userId, upScore);
         return problemGradeResponseDtoList;
     }
 
@@ -97,6 +103,7 @@ public class AnswerServiceImpl implements AnswerService {
     public List<ProblemGradeResponseDto> gradeSolvedProblem(
             ProblemGradeRequestDto problemGradeRequestDtoList, String accessToken) {
 
+        Integer upScore=0;
         // token 검증
         if (!tokenProviderUtil.validateToken(accessToken)) {
             throw new RuntimeException("Access Token 이 유효하지 않습니다.");
@@ -126,10 +133,14 @@ public class AnswerServiceImpl implements AnswerService {
             Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
                     registedProblem,
                     user);
+
             if (registedProblemTry.isPresent()) {
+                if(!registedProblemTry.get().isIscorrect() && isCorrect)
+                    upScore++;
                 ProblemTry problemTry = registedProblemTry.get();
                 problemTry.setIscorrect(isCorrect);
                 problemTry.setAnswerSubmitted(Integer.parseInt(problem.getSolution()));
+                problemTryRepository.save(problemTry);
             } else {
                 ProblemTry problemTry = ProblemTry.builder()
                         .answerSubmitted(Integer.parseInt(problem.getSolution()))
@@ -144,10 +155,14 @@ public class AnswerServiceImpl implements AnswerService {
             }
 
             problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
-                    .problemId(problem.getProblemId())
+                    .problemId(problem.getProblemId().substring(8))
                     .solution(Integer.parseInt(problem.getSolution()))
                     .answer(solutionProblem.getAnswer()).build());
         }
+        rankService.setRank(userId, upScore);
         return problemGradeResponseDtoList;
     }
 }
+
+
+// 이미 맞은 문제를 다시 한 번 풀 경우,
