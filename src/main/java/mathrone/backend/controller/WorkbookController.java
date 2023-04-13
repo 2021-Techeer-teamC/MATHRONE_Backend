@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/book")
+@RequestMapping("/workbook")
 public class WorkbookController {
 
 
@@ -28,7 +28,7 @@ public class WorkbookController {
 
 
     //workbook API
-    @GetMapping("/workbook") // 모든 워크북 조회(Books page)
+    @GetMapping("") // 모든 워크북 조회(Books page)
     public List<bookItem> bookList(
         @RequestParam(value = "publisher", required = false, defaultValue = "all") String publisher,
         @RequestParam(value = "sortType", required = false, defaultValue = "star") String sortType,
@@ -40,7 +40,7 @@ public class WorkbookController {
     }
 
 
-    @GetMapping("/workbook/info") // 모든 워크북 조회(Books page)
+    @GetMapping("/info") // 모든 워크북 조회(Books page)
     public Long bookCount(
         @RequestParam(value = "publisher", required = false, defaultValue = "all") String publisher,
         @RequestParam(value = "category", required = false, defaultValue = "all") String category) {
@@ -49,7 +49,7 @@ public class WorkbookController {
     }
 
 
-    @GetMapping("workbook/list")
+    @GetMapping("/list")
     public List<bookContent> workbookList() {
         return workBookService.getWorkbookList();
     }
