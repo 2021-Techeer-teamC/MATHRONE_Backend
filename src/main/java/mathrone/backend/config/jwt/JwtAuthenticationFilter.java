@@ -47,9 +47,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // logout인 회원일 경우 해당 회원의 access token으로 접근을 방지하기 위함
     private boolean checkLogout(String accessToken, HttpServletRequest request) {
         // logoutToken은 해당 회원의 access token을 id로 가짐.
-        if (logoutAccessTokenRedisRepository.existsById(accessToken)) {
+        if (!logoutAccessTokenRedisRepository.existsById(accessToken)) {
             return true;
         } else {
+            // 이미 로그아웃한 회원인 경우
             request.setAttribute("Exception", new CustomException(AlREADY_LOGOUT));
             return false;
         }
