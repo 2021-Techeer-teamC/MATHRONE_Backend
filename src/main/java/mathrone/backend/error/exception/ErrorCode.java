@@ -34,11 +34,14 @@ public enum ErrorCode {
     NOT_FOUND_CHAPTER(NOT_FOUND, "workbook에 chapter가 존재하지 않습니다. ", "W002"),
 
     // token
-    INVALID_TOKEN(UNAUTHORIZED, "JWT 토큰이 유효하지 않습니다.", "T001"),
+    INVALID_ACCESS_TOKEN(UNAUTHORIZED, "Access token이 유효하지 않습니다.", "T001"),
     EXPIRED_TOKEN(UNAUTHORIZED, "만료된 JWT 토큰입니다.", "T002"),
     INVALID_SIGNATURE(UNAUTHORIZED, "잘못된 JWT 서명입니다.", "T003"),
     UNSUPPORTED_TOKEN(UNAUTHORIZED, "지원되지 않는 JWT 토큰입니다.", "T004"),
-    AlREADY_LOGOUT(UNAUTHORIZED, "이미 로그아웃한 회원입니다.", "T005"),
+    INVALID_REFRESH_TOKEN(UNAUTHORIZED, "Refresh token이 유효하지 않습니다.", "T005"),
+    NOT_AUTH_INFORMATION(UNAUTHORIZED, "권한 정보가 없는 토큰입니다.", "T006"),
+    AlREADY_LOGOUT(UNAUTHORIZED, "이미 로그아웃한 회원입니다.", "T007"),
+
 
     // google
     GOOGLE_ACCOUNT_IS_DUPLICATION(UNAUTHORIZED, "이미 해당 구글계정으로 가입이 진행되었습니다.", "G001"),

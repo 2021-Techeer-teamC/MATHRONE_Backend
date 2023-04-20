@@ -2,7 +2,8 @@ package mathrone.backend.util;
 
 import static mathrone.backend.error.exception.ErrorCode.EXPIRED_TOKEN;
 import static mathrone.backend.error.exception.ErrorCode.INVALID_SIGNATURE;
-import static mathrone.backend.error.exception.ErrorCode.INVALID_TOKEN;
+import static mathrone.backend.error.exception.ErrorCode.INVALID_ACCESS_TOKEN;
+import static mathrone.backend.error.exception.ErrorCode.NOT_AUTH_INFORMATION;
 import static mathrone.backend.error.exception.ErrorCode.UNSUPPORTED_TOKEN;
 
 import io.jsonwebtoken.Claims;
@@ -43,7 +44,7 @@ import org.springframework.util.StringUtils;
 public class TokenProviderUtil {
 
     private static final String AUTHORITIES_KEY = "auth";
-    private static final String BEARER_TYPE = "Bearer";     // token 인증 타입(jwt 토큰을 의미)
+    private static final String BEARER_TYPE = "Bearer";     // JWT 토큰 인증 타입
     private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24;       // 1일
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24 * 7;  // 7일
     public static final String AUTHORIZATION_HEADER = "Authorization";  // http header 종류
@@ -135,7 +136,7 @@ public class TokenProviderUtil {
         Claims claims = parseClaims(accessToken);
 
         if (claims.get(AUTHORITIES_KEY) == null) {
-            throw new RuntimeException("권한 정보가 없는 토큰입니다.");
+            throw new CustomException(NOT_AUTH_INFORMATION);
         }
 
         // 권한 정보 가져옴
@@ -178,7 +179,7 @@ public class TokenProviderUtil {
             request.setAttribute("Exception",  new CustomException(UNSUPPORTED_TOKEN));
         } catch (IllegalArgumentException e) {
             log.info("JWT 토큰이 잘못되었습니다.");
-            request.setAttribute("Exception",  new CustomException(INVALID_TOKEN));
+            request.setAttribute("Exception",  new CustomException(INVALID_ACCESS_TOKEN));
         }
         return false;
     }

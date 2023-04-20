@@ -30,6 +30,8 @@ import mathrone.backend.domain.token.LogoutAccessToken;
 import mathrone.backend.domain.token.RefreshToken;
 
 import static mathrone.backend.domain.enums.UserResType.*;
+import static mathrone.backend.error.exception.ErrorCode.AlREADY_LOGOUT;
+import static mathrone.backend.error.exception.ErrorCode.INVALID_REFRESH_TOKEN;
 
 @Service
 @RequiredArgsConstructor
@@ -258,11 +260,11 @@ public class AuthService {
         // 저장소에서 Member ID 를 기반으로 Refresh Token 값 가져오기
         RefreshToken storedRefreshToken = refreshTokenRepository.findByUserId(
                 authentication.getName())
-            .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
+            .orElseThrow(() -> new CustomException(AlREADY_LOGOUT));
 
         // Refresh Token 일치 여부 검사
         if (!storedRefreshToken.getRefreshToken().equals(refreshToken)) {
-            throw new RuntimeException("토큰의 유저 정보가 일치하지 않습니다.");
+            throw new CustomException(INVALID_REFRESH_TOKEN);
         }
 
         UserInfo user = findUserFromRequest(request);
@@ -291,10 +293,7 @@ public class AuthService {
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         // 2. access token으로부터 user id 가져오기 (email x)
-        String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
-
-        return userId;
-
+        return tokenProviderUtil.getAuthentication(accessToken).getName();
     }
 
     public void validateUserAccountId(String userAccountId) {
@@ -328,8 +327,7 @@ public class AuthService {
         Integer userId = Integer.parseInt(
             tokenProviderUtil.getAuthentication(accessToken).getName());
         // 3. userId를 이용해 user가져오기
-        UserInfo user = userinfoRepository.findByUserId(userId);
-        return user;
+        return userinfoRepository.findByUserId(userId);
     }
 
     public void updateAccountId(String accountId, UserInfo user) {
