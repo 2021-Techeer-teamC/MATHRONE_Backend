@@ -34,20 +34,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 2. validateToken 으로 토큰 유효성 검사
         if (StringUtils.hasText(accessToken) && tokenProviderUtil.validateToken(accessToken, request)) {
             // 3. Logout한 회원인지 검사
-            checkLogout(accessToken);
-            // 정상 토큰이면 해당 토큰으로 Authentication 을 가져와서 SecurityContext 에 저장
-            Authentication authentication = tokenProviderUtil.getAuthentication(accessToken);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            if (checkLogout(accessToken, request)){
+                // 정상 토큰이면 해당 토큰으로 Authentication 을 가져와서 SecurityContext 에 저장
+                Authentication authentication = tokenProviderUtil.getAuthentication(accessToken);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
 
         filterChain.doFilter(request, response);
     }
 
     // logout인 회원일 경우 해당 회원의 access token으로 접근을 방지하기 위함
-    private void checkLogout(String accessToken) {
+    private boolean checkLogout(String accessToken, HttpServletRequest request) {
         // logoutToken은 해당 회원의 access token을 id로 가짐.
         if (logoutAccessTokenRedisRepository.existsById(accessToken)) {
-            throw new CustomException(AlREADY_LOGOUT);
+            return true;
+        } else {
+            request.setAttribute("Exception", new CustomException(AlREADY_LOGOUT));
+            return false;
         }
     }
 }
