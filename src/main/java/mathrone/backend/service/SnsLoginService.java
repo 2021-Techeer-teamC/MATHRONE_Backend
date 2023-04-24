@@ -59,6 +59,7 @@ public class SnsLoginService {
     }
 
 
+
     public ResponseEntity<ResponseTokenDTO> getToken(String code) {
 
         RestTemplate restTemplate = new RestTemplate();
@@ -130,11 +131,9 @@ public class SnsLoginService {
         return ResponseEntity.ok().body(userInfoDto);
     }
 
-
     public void resultNull(String resultJson) {
         if (resultJson == null) {
             throw new CustomException(ErrorCode.GOOGLE_SERVER_ERROR);
-
         }
 
     }

@@ -11,7 +11,6 @@ import mathrone.backend.controller.dto.OauthDTO.SnsInfo;
 @AllArgsConstructor
 @Builder
 public class TokenDto {
-
     private String grantType;
     private String accessToken;
     private String refreshToken;
