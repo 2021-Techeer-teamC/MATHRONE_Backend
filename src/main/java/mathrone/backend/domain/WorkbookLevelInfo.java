@@ -2,8 +2,9 @@ package mathrone.backend.domain;
 
 
 import com.sun.istack.NotNull;
-import lombok.NoArgsConstructor;
+//import jnr.ffi.annotations.In;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import javax.persistence.*;
 
 @NoArgsConstructor
