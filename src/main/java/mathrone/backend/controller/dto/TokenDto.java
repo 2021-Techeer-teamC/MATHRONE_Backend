@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
+import mathrone.backend.controller.dto.OauthDTO.SnsInfo;
 
 @Getter
 @NoArgsConstructor
@@ -16,5 +17,6 @@ public class TokenDto {
     private String refreshToken;
     private Long accessTokenExpiresIn;
     private UserResponseDto userInfo;
-    private KakaoTokenResponseDTO snsInfo;
+    private SnsInfo snsInfo;
+//    private KakaoTokenResponseDTO snsInfo;
 }

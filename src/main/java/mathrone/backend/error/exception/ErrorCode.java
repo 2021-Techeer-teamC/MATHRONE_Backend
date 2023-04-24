@@ -21,8 +21,13 @@ public enum ErrorCode {
     NONEXISTENT_FAILED_WORKBOOK(NOT_FOUND, "Redis 에 유저가 틀린 문제 중 해당 문제집에 대한 틀린 문제 정보가 존재하지 않습니다"),
     NONEXISTENT_FAILED_CHAPTER(NOT_FOUND, "Redis 에 유저가 틀린 문제 중 해당 챕터에 대한 틀린 문제 정보가 존재하지 않습니다"),
 
+
+    KAKAO_ACCOUNT_IS_DUPLICATION(UNAUTHORIZED, "이미 해당 카카오계정으로 가입이 진행되었습니다."),
+    KAKAO_ACCOUNT_NOT_FOUND(UNAUTHORIZED, "해당 계정으로 가입이 진행되지 않았습니다. 회원가입을 진행한 후 로그인해주세요."),
+
     // workbook
     NOT_FOUND_WORKBOOK(NOT_FOUND, "해당 workbook이 존재하지 않습니다"),
+
 
     // chapter
     NOT_FOUND_CHAPTER(NOT_FOUND, "workbook에 chapter가 존재하지 않습니다. "),
