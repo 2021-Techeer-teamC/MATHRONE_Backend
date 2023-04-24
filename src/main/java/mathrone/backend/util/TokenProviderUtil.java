@@ -21,13 +21,12 @@ import java.util.Date;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
+import mathrone.backend.controller.dto.OauthDTO.SnsInfo;
 import mathrone.backend.controller.dto.TokenDto;
 import mathrone.backend.controller.dto.UserResponseDto;
 import mathrone.backend.error.exception.CustomException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -96,8 +95,9 @@ public class TokenProviderUtil {
     }
 
 
-    public TokenDto generateTokenWithSns(Authentication authentication,
-        ResponseEntity<KakaoTokenResponseDTO> kakaoTokenResponseDTO) {
+    public TokenDto generateTokenWithSns(Authentication authentication, String accountId,
+        String snsAccessToken) {
+
         // 권한 가져오기
         String auth = authentication.getAuthorities().stream()
             .map(GrantedAuthority::getAuthority)
@@ -121,13 +121,24 @@ public class TokenProviderUtil {
             .compact();
 
         return TokenDto.builder()
+
             .grantType(BEARER_TYPE)
             .accessToken(accessToken)
             .accessTokenExpiresIn(accessTokenExpires.getTime())
             .refreshToken(refreshToken)
-            .userInfo(UserResponseDto.builder().accountId(authentication.getName()).build())
-            .snsInfo(kakaoTokenResponseDTO.getBody())
+            .userInfo(
+                UserResponseDto.builder()
+                    .userId(authentication.getName())
+                    .accountId(accountId)
+                    .build()
+            )
+            .snsInfo(
+                SnsInfo.builder()
+                    .snsAccessToken(snsAccessToken)
+                    .build()
+            )
             .build();
+
     }
 
 
@@ -173,13 +184,13 @@ public class TokenProviderUtil {
             request.setAttribute("Exception", new CustomException(INVALID_SIGNATURE));
         } catch (ExpiredJwtException e) {
             log.info("만료된 JWT 토큰입니다.");
-            request.setAttribute("Exception",  new CustomException(EXPIRED_TOKEN));
+            request.setAttribute("Exception", new CustomException(EXPIRED_TOKEN));
         } catch (UnsupportedJwtException e) {
             log.info("지원되지 않는 JWT 토큰입니다.");
-            request.setAttribute("Exception",  new CustomException(UNSUPPORTED_TOKEN));
+            request.setAttribute("Exception", new CustomException(UNSUPPORTED_TOKEN));
         } catch (IllegalArgumentException e) {
             log.info("JWT 토큰이 잘못되었습니다.");
-            request.setAttribute("Exception",  new CustomException(INVALID_ACCESS_TOKEN));
+            request.setAttribute("Exception", new CustomException(INVALID_ACCESS_TOKEN));
         }
         return false;
     }
