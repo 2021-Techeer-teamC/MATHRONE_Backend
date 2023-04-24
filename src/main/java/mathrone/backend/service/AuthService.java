@@ -17,6 +17,7 @@ import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.redisRepository.KakaoRefreshTokenRedisRepository;
 import mathrone.backend.repository.redisRepository.LogoutAccessTokenRedisRepository;
 import mathrone.backend.repository.redisRepository.RefreshTokenRedisRepository;
+import mathrone.backend.repository.tokenRepository.GoogleRefreshTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,9 +33,6 @@ import java.util.List;
 
 import mathrone.backend.domain.token.LogoutAccessToken;
 import mathrone.backend.domain.token.RefreshToken;
-import mathrone.backend.repository.tokenRepository.LogoutAccessTokenRedisRepository;
-import mathrone.backend.repository.tokenRepository.RefreshTokenRedisRepository;
-import mathrone.backend.repository.tokenRepository.RefreshTokenRepository;
 import org.springframework.http.ResponseEntity;
 
 import static mathrone.backend.domain.enums.UserResType.*;
@@ -42,7 +40,6 @@ import static mathrone.backend.domain.enums.UserResType.*;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final UserInfoRepository userinfoRepository;
     private final PasswordEncoder passwordEncoder;
@@ -50,18 +47,13 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
     private final LogoutAccessTokenRedisRepository logoutAccessTokenRedisRepository;
-
-
-    private final GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository;
-
     private final KakaoRefreshTokenRedisRepository kakaoRefreshTokenRedisRepository;
-
+    private final GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository;
 
     @Transactional
     public UserResponseDto signup(UserSignUpDto userSignUpDto) {
         // user account ID가 존재하는지 검사
         validateUserAccountId(userSignUpDto.getAccountId());
-
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder,
             MATHRONE.getTypeName()); //MATHRONE user로 가입시켜주기
         return UserResponseDto.of(userinfoRepository.save(newUser));
@@ -75,17 +67,15 @@ public class AuthService {
         //유효한 accountID인지 확인(이미 존재하는 아이디인지)
         validateUserAccountId(accountId); //이미 존재하는 아이디면 여기서 에러
         //아니면 회원가입 진행
-        //입력받아온 accountID를 이용하여 회원가입
+        //입력받아온 accountID를 이용하여     회원가입
         UserSignUpDto userSignUpDto = new UserSignUpDto(googleIDToken.getBody().getEmail(),
             "googleLogin", accountId); //id와 email을 email로 채워서 만들기
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder, GOOGLE.getTypeName());
-
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
-
     @Transactional
-
-    public UserResponseDto signupWithKakao(ResponseEntity<KakaoIDToken> kakaoIDToken, String accountID) {
+    public UserResponseDto signupWithKakao(ResponseEntity<KakaoIDToken> kakaoIDToken,
+        String accountID) {
 
         //이미 가입된 카카오 계정인지 확인
         validateKakaoAccount(kakaoIDToken);
@@ -95,18 +85,14 @@ public class AuthService {
 
         UserSignUpDto userSignUpDto = new UserSignUpDto(kakaoIDToken.getBody().getEmail(),
                 "kakaoLogin", accountID); //id와 email을 email로 채워서 만들기
-
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder, KAKAO.getTypeName());
-
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
-
     @Transactional
-
     public TokenDto googleLogin(ResponseEntity<GoogleIDToken> googleIDToken, ResponseEntity<ResponseTokenDTO> googleResponseToken){
         //0. 가입이 되어 있는 계정이 아니면 회원가입을 자동으로 시켜주기
         if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
-            GOOGLE.getTypeName())) {
+                GOOGLE.getTypeName())){
             //타입 : 구글 && 이메일이 존재하지 않는 경우
             String tmpId;
             //@로 시작하는 랜덤 아이디를 만들어 제공
@@ -116,16 +102,12 @@ public class AuthService {
             signupWithGoogle(googleIDToken, tmpId);
         }
 
-
-
         UserInfo user = userinfoRepository.findByEmailAndResType(googleIDToken.getBody().getEmail(), GOOGLE.getTypeName());
         UserRequestDto userRequestDto = new UserRequestDto(user.getAccountId(),
                     "googleLogin");
 
-
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
         UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
-
 
         // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
         //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
@@ -162,10 +144,8 @@ public class AuthService {
         UserInfo user = userinfoRepository.findByEmailAndResType(googleIDToken.getBody().getEmail(), GOOGLE.getTypeName());
         int userId = user.getUserId();
 
-
         // google에서 발급한 refresh Token
         String refreshToken = googleResponseToken.getBody().getRefreshToken();
-
 
         //builder로 객체 생성
         GoogleRefreshTokenRedis googleRefreshTokenRedis = GoogleRefreshTokenRedis.builder()
@@ -176,7 +156,6 @@ public class AuthService {
         googleRefreshTokenRedisRepository.save(googleRefreshTokenRedis);
     }
 
-
     @Transactional
     public TokenDto kakaoLogin(ResponseEntity<KakaoTokenResponseDTO> kakaoTokenResponseDto,
         ResponseEntity<KakaoIDToken> kakaoIDToken) {
@@ -184,7 +163,7 @@ public class AuthService {
         //가입이 안되어 있는 경우 -> 자동가입 but accountID가 미설정되었음을 알려야함
         if (!userinfoRepository.existsByEmailAndResType(kakaoIDToken.getBody().getEmail(),
             KAKAO.getTypeName())) {
-            signupWithKakao(kakaoIDToken); //카카오계정 으로 회원가입 진행
+            signupWithKakao(kakaoIDToken, kakaoIDToken.getBody().getEmail()); //카카오계정 으로 회원가입 진행
         }
         UserRequestDto userRequestDto = new UserRequestDto(kakaoIDToken.getBody().getEmail(),
             "kakaoLogin");
@@ -222,7 +201,6 @@ public class AuthService {
 
         return tokenDto;
     }
-
     @Transactional
     public void saveKakaoRefreshToken(ResponseEntity<KakaoTokenResponseDTO> kakaoTokenResponseDto,
         ResponseEntity<KakaoIDToken> kakaoIdToken) {
@@ -512,12 +490,6 @@ public class AuthService {
         }
     }
 
-    public void invalidateUserAccountId(String userAccountId) {
-        if (!userinfoRepository.existsUserInfoByAccountId(userAccountId)) {
-            throw new CustomException(ErrorCode.ACCOUNT_NOT_EXIST);
-        }
-    }
-
     //가입이 진행된 구글 계정인지 확인 -> 가입이 된적 없으면 에러 (로그인 시도시)
     // 로그인 시 가입된 적 없으면 자동 가입이 진행되므로 필요 없어짐
 //    public void existGoogleAccount(ResponseEntity<GoogleIDToken> googleIDToken) {
@@ -538,7 +510,7 @@ public class AuthService {
     public void validateKakaoAccount(ResponseEntity<KakaoIDToken> kakaoIDToken) {
         if(userinfoRepository.existsByEmailAndResType(kakaoIDToken.getBody().getEmail(),
                 KAKAO.getTypeName())){
-            throw new UserException(ErrorCode.KAKAO_ACCOUNT_IS_DUPLICATION);
+            throw new CustomException(ErrorCode.KAKAO_ACCOUNT_IS_DUPLICATION);
         }
     }
 
@@ -557,10 +529,6 @@ public class AuthService {
         // 3. userId를 이용해 user가져오기
         UserInfo user = userinfoRepository.findByUserId(userId);
         return user;
-    }
-
-    public void incorrectPassword() {
-        throw new CustomException(ErrorCode.PASSWORD_NOT_CORRECT);
     }
 
     public void updateAccountId(String accountId, UserInfo user) {

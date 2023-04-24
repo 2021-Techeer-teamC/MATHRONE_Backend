@@ -20,18 +20,17 @@ public interface WorkBookRepository extends JpaRepository<WorkBookInfo, String> 
     Page<WorkBookInfo> findAllByPublisher(String publisher, Pageable pageable);
 
     //publisher와 category를 이용하여 workbook을 찾는 기능 -> Workbook Info 타입의 리스트를 반환
-    Page<WorkBookInfo> findAllByPublisherAndCategory(String publisher, String category, Pageable pageable);
+    Page<WorkBookInfo> findAllByPublisherAndCategory(String publisher, String category,
+        Pageable pageable);
 
     //결과의 수 반환
     Long countByPublisher(String publisher);
+
     Long countByPublisherAndCategory(String publisher, String category);
 
-    @Query( value = "SELECT publisher, category FROM workbook GROUP BY publisher, category", nativeQuery = true)
+    @Query(value = "SELECT publisher, category FROM workbook GROUP BY publisher, category", nativeQuery = true)
     List<PubCatPair> findGroupByPublisherAndCategory();
-    
-    // publisher에 따라 workbook 전부 조회
-    List<WorkBookInfo> findByPublisher(String publisher);
-  
+
     // workbookId로 해당 workbook 조회
     WorkBookInfo findByWorkbookId(String workbookId);
 }

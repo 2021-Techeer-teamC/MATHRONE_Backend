@@ -1,13 +1,6 @@
 package mathrone.backend.service;
 
-import static mathrone.backend.error.exception.ErrorCode.EMPTY_FAILED_PROBLEM;
-import static mathrone.backend.error.exception.ErrorCode.EMPTY_FAILED_PROBLEM_IN_REDIS;
-import static mathrone.backend.error.exception.ErrorCode.INVALID_ACCESS_TOKEN;
-import static mathrone.backend.error.exception.ErrorCode.NONEXISTENT_FAILED_CHAPTER;
-import static mathrone.backend.error.exception.ErrorCode.NONEXISTENT_FAILED_WORKBOOK;
-import static mathrone.backend.error.exception.ErrorCode.NOT_FOUND_CHAPTER;
-import static mathrone.backend.error.exception.ErrorCode.NOT_FOUND_WORKBOOK;
-import static mathrone.backend.error.exception.ErrorCode.NOT_PREMIUM;
+import static mathrone.backend.error.exception.ErrorCode.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;

@@ -7,17 +7,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
-import mathrone.backend.controller.dto.OauthDTO.Kakao.*;
 import mathrone.backend.controller.dto.OauthDTO.OAuthLoginUtils;
 import mathrone.backend.controller.dto.OauthDTO.RequestTokenDTO;
 import mathrone.backend.controller.dto.OauthDTO.ResponseTokenDTO;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
 
-import mathrone.backend.controller.dto.TokenDto;
 import mathrone.backend.domain.token.GoogleRefreshTokenRedis;
 import mathrone.backend.domain.token.KakaoRefreshTokenRedis;
+import mathrone.backend.repository.redisRepository.KakaoRefreshTokenRedisRepository;
 import mathrone.backend.repository.tokenRepository.GoogleRefreshTokenRedisRepository;
-import mathrone.backend.repository.tokenRepository.KakaoRefreshTokenRedisRepository;
 
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoOAuthLoginUtils;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
@@ -36,7 +34,6 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.util.Base64;
 import java.util.HashMap;
@@ -142,7 +139,7 @@ public class SnsLoginService {
 
     public void resultNull(String resultJson){
         if(resultJson==null){
-            throw new UserException(ErrorCode.GOOGLE_SERVER_ERROR);
+            throw new CustomException(ErrorCode.GOOGLE_SERVER_ERROR);
 
         }
 

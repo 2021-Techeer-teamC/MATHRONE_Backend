@@ -2,6 +2,7 @@ package mathrone.backend.controller;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.*;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
