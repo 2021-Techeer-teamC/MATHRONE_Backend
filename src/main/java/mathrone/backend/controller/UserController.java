@@ -70,6 +70,8 @@ public class UserController {
     }
 
 
+
+
     @GetMapping(value = "/check/accountId", headers = {"Content-type=application/json"})
     public ResponseEntity<Void> validateUserAccountId(@RequestParam String userAccountId) {
         authService.validateUserAccountId(userAccountId);
@@ -88,25 +90,22 @@ public class UserController {
     }
 
     @PostMapping(value = "/kakao/reissue")
-    public ResponseEntity<TokenDto> kakaoReissue(HttpServletRequest request, String userId)
-        throws JsonProcessingException {
+    public ResponseEntity<TokenDto> kakaoReissue(HttpServletRequest request, String userId) throws JsonProcessingException {
 
         ResponseEntity<KakaoTokenResponseDTO> reissue = snsLoginService.kakaoReissue(userId);
-        ResponseEntity<KakaoIDToken> idInfo = snsLoginService.decodeIdToken(
-            reissue.getBody().getId_token());
+        ResponseEntity<KakaoIDToken> idInfo = snsLoginService.decodeIdToken(reissue.getBody().getId_token());
 
-        return ResponseEntity.ok(authService.kakaoReissue(request, reissue, idInfo));
+        return ResponseEntity.ok(authService.kakaoReissue(request,reissue, idInfo));
     }
 
 
     @PostMapping(value = "/google/reissue")
-    public ResponseEntity<TokenDto> googleReissue(HttpServletRequest request, String userId)
-        throws Exception {
+    public ResponseEntity<TokenDto> googleReissue(HttpServletRequest request, String userId) throws Exception {
 
         ResponseEntity<ResponseTokenDTO> reissue = snsLoginService.googleReissue(userId);
         ResponseEntity<GoogleIDToken> idInfo = snsLoginService.getGoogleIDToken(reissue);
 
-        return ResponseEntity.ok(authService.googleReissue(request, reissue, idInfo));
+        return ResponseEntity.ok(authService.googleReissue(request,reissue, idInfo));
     }
 
 
@@ -147,6 +146,7 @@ public class UserController {
         return ResponseEntity.ok().build();
 
     }
+
 
 
     //카카오 로그인 (회원가입 안되어 있는 경우 회원가입도)

@@ -1,6 +1,7 @@
 package mathrone.backend.service;
 
 import javax.servlet.http.HttpServletRequest;
+
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.*;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
@@ -53,6 +54,7 @@ public class AuthService {
     public UserResponseDto signup(UserSignUpDto userSignUpDto) {
         // user account ID가 존재하는지 검사
         validateUserAccountId(userSignUpDto.getAccountId());
+
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder,
             MATHRONE.getTypeName()); //MATHRONE user로 가입시켜주기
         return UserResponseDto.of(userinfoRepository.save(newUser));
@@ -85,18 +87,17 @@ public class AuthService {
         validateUserAccountId(accountID);
 
         UserSignUpDto userSignUpDto = new UserSignUpDto(kakaoIDToken.getBody().getEmail(),
-            "kakaoLogin", accountID); //id와 email을 email로 채워서 만들기
+                "kakaoLogin", accountID); //id와 email을 email로 채워서 만들기
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder, KAKAO.getTypeName());
 
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
 
     @Transactional
-    public TokenDto googleLogin(ResponseEntity<GoogleIDToken> googleIDToken,
-        ResponseEntity<ResponseTokenDTO> googleResponseToken) {
+    public TokenDto googleLogin(ResponseEntity<GoogleIDToken> googleIDToken, ResponseEntity<ResponseTokenDTO> googleResponseToken){
         //0. 가입이 되어 있는 계정이 아니면 회원가입을 자동으로 시켜주기
         if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
-            GOOGLE.getTypeName())) {
+                GOOGLE.getTypeName())){
             //타입 : 구글 && 이메일이 존재하지 않는 경우
             String tmpId;
             //@로 시작하는 랜덤 아이디를 만들어 제공
@@ -106,27 +107,28 @@ public class AuthService {
             signupWithGoogle(googleIDToken, tmpId);
         }
 
-        UserInfo user = userinfoRepository.findByEmailAndResType(googleIDToken.getBody().getEmail(),
-            GOOGLE.getTypeName());
+        UserInfo user = userinfoRepository.findByEmailAndResType(googleIDToken.getBody().getEmail(), GOOGLE.getTypeName());
         UserRequestDto userRequestDto = new UserRequestDto(user.getAccountId(),
-            "googleLogin");
+                    "googleLogin");
+
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
         UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
 
         // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
         //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
         Authentication authentication = authenticationManagerBuilder.getObject()
-            .authenticate(authenticationToken);
+                    .authenticate(authenticationToken);
 
         // 3. token 생성
-        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
-            userRequestDto.getAccountId());
+        TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication, userRequestDto.getAccountId(),googleResponseToken.getBody().getAccessToken());
+
+
         // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
         RefreshToken refreshToken = RefreshToken.builder()
-            .userid(authentication.getName())
-            .refreshToken(tokenDto.getRefreshToken())
-            .expiration(tokenProviderUtil.getRefreshTokenExpireTime())
-            .build();
+                    .userid(authentication.getName())
+                    .refreshToken(tokenDto.getRefreshToken())
+                    .expiration(tokenProviderUtil.getRefreshTokenExpireTime())
+                    .build();
 
         // 5. 토큰 저장 테이블 저장
         refreshTokenRepository.save(refreshToken);
@@ -141,12 +143,10 @@ public class AuthService {
     }
 
     @Transactional
-    public void saveGoogleRefreshToken(ResponseEntity<GoogleIDToken> googleIDToken,
-        ResponseEntity<ResponseTokenDTO> googleResponseToken) {
+    public void saveGoogleRefreshToken(ResponseEntity<GoogleIDToken> googleIDToken, ResponseEntity<ResponseTokenDTO> googleResponseToken){
 
         //user id알아내기
-        UserInfo user = userinfoRepository.findByEmailAndResType(googleIDToken.getBody().getEmail(),
-            GOOGLE.getTypeName());
+        UserInfo user = userinfoRepository.findByEmailAndResType(googleIDToken.getBody().getEmail(), GOOGLE.getTypeName());
         int userId = user.getUserId();
 
         // google에서 발급한 refresh Token
@@ -154,9 +154,9 @@ public class AuthService {
 
         //builder로 객체 생성
         GoogleRefreshTokenRedis googleRefreshTokenRedis = GoogleRefreshTokenRedis.builder()
-            .id(Integer.toString(userId))
-            .refreshToken(refreshToken)
-            .build();
+                .id(Integer.toString(userId))
+                .refreshToken(refreshToken)
+                .build();
 
         googleRefreshTokenRedisRepository.save(googleRefreshTokenRedis);
     }
@@ -176,26 +176,32 @@ public class AuthService {
             } while (userinfoRepository.existsByAccountId(tmpId));//존재하지 않는 아이디일 때 까지 반복
             signupWithKakao(kakaoIDToken, tmpId); //카카오계정 으로 회원가입 진행
         }
-        UserInfo user = userinfoRepository.findByEmailAndResType(kakaoIDToken.getBody().getEmail(),
-            KAKAO.getTypeName());
+        UserInfo user = userinfoRepository.findByEmailAndResType(kakaoIDToken.getBody().getEmail(), KAKAO.getTypeName());
         UserRequestDto userRequestDto = new UserRequestDto(user.getAccountId(),
             "kakaoLogin");
+
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
         UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
+
+
         // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
         //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
         Authentication authentication = authenticationManagerBuilder.getObject()
-            .authenticate(authenticationToken);
+                .authenticate(authenticationToken);
+
+
         // 3. token 생성
-        TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication,
-            userRequestDto.getAccountId(), kakaoTokenResponseDto.getBody().getAccess_token());
+        TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication, userRequestDto.getAccountId(), kakaoTokenResponseDto.getBody().getAccess_token());
+
 
         // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
         RefreshToken refreshToken = RefreshToken.builder()
-            .userid(authentication.getName())
-            .refreshToken(tokenDto.getRefreshToken())
-            .expiration(tokenProviderUtil.getRefreshTokenExpireTime())
-            .build();
+                .userid(authentication.getName())
+                .refreshToken(tokenDto.getRefreshToken())
+                .expiration(tokenProviderUtil.getRefreshTokenExpireTime())
+                .build();
+
+
         // 5. 토큰 저장 테이블 저장
         refreshTokenRepository.save(refreshToken);
         // 6. redis 저장
@@ -210,8 +216,7 @@ public class AuthService {
     public void saveKakaoRefreshToken(ResponseEntity<KakaoTokenResponseDTO> kakaoTokenResponseDto,
         ResponseEntity<KakaoIDToken> kakaoIdToken) {
         //user id알아내기
-        UserInfo user = userinfoRepository.findByEmailAndResType(kakaoIdToken.getBody().getEmail(),
-            KAKAO.getTypeName());
+        UserInfo user = userinfoRepository.findByEmailAndResType(kakaoIdToken.getBody().getEmail(), KAKAO.getTypeName());
         int userId = user.getUserId();
 
         // kakao에서 발급한 refresh Token 및 만료시간
@@ -269,24 +274,23 @@ public class AuthService {
 
     @Transactional
     public void logout(HttpServletRequest request) {
-        // Request Header 에서 access token 빼기
 
-        // 1. Request Header 에서 access token 빼기
+        // Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
-        // 3. access token으로부터 user id 가져오기 (email x)
+        // access token으로부터 user id 가져오기 (email x)
         String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
 
-        // 4. logout token의 유효기간은 access token의 남은 기간동안 유지되어야 함
+        // logout token의 유효기간은 access token의 남은 기간동안 유지되어야 함
         long remainAccessTokenExpiration = tokenProviderUtil.getRemainExpiration(accessToken);
 
-        // 5. refreshToken table에 존재하는 해당 유저의 refreshToken 정보 삭제
+        // refreshToken table에 존재하는 해당 유저의 refreshToken 정보 삭제
         refreshTokenRepository.deleteByUserId(userId);
 
-        // 6. redis에 존재하는 refreshToken 삭제
+        // redis에 존재하는 refreshToken 삭제
         refreshTokenRedisRepository.deleteById(userId);
 
-        // 7. logout token를 redis에 저장 (이후 로그아웃된 유저의 AccessToken으로 접근 방지를 위함)
+        // logout token를 redis에 저장 (이후 로그아웃된 유저의 AccessToken으로 접근 방지를 위함)
         logoutAccessTokenRedisRepository.save(
             LogoutAccessToken.of(accessToken, userId, remainAccessTokenExpiration));
     }
@@ -320,7 +324,7 @@ public class AuthService {
 
     @Transactional
     public void logoutWithGoogle(HttpServletRequest request) {
-        // 1. Request Header 에서 access token 빼기
+        // Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         // access token으로부터 user id 가져오기 (email x)
@@ -339,7 +343,8 @@ public class AuthService {
         logoutAccessTokenRedisRepository.save(
             LogoutAccessToken.of(accessToken, userId, remainAccessTokenExpiration));
 
-        // 8. googleRedisToken삭제
+
+        // googleRedisToken삭제
         googleRefreshTokenRedisRepository.deleteById(userId);
     }
 
@@ -378,26 +383,24 @@ public class AuthService {
 
 
     @Transactional
-    public TokenDto kakaoReissue(HttpServletRequest request,
-        ResponseEntity<KakaoTokenResponseDTO> reissue, ResponseEntity<KakaoIDToken> kakaoIdToken) {
+    public TokenDto kakaoReissue(HttpServletRequest request, ResponseEntity<KakaoTokenResponseDTO> reissue,ResponseEntity<KakaoIDToken> kakaoIdToken) {
 
         // 2. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
         // 3. Access Token 에서 Member ID 가져오기
         Authentication authentication = tokenProviderUtil.getAuthentication(
-            accessToken);
+                accessToken);
         // 4. 저장소에서 Member ID 를 기반으로 Refresh Token 값 가져오기
         RefreshToken storedRefreshToken = refreshTokenRepository.findByUserId(
-                authentication.getName())
-            .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
+                        authentication.getName())
+                .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
 
         UserInfo user = findUserFromRequest(request);
         // 5. 새로운 토큰 생성
-        TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication,
-            user.getAccountId(), reissue.getBody().getAccess_token());
+        TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication, user.getAccountId(), reissue.getBody().getAccess_token());
         // 6. 저장소 정보 업데이트
         RefreshToken newRefreshToken = storedRefreshToken.updateValue(tokenDto.getRefreshToken(),
-            tokenProviderUtil.getRefreshTokenExpireTime());
+                tokenProviderUtil.getRefreshTokenExpireTime());
         // redis와 gcp에 모두 refresh token을 저장.
         refreshTokenRepository.save(newRefreshToken);
         refreshTokenRedisRepository.save(newRefreshToken.transferRedisToken());
@@ -409,31 +412,30 @@ public class AuthService {
     }
 
 
+
     @Transactional
-    public TokenDto googleReissue(HttpServletRequest request,
-        ResponseEntity<ResponseTokenDTO> reissue, ResponseEntity<GoogleIDToken> googleIdToken) {
+    public TokenDto googleReissue(HttpServletRequest request, ResponseEntity<ResponseTokenDTO> reissue, ResponseEntity<GoogleIDToken> googleIdToken) {
 
         // 2. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         // 3. Access Token 에서 Member ID 가져오기
         Authentication authentication = tokenProviderUtil.getAuthentication(
-            accessToken);
+                accessToken);
 
         // 4. 저장소에서 Member ID 를 기반으로 Refresh Token 값 가져오기
         RefreshToken storedRefreshToken = refreshTokenRepository.findByUserId(
-                authentication.getName())
-            .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
+                        authentication.getName())
+                .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
 
         UserInfo user = findUserFromRequest(request);
 
         // 5. 새로운 토큰 생성
-        TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication,
-            user.getAccountId(), reissue.getBody().getAccessToken());
+        TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication, user.getAccountId(), reissue.getBody().getAccessToken());
 
         // 6. 저장소 정보 업데이트
         RefreshToken newRefreshToken = storedRefreshToken.updateValue(tokenDto.getRefreshToken(),
-            tokenProviderUtil.getRefreshTokenExpireTime());
+                tokenProviderUtil.getRefreshTokenExpireTime());
 
         // redis와 gcp에 모두 refresh token을 저장.
         refreshTokenRepository.save(newRefreshToken);
@@ -441,9 +443,11 @@ public class AuthService {
         refreshTokenRedisRepository.save(newRefreshToken.transferRedisToken());
 
         // 7. google 에서 발급한 refreshToken 저장
-        saveGoogleRefreshToken(googleIdToken, reissue);
+        saveGoogleRefreshToken(googleIdToken,reissue);
         return tokenDto;
     }
+
+
 
 
     // refresh Token table에 존재하는 refreshToken 전체 리스트 가져오기
@@ -485,11 +489,12 @@ public class AuthService {
 
 
     public void validateKakaoAccount(ResponseEntity<KakaoIDToken> kakaoIDToken) {
-        if (userinfoRepository.existsByEmailAndResType(kakaoIDToken.getBody().getEmail(),
-            KAKAO.getTypeName())) {
+        if(userinfoRepository.existsByEmailAndResType(kakaoIDToken.getBody().getEmail(),
+                KAKAO.getTypeName())){
             throw new CustomException(ErrorCode.KAKAO_ACCOUNT_IS_DUPLICATION);
         }
     }
+
 
 
     //

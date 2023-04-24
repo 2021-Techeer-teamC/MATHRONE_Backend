@@ -36,6 +36,7 @@ public enum ErrorCode {
     // workbook
     NOT_FOUND_WORKBOOK(NOT_FOUND, "해당 workbook이 존재하지 않습니다", "W001"),
 
+
     // chapter
     NOT_FOUND_CHAPTER(NOT_FOUND, "workbook에 chapter가 존재하지 않습니다. ", "W002"),
 

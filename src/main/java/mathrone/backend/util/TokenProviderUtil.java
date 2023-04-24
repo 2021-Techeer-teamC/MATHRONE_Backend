@@ -122,22 +122,22 @@ public class TokenProviderUtil {
 
         return TokenDto.builder()
 
-            .grantType(BEARER_TYPE)
-            .accessToken(accessToken)
-            .accessTokenExpiresIn(accessTokenExpires.getTime())
-            .refreshToken(refreshToken)
-            .userInfo(
-                UserResponseDto.builder()
-                    .userId(authentication.getName())
-                    .accountId(accountId)
-                    .build()
-            )
-            .snsInfo(
-                SnsInfo.builder()
-                    .snsAccessToken(snsAccessToken)
-                    .build()
-            )
-            .build();
+                .grantType(BEARER_TYPE)
+                .accessToken(accessToken)
+                .accessTokenExpiresIn(accessTokenExpires.getTime())
+                .refreshToken(refreshToken)
+                .userInfo(
+                        UserResponseDto.builder()
+                                .userId(authentication.getName())
+                                .accountId(accountId)
+                                .build()
+                )
+                .snsInfo(
+                        SnsInfo.builder()
+                                .snsAccessToken(snsAccessToken)
+                                .build()
+                )
+                .build();
 
     }
 
