@@ -163,9 +163,16 @@ public class AuthService {
         //가입이 안되어 있는 경우 -> 자동가입 but accountID가 미설정되었음을 알려야함
         if (!userinfoRepository.existsByEmailAndResType(kakaoIDToken.getBody().getEmail(),
             KAKAO.getTypeName())) {
-            signupWithKakao(kakaoIDToken, kakaoIDToken.getBody().getEmail()); //카카오계정 으로 회원가입 진행
+            //타입 : 카카오 && 이메일이 존재하지 않는 경우
+            String tmpId;
+            //@로 시작하는 랜덤 아이디를 만들어 제공
+            do {
+                tmpId = "@" + RandomStringUtils.random(12, true, true);
+            } while (userinfoRepository.existsByAccountId(tmpId));//존재하지 않는 아이디일 때 까지 반복
+            signupWithKakao(kakaoIDToken, tmpId); //카카오계정 으로 회원가입 진행
         }
-        UserRequestDto userRequestDto = new UserRequestDto(kakaoIDToken.getBody().getEmail(),
+        UserInfo user = userinfoRepository.findByEmailAndResType(kakaoIDToken.getBody().getEmail(), KAKAO.getTypeName());
+        UserRequestDto userRequestDto = new UserRequestDto(user.getAccountId(),
             "kakaoLogin");
 
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
