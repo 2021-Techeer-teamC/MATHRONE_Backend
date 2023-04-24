@@ -28,7 +28,7 @@ public class WorkbookController {
 
 
     //workbook API
-    @GetMapping("") // 모든 워크북 조회(Books page)
+    @GetMapping("/list") // 모든 워크북 조회(Books page)
     public List<bookItem> bookList(
         @RequestParam(value = "publisher", required = false, defaultValue = "all") String publisher,
         @RequestParam(value = "sortType", required = false, defaultValue = "star") String sortType,
@@ -40,7 +40,7 @@ public class WorkbookController {
     }
 
 
-    @GetMapping("/info") // 모든 워크북 조회(Books page)
+    @GetMapping("/count") // 모든 워크북 조회(Books page)
     public Long bookCount(
         @RequestParam(value = "publisher", required = false, defaultValue = "all") String publisher,
         @RequestParam(value = "category", required = false, defaultValue = "all") String category) {
@@ -49,7 +49,7 @@ public class WorkbookController {
     }
 
 
-    @GetMapping("/list")
+    @GetMapping("/summary")
     public List<bookContent> workbookList() {
         return workBookService.getWorkbookList();
     }
