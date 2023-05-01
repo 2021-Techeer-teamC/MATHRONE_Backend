@@ -11,14 +11,13 @@ import lombok.NoArgsConstructor;
 @Builder
 public class kakaoTokenReissueRequestDTO {
 
-   private String grantType;
+    private String grantType;
 
-   private String clientId;
+    private String clientId;
 
-   private String refreshToken;
+    private String refreshToken;
 
-   private String clientSecret;
-
+    private String clientSecret;
 
 
 }

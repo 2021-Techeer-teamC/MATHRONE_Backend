@@ -121,7 +121,7 @@ public class UserController {
         ResponseEntity<GoogleIDToken> res2 = snsLoginService.getGoogleIDToken(res);
 
         //mathrone signup with google id token
-        return ResponseEntity.ok(authService.googleLogin(res2,res));
+        return ResponseEntity.ok(authService.googleLogin(res2, res));
     }
 
     //구글 로그아웃
@@ -134,7 +134,8 @@ public class UserController {
 
     //accoutID update -> "PUT"으로 변경
     @PutMapping(value = "/accountId", headers = {"Content-type=application/json"})
-    public ResponseEntity<Void> updateAccountId(@RequestBody ChangeAccountIdDto accountId, HttpServletRequest request) {
+    public ResponseEntity<Void> updateAccountId(@RequestBody ChangeAccountIdDto accountId,
+        HttpServletRequest request) {
 
         //accessToken을 통해 userID알아내기 (primary key)
         UserInfo user = authService.findUserFromRequest(request);

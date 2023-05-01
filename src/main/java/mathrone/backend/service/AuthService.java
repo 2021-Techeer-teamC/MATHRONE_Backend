@@ -25,21 +25,21 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-
 import javax.transaction.Transactional;
 import java.util.List;
-
 
 import mathrone.backend.domain.token.LogoutAccessToken;
 import mathrone.backend.domain.token.RefreshToken;
 import org.springframework.http.ResponseEntity;
 
 import static mathrone.backend.domain.enums.UserResType.*;
+import static mathrone.backend.error.exception.ErrorCode.AlREADY_LOGOUT;
+import static mathrone.backend.error.exception.ErrorCode.INVALID_REFRESH_TOKEN;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final UserInfoRepository userinfoRepository;
     private final PasswordEncoder passwordEncoder;
@@ -54,6 +54,7 @@ public class AuthService {
     public UserResponseDto signup(UserSignUpDto userSignUpDto) {
         // user account ID가 존재하는지 검사
         validateUserAccountId(userSignUpDto.getAccountId());
+
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder,
             MATHRONE.getTypeName()); //MATHRONE user로 가입시켜주기
         return UserResponseDto.of(userinfoRepository.save(newUser));
@@ -67,12 +68,14 @@ public class AuthService {
         //유효한 accountID인지 확인(이미 존재하는 아이디인지)
         validateUserAccountId(accountId); //이미 존재하는 아이디면 여기서 에러
         //아니면 회원가입 진행
-        //입력받아온 accountID를 이용하여     회원가입
+        //입력받아온 accountID를 이용하여 회원가입
         UserSignUpDto userSignUpDto = new UserSignUpDto(googleIDToken.getBody().getEmail(),
             "googleLogin", accountId); //id와 email을 email로 채워서 만들기
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder, GOOGLE.getTypeName());
+
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
+
     @Transactional
     public UserResponseDto signupWithKakao(ResponseEntity<KakaoIDToken> kakaoIDToken,
         String accountID) {
@@ -86,8 +89,10 @@ public class AuthService {
         UserSignUpDto userSignUpDto = new UserSignUpDto(kakaoIDToken.getBody().getEmail(),
                 "kakaoLogin", accountID); //id와 email을 email로 채워서 만들기
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder, KAKAO.getTypeName());
+
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
+
     @Transactional
     public TokenDto googleLogin(ResponseEntity<GoogleIDToken> googleIDToken, ResponseEntity<ResponseTokenDTO> googleResponseToken){
         //0. 가입이 되어 있는 계정이 아니면 회원가입을 자동으로 시켜주기
@@ -199,15 +204,14 @@ public class AuthService {
 
         // 5. 토큰 저장 테이블 저장
         refreshTokenRepository.save(refreshToken);
-
         // 6. redis 저장
         refreshTokenRedisRepository.save(refreshToken.transferRedisToken());
-
         // 7. kakao에서 발급한 refreshToken 저장
         saveKakaoRefreshToken(kakaoTokenResponseDto, kakaoIDToken);
 
         return tokenDto;
     }
+
     @Transactional
     public void saveKakaoRefreshToken(ResponseEntity<KakaoTokenResponseDTO> kakaoTokenResponseDto,
         ResponseEntity<KakaoIDToken> kakaoIdToken) {
@@ -245,17 +249,17 @@ public class AuthService {
 
     @Transactional
     public TokenDto login(UserRequestDto userRequestDto) {
-        // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
+        // Login ID/PW 를 기반으로 AuthenticationToken 생성
         UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
 
-        // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
+        // 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
         //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
         Authentication authentication = authenticationManagerBuilder.getObject()
             .authenticate(authenticationToken);
-        // 3. token 생성
+        // token 생성
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
             userRequestDto.getAccountId());
-        // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
+        // refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
         RefreshToken refreshToken = RefreshToken.builder()
             .userid(authentication.getName())
             .refreshToken(tokenDto.getRefreshToken())
@@ -271,27 +275,22 @@ public class AuthService {
     @Transactional
     public void logout(HttpServletRequest request) {
 
-        // 1. Request Header 에서 access token 빼기
+        // Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
-        // 2. access token 유효성 검사
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
-        }
-
-        // 3. access token으로부터 user id 가져오기 (email x)
+        // access token으로부터 user id 가져오기 (email x)
         String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
 
-        // 4. logout token의 유효기간은 access token의 남은 기간동안 유지되어야 함
+        // logout token의 유효기간은 access token의 남은 기간동안 유지되어야 함
         long remainAccessTokenExpiration = tokenProviderUtil.getRemainExpiration(accessToken);
 
-        // 5. refreshToken table에 존재하는 해당 유저의 refreshToken 정보 삭제
+        // refreshToken table에 존재하는 해당 유저의 refreshToken 정보 삭제
         refreshTokenRepository.deleteByUserId(userId);
 
-        // 6. redis에 존재하는 refreshToken 삭제
+        // redis에 존재하는 refreshToken 삭제
         refreshTokenRedisRepository.deleteById(userId);
 
-        // 7. logout token를 redis에 저장 (이후 로그아웃된 유저의 AccessToken으로 접근 방지를 위함)
+        // logout token를 redis에 저장 (이후 로그아웃된 유저의 AccessToken으로 접근 방지를 위함)
         logoutAccessTokenRedisRepository.save(
             LogoutAccessToken.of(accessToken, userId, remainAccessTokenExpiration));
     }
@@ -299,96 +298,79 @@ public class AuthService {
     @Transactional
     public void logoutWithKakao(HttpServletRequest request) {
 
-        // 1. Request Header 에서 access token 빼기
+        // Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
-        // 2. access token 유효성 검사
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
-        }
-
-        // 3. access token으로부터 user id 가져오기 (email x)
+        // access token으로부터 user id 가져오기 (email x)
         String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
 
-        // 4. logout token의 유효기간은 access token의 남은 기간동안 유지되어야 함
+        // logout token의 유효기간은 access token의 남은 기간동안 유지되어야 함
         long remainAccessTokenExpiration = tokenProviderUtil.getRemainExpiration(accessToken);
 
-        // 5. refreshToken table에 존재하는 해당 유저의 refreshToken 정보 삭제
+        // refreshToken table에 존재하는 해당 유저의 refreshToken 정보 삭제
         refreshTokenRepository.deleteByUserId(userId);
 
-        // 6. redis에 존재하는 refreshToken 삭제
+        // redis에 존재하는 refreshToken 삭제
         refreshTokenRedisRepository.deleteById(userId);
 
-        // 7. logout token를 redis에 저장 (이후 로그아웃된 유저의 AccessToken으로 접근 방지를 위함)
+        // logout token를 redis에 저장 (이후 로그아웃된 유저의 AccessToken으로 접근 방지를 위함)
         logoutAccessTokenRedisRepository.save(
-                LogoutAccessToken.of(accessToken, userId, remainAccessTokenExpiration));
+            LogoutAccessToken.of(accessToken, userId, remainAccessTokenExpiration));
 
-        // 8. kakaoRedisToken삭제
+        // kakaoRedisToken삭제
         kakaoRefreshTokenRedisRepository.deleteById(userId);
     }
 
 
     @Transactional
     public void logoutWithGoogle(HttpServletRequest request) {
-        // 1. Request Header 에서 access token 빼기
+        // Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
-        // 2. access token 유효성 검사
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
-        }
-
-        // 3. access token으로부터 user id 가져오기 (email x)
+        // access token으로부터 user id 가져오기 (email x)
         String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
 
-        // 4. logout token의 유효기간은 access token의 남은 기간동안 유지되어야 함
+        // logout token의 유효기간은 access token의 남은 기간동안 유지되어야 함
         long remainAccessTokenExpiration = tokenProviderUtil.getRemainExpiration(accessToken);
 
-        // 5. refreshToken table에 존재하는 해당 유저의 refreshToken 정보 삭제
+        // refreshToken table에 존재하는 해당 유저의 refreshToken 정보 삭제
         refreshTokenRepository.deleteByUserId(userId);
 
-        // 6. redis에 존재하는 refreshToken 삭제
+        // redis에 존재하는 refreshToken 삭제
         refreshTokenRedisRepository.deleteById(userId);
 
-        // 7. logout token를 redis에 저장 (이후 로그아웃된 유저의 AccessToken으로 접근 방지를 위함)
+        // logout token를 redis에 저장 (이후 로그아웃된 유저의 AccessToken으로 접근 방지를 위함)
         logoutAccessTokenRedisRepository.save(
-                LogoutAccessToken.of(accessToken, userId, remainAccessTokenExpiration));
+            LogoutAccessToken.of(accessToken, userId, remainAccessTokenExpiration));
 
 
-        // 8. googleRedisToken삭제
+        // googleRedisToken삭제
         googleRefreshTokenRedisRepository.deleteById(userId);
     }
 
-
-
     @Transactional
     public TokenDto reissue(HttpServletRequest request, String refreshToken) {
-
-        // 1. Refresh token 검증
-        if (!tokenProviderUtil.validateToken(refreshToken)) {
-            throw new RuntimeException("Refresh Token 이 유효하지 않습니다.");
-        }
-
-        // 2. Request Header 에서 access token 빼기
+        // Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
-        // 3. Access Token 에서 Member ID 가져오기
+        // Access Token 에서 Member ID 가져오기
         Authentication authentication = tokenProviderUtil.getAuthentication(
             accessToken);
 
-        // 4. 저장소에서 Member ID 를 기반으로 Refresh Token 값 가져오기
+        // 저장소에서 Member ID 를 기반으로 Refresh Token 값 가져오기
         RefreshToken storedRefreshToken = refreshTokenRepository.findByUserId(
                 authentication.getName())
-            .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
+            .orElseThrow(() -> new CustomException(AlREADY_LOGOUT));
 
-        // 4. Refresh Token 일치 여부 검사
+        // Refresh Token 일치 여부 검사
         if (!storedRefreshToken.getRefreshToken().equals(refreshToken)) {
-            throw new RuntimeException("토큰의 유저 정보가 일치하지 않습니다.");
+            throw new CustomException(INVALID_REFRESH_TOKEN);
         }
+
         UserInfo user = findUserFromRequest(request);
-        // 5. 새로운 토큰 생성
+        // 새로운 토큰 생성
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication, user.getAccountId());
-        // 6. 저장소 정보 업데이트
+        // 저장소 정보 업데이트
         RefreshToken newRefreshToken = storedRefreshToken.updateValue(tokenDto.getRefreshToken(),
             tokenProviderUtil.getRefreshTokenExpireTime());
 
@@ -398,7 +380,6 @@ public class AuthService {
 
         return tokenDto;
     }
-
 
 
     @Transactional
@@ -468,6 +449,7 @@ public class AuthService {
 
 
 
+
     // refresh Token table에 존재하는 refreshToken 전체 리스트 가져오기
     public List<RefreshToken> getRefreshList() {
         return refreshTokenRepository.findAll();
@@ -479,16 +461,8 @@ public class AuthService {
         // 1. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
-        // 2. access token 유효성 검사
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
-        }
-
-        // 3. access token으로부터 user id 가져오기 (email x)
-        String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
-
-        return userId;
-
+        // 2. access token으로부터 user id 가져오기 (email x)
+        return tokenProviderUtil.getAuthentication(accessToken).getName();
     }
 
     public void validateUserAccountId(String userAccountId) {
@@ -527,15 +501,12 @@ public class AuthService {
     public UserInfo findUserFromRequest(HttpServletRequest request) {
         // 1. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
-        }
+
         // 2. access token으로부터 user id 가져오기 (email x)
         Integer userId = Integer.parseInt(
             tokenProviderUtil.getAuthentication(accessToken).getName());
         // 3. userId를 이용해 user가져오기
-        UserInfo user = userinfoRepository.findByUserId(userId);
-        return user;
+        return userinfoRepository.findByUserId(userId);
     }
 
     public void updateAccountId(String accountId, UserInfo user) {

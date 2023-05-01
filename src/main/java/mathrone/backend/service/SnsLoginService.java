@@ -11,15 +11,12 @@ import mathrone.backend.controller.dto.OauthDTO.OAuthLoginUtils;
 import mathrone.backend.controller.dto.OauthDTO.RequestTokenDTO;
 import mathrone.backend.controller.dto.OauthDTO.ResponseTokenDTO;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
-
 import mathrone.backend.domain.token.GoogleRefreshTokenRedis;
 import mathrone.backend.domain.token.KakaoRefreshTokenRedis;
 import mathrone.backend.repository.redisRepository.KakaoRefreshTokenRedisRepository;
 import mathrone.backend.repository.tokenRepository.GoogleRefreshTokenRedisRepository;
-
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoOAuthLoginUtils;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
-
 import org.springframework.http.*;
 import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.error.exception.CustomException;
@@ -48,14 +45,12 @@ public class SnsLoginService {
     // 객체화 (static)되지 않았기 때문에 객체화 부터 시켜주어야 쓸수 있다.
     private final OAuthLoginUtils oAuthLoginUtils;
     private final KakaoOAuthLoginUtils kakaoOAuthLoginUtils;
-
-
-
-    private  final GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository;
-
+    private final GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository;
     private final KakaoRefreshTokenRedisRepository kakaoRefreshTokenRedisRepository;
 
-    SnsLoginService(OAuthLoginUtils oAuthLoginUtils, KakaoOAuthLoginUtils kakaoOAuthLoginUtils, GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository,KakaoRefreshTokenRedisRepository kakaoRefreshTokenRedisRepository) {
+    SnsLoginService(OAuthLoginUtils oAuthLoginUtils, KakaoOAuthLoginUtils kakaoOAuthLoginUtils,
+        GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository,
+        KakaoRefreshTokenRedisRepository kakaoRefreshTokenRedisRepository) {
 
         this.oAuthLoginUtils = oAuthLoginUtils;
         this.kakaoOAuthLoginUtils = kakaoOAuthLoginUtils;
@@ -112,8 +107,8 @@ public class SnsLoginService {
     }
 
 
-
-    public ResponseEntity<GoogleIDToken> getGoogleIDToken(ResponseEntity<ResponseTokenDTO> googleTokenInfo) throws Exception {
+    public ResponseEntity<GoogleIDToken> getGoogleIDToken(
+        ResponseEntity<ResponseTokenDTO> googleTokenInfo) throws Exception {
 
         RestTemplate restTemplate = new RestTemplate();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -136,11 +131,9 @@ public class SnsLoginService {
         return ResponseEntity.ok().body(userInfoDto);
     }
 
-
-    public void resultNull(String resultJson){
-        if(resultJson==null){
+    public void resultNull(String resultJson) {
+        if (resultJson == null) {
             throw new CustomException(ErrorCode.GOOGLE_SERVER_ERROR);
-
         }
 
     }
@@ -203,8 +196,8 @@ public class SnsLoginService {
     }
 
 
-
-    public ResponseEntity<KakaoIDToken> decodeIdToken(String idToken) throws JsonProcessingException {
+    public ResponseEntity<KakaoIDToken> decodeIdToken(String idToken)
+        throws JsonProcessingException {
 
         Map<String, Object> map = new HashMap<String, Object>();
 
@@ -233,22 +226,23 @@ public class SnsLoginService {
     }
 
 
-
     @Transactional
     public ResponseEntity<KakaoTokenResponseDTO> kakaoReissue(String userId) {
 
         //리프레시토큰으로 재발급부터
-        Optional<KakaoRefreshTokenRedis> kakaoRedis = kakaoRefreshTokenRedisRepository.findById(userId);
+        Optional<KakaoRefreshTokenRedis> kakaoRedis = kakaoRefreshTokenRedisRepository.findById(
+            userId);
 
         String refreshToken = kakaoRedis.get().getRefreshToken();
 
-
-        try{
+        try {
             RestTemplate rt = new RestTemplate();
-            rt.setRequestFactory(new HttpComponentsClientHttpRequestFactory()); //error message type및 description확인 가능
+            rt.setRequestFactory(
+                new HttpComponentsClientHttpRequestFactory()); //error message type및 description확인 가능
             // 해더 만들기
             HttpHeaders headers = new HttpHeaders();
-            headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8"); // http converter 존재x에러 해결(multimap)
+            headers.add("Content-type",
+                "application/x-www-form-urlencoded;charset=utf-8"); // http converter 존재x에러 해결(multimap)
             // 바디 만들기 (HashMap 사용 불가!)
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("grant_type", "refresh_token");
@@ -257,20 +251,22 @@ public class SnsLoginService {
             params.add("refresh_token", refreshToken);
             // 해더와 바디를 하나의 오브젝트로 만들기
             HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest =
-                    new HttpEntity<>(params, headers);
+                new HttpEntity<>(params, headers);
             // Http 요청하고 리턴값을 response 변수로 받기
             ResponseEntity<String> apiResponseJson = rt.exchange(
-                    "https://kauth.kakao.com/oauth/token", // Host
-                    HttpMethod.POST, // Request Method
-                    kakaoTokenRequest,	// RequestBody
-                    String.class
-            );	// return Object
+                "https://kauth.kakao.com/oauth/token", // Host
+                HttpMethod.POST, // Request Method
+                kakaoTokenRequest,    // RequestBody
+                String.class
+            );    // return Object
             // ObjectMapper를 통해 String to Object로 변환
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL); // NULL이 아닌 값만 응답받기(NULL인 경우는 생략)
-            KakaoTokenResponseDTO kakaoLoginResponse = objectMapper.readValue(apiResponseJson.getBody(), new TypeReference<KakaoTokenResponseDTO>() {
-            });
+            objectMapper.setSerializationInclusion(
+                JsonInclude.Include.NON_NULL); // NULL이 아닌 값만 응답받기(NULL인 경우는 생략)
+            KakaoTokenResponseDTO kakaoLoginResponse = objectMapper.readValue(
+                apiResponseJson.getBody(), new TypeReference<KakaoTokenResponseDTO>() {
+                });
             return ResponseEntity.ok().body(kakaoLoginResponse);
         } catch (Exception e) {
             e.printStackTrace();
@@ -284,17 +280,20 @@ public class SnsLoginService {
     public ResponseEntity<ResponseTokenDTO> googleReissue(String userId) {
 
         //리프레시토큰으로 재발급부터
-        Optional<GoogleRefreshTokenRedis> googleRedis = googleRefreshTokenRedisRepository.findById(userId);
+        Optional<GoogleRefreshTokenRedis> googleRedis = googleRefreshTokenRedisRepository.findById(
+            userId);
         String refreshToken = googleRedis.get().getRefreshToken();
 
-        try{
+        try {
 
             RestTemplate rt = new RestTemplate();
-            rt.setRequestFactory(new HttpComponentsClientHttpRequestFactory()); //error message type및 description확인 가능
+            rt.setRequestFactory(
+                new HttpComponentsClientHttpRequestFactory()); //error message type및 description확인 가능
 
             // 해더 만들기
             HttpHeaders headers = new HttpHeaders();
-            headers.add("Content-type", "application/x-www-form-urlencoded"); // http converter 존재x에러 해결(multimap)
+            headers.add("Content-type",
+                "application/x-www-form-urlencoded"); // http converter 존재x에러 해결(multimap)
             // 바디 만들기 (HashMap 사용 불가!)
 
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -305,23 +304,25 @@ public class SnsLoginService {
 
             // 해더와 바디를 하나의 오브젝트로 만들기
             HttpEntity<MultiValueMap<String, String>> googleTokenRequest =
-                    new HttpEntity<>(params, headers);
+                new HttpEntity<>(params, headers);
 
             // Http 요청하고 리턴값을 response 변수로 받기
             ResponseEntity<String> apiResponseJson = rt.exchange(
-                    "https://www.googleapis.com/oauth2/v4/token", // Host
-                    HttpMethod.POST, // Request Method
-                    googleTokenRequest,	// RequestBody
-                    String.class
-            );	// return Object
+                "https://www.googleapis.com/oauth2/v4/token", // Host
+                HttpMethod.POST, // Request Method
+                googleTokenRequest,    // RequestBody
+                String.class
+            );    // return Object
 
             // ObjectMapper를 통해 String to Object로 변환
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL); // NULL이 아닌 값만 응답받기(NULL인 경우는 생략)
+            objectMapper.setSerializationInclusion(
+                JsonInclude.Include.NON_NULL); // NULL이 아닌 값만 응답받기(NULL인 경우는 생략)
 
-            ResponseTokenDTO googleResponseTokenDto = objectMapper.readValue(apiResponseJson.getBody(), new TypeReference<ResponseTokenDTO>() {
-            });
+            ResponseTokenDTO googleResponseTokenDto = objectMapper.readValue(
+                apiResponseJson.getBody(), new TypeReference<ResponseTokenDTO>() {
+                });
             return ResponseEntity.ok().body(googleResponseTokenDto);
         } catch (Exception e) {
             e.printStackTrace();
@@ -329,6 +330,4 @@ public class SnsLoginService {
         return ResponseEntity.badRequest().body(null);
 
     }
-
-
 }

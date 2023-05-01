@@ -1,11 +1,14 @@
 package mathrone.backend.config.jwt;
 
+import static mathrone.backend.error.exception.ErrorCode.AlREADY_LOGOUT;
+
 import java.io.IOException;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.repository.redisRepository.LogoutAccessTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.security.core.Authentication;
@@ -29,22 +32,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         // 2. validateToken 으로 토큰 유효성 검사
-        if (StringUtils.hasText(accessToken) && tokenProviderUtil.validateToken(accessToken)) {
+        if (StringUtils.hasText(accessToken) && tokenProviderUtil.validateToken(accessToken, request)) {
             // 3. Logout한 회원인지 검사
-            checkLogout(accessToken);
-            // 정상 토큰이면 해당 토큰으로 Authentication 을 가져와서 SecurityContext 에 저장
-            Authentication authentication = tokenProviderUtil.getAuthentication(accessToken);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            if (checkLogout(accessToken, request)){
+                // 정상 토큰이면 해당 토큰으로 Authentication 을 가져와서 SecurityContext 에 저장
+                Authentication authentication = tokenProviderUtil.getAuthentication(accessToken);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
 
         filterChain.doFilter(request, response);
     }
 
     // logout인 회원일 경우 해당 회원의 access token으로 접근을 방지하기 위함
-    private void checkLogout(String accessToken) {
+    private boolean checkLogout(String accessToken, HttpServletRequest request) {
         // logoutToken은 해당 회원의 access token을 id로 가짐.
-        if (logoutAccessTokenRedisRepository.existsById(accessToken)) {
-            throw new IllegalArgumentException("이미 로그아웃한 회원입니다.");
+        if (!logoutAccessTokenRedisRepository.existsById(accessToken)) {
+            return true;
+        } else {
+            // 이미 로그아웃한 회원인 경우
+            request.setAttribute("Exception", new CustomException(AlREADY_LOGOUT));
+            return false;
         }
     }
 }
