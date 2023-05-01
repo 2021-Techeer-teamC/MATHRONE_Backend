@@ -1,5 +1,11 @@
 package mathrone.backend.util;
 
+import static mathrone.backend.error.exception.ErrorCode.EXPIRED_TOKEN;
+import static mathrone.backend.error.exception.ErrorCode.INVALID_SIGNATURE;
+import static mathrone.backend.error.exception.ErrorCode.INVALID_ACCESS_TOKEN;
+import static mathrone.backend.error.exception.ErrorCode.NOT_AUTH_INFORMATION;
+import static mathrone.backend.error.exception.ErrorCode.UNSUPPORTED_TOKEN;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -15,14 +21,12 @@ import java.util.Date;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
-import mathrone.backend.controller.dto.OauthDTO.ResponseTokenDTO;
 import mathrone.backend.controller.dto.OauthDTO.SnsInfo;
 import mathrone.backend.controller.dto.TokenDto;
 import mathrone.backend.controller.dto.UserResponseDto;
+import mathrone.backend.error.exception.CustomException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -39,7 +43,7 @@ import org.springframework.util.StringUtils;
 public class TokenProviderUtil {
 
     private static final String AUTHORITIES_KEY = "auth";
-    private static final String BEARER_TYPE = "Bearer";     // token 인증 타입(jwt 토큰을 의미)
+    private static final String BEARER_TYPE = "Bearer";     // JWT 토큰 인증 타입
     private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24;       // 1일
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24 * 7;  // 7일
     public static final String AUTHORIZATION_HEADER = "Authorization";  // http header 종류
@@ -91,8 +95,8 @@ public class TokenProviderUtil {
     }
 
 
-
-    public TokenDto generateTokenWithSns(Authentication authentication, String accountId,String snsAccessToken) {
+    public TokenDto generateTokenWithSns(Authentication authentication, String accountId,
+        String snsAccessToken) {
 
         // 권한 가져오기
         String auth = authentication.getAuthorities().stream()
@@ -138,13 +142,12 @@ public class TokenProviderUtil {
     }
 
 
-
     public Authentication getAuthentication(String accessToken) {
         // 토큰 복호화 (내부 정보 가져옴)
         Claims claims = parseClaims(accessToken);
 
         if (claims.get(AUTHORITIES_KEY) == null) {
-            throw new RuntimeException("권한 정보가 없는 토큰입니다.");
+            throw new CustomException(NOT_AUTH_INFORMATION);
         }
 
         // 권한 정보 가져옴
@@ -172,24 +175,28 @@ public class TokenProviderUtil {
     }
 
     // 토큰 정보 검증
-    public boolean validateToken(String token) {
+    public boolean validateToken(String token, HttpServletRequest request) {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
         } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
             log.info("잘못된 JWT 서명입니다.");
+            request.setAttribute("Exception", new CustomException(INVALID_SIGNATURE));
         } catch (ExpiredJwtException e) {
             log.info("만료된 JWT 토큰입니다.");
+            request.setAttribute("Exception", new CustomException(EXPIRED_TOKEN));
         } catch (UnsupportedJwtException e) {
             log.info("지원되지 않는 JWT 토큰입니다.");
+            request.setAttribute("Exception", new CustomException(UNSUPPORTED_TOKEN));
         } catch (IllegalArgumentException e) {
             log.info("JWT 토큰이 잘못되었습니다.");
+            request.setAttribute("Exception", new CustomException(INVALID_ACCESS_TOKEN));
         }
         return false;
     }
 
 
-    public static Date getRefreshTokenExpireTime() {
+    public Date getRefreshTokenExpireTime() {
         return new Date(new Date().getTime() + REFRESH_TOKEN_EXPIRE_TIME);
     }
 
