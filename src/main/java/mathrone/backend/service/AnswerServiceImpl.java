@@ -32,11 +32,6 @@ public class AnswerServiceImpl implements AnswerService {
     public List<ProblemGradeResponseDto> gradeProblem(
         ProblemGradeRequestDto problemGradeRequestDtoList, String accessToken) {
 
-        // token 검증
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
-        }
-
         // access token에서 userId 가져오기
         Integer userId = Integer.parseInt(
             tokenProviderUtil.getAuthentication(accessToken).getName());
@@ -50,10 +45,7 @@ public class AnswerServiceImpl implements AnswerService {
             Solution solutionProblem = solutionRepository.findSolutionByProblemId(
                 problem.getProblemId());
             Problem registedProblem = problemRepository.findByProblemId(problem.getProblemId());
-            boolean isCorrect = false;
-            if (solutionProblem.getAnswer() == problem.getSolution()) {
-                isCorrect = true;
-            }
+            boolean isCorrect = solutionProblem.getAnswer() == problem.getSolution();
 
             Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
                 registedProblem,
