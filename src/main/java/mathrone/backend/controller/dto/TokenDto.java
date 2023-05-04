@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
 import mathrone.backend.controller.dto.OauthDTO.SnsInfo;
 
 @Getter

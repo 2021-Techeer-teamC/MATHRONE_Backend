@@ -90,12 +90,10 @@ public class ProfileService {
         }
 
         //최종 Profile 생성
-        UserProfile res = new UserProfile(userinfo.getUserId(), userinfo.getAccountId(),
+        return new UserProfile(userinfo.getUserId(), userinfo.getAccountId(),
             userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
             userinfo.isPremium(), userinfo.getEmail(), userinfo.getPhoneNum(),
             userinfo.getUserImg(), userinfo.getRole(), r);
-
-        return res;
     }
 
 
@@ -112,9 +110,6 @@ public class ProfileService {
         // 1. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
-        }
         // 2. access token으로부터 user id 가져오기 (email x)
         String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
 
@@ -127,9 +122,6 @@ public class ProfileService {
         // 1. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new CustomException(INVALID_ACCESS_TOKEN);
-        }
         // 2. access token으로부터 user id 가져오기 (email x)
         Integer userId = Integer.parseInt(
             tokenProviderUtil.getAuthentication(accessToken).getName());
@@ -264,9 +256,6 @@ public class ProfileService {
         // 1. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new CustomException(INVALID_ACCESS_TOKEN);
-        }
         // 2. access token으로부터 user id 가져오기 (email x)
         Integer userId = Integer.parseInt(
             tokenProviderUtil.getAuthentication(accessToken).getName());
