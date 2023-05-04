@@ -1,13 +1,6 @@
 package mathrone.backend.service;
 
-import static mathrone.backend.error.exception.ErrorCode.EMPTY_FAILED_PROBLEM;
-import static mathrone.backend.error.exception.ErrorCode.EMPTY_FAILED_PROBLEM_IN_REDIS;
-import static mathrone.backend.error.exception.ErrorCode.INVALID_ACCESS_TOKEN;
-import static mathrone.backend.error.exception.ErrorCode.NONEXISTENT_FAILED_CHAPTER;
-import static mathrone.backend.error.exception.ErrorCode.NONEXISTENT_FAILED_WORKBOOK;
-import static mathrone.backend.error.exception.ErrorCode.NOT_FOUND_CHAPTER;
-import static mathrone.backend.error.exception.ErrorCode.NOT_FOUND_WORKBOOK;
-import static mathrone.backend.error.exception.ErrorCode.NOT_PREMIUM;
+import static mathrone.backend.error.exception.ErrorCode.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -97,12 +90,10 @@ public class ProfileService {
         }
 
         //최종 Profile 생성
-        UserProfile res = new UserProfile(userinfo.getUserId(), userinfo.getAccountId(),
+        return new UserProfile(userinfo.getUserId(), userinfo.getAccountId(),
             userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
             userinfo.isPremium(), userinfo.getEmail(), userinfo.getPhoneNum(),
             userinfo.getUserImg(), userinfo.getRole(), r);
-
-        return res;
     }
 
 
@@ -119,9 +110,6 @@ public class ProfileService {
         // 1. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
-        }
         // 2. access token으로부터 user id 가져오기 (email x)
         String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
 
@@ -134,9 +122,6 @@ public class ProfileService {
         // 1. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new CustomException(INVALID_ACCESS_TOKEN);
-        }
         // 2. access token으로부터 user id 가져오기 (email x)
         Integer userId = Integer.parseInt(
             tokenProviderUtil.getAuthentication(accessToken).getName());
@@ -271,9 +256,6 @@ public class ProfileService {
         // 1. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new CustomException(INVALID_ACCESS_TOKEN);
-        }
         // 2. access token으로부터 user id 가져오기 (email x)
         Integer userId = Integer.parseInt(
             tokenProviderUtil.getAuthentication(accessToken).getName());

@@ -47,7 +47,6 @@ public class AnswerServiceImpl implements AnswerService {
         if (!tokenProviderUtil.validateToken(accessToken)) {
             throw new RuntimeException("Access Token 이 유효하지 않습니다.");
         }
-
         // access token에서 userId 가져오기
         Integer userId = Integer.parseInt(
             tokenProviderUtil.getAuthentication(accessToken).getName());
@@ -128,7 +127,6 @@ public class AnswerServiceImpl implements AnswerService {
             if (solutionProblem.getAnswer() == Integer.parseInt(problem.getSolution())) {
                 isCorrect = true;
             }
-
             Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
                     registedProblem,
                     user); // 해당 문제를 시도한 적이 있는지 확인

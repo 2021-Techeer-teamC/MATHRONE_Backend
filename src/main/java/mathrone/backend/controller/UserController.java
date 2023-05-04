@@ -2,6 +2,7 @@ package mathrone.backend.controller;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.*;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
@@ -53,6 +54,24 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping(value = "/kakao/logout", headers = {"Content-type=application/json"})
+    public ResponseEntity<Void> logoutWithKakao(HttpServletRequest request
+    ) {
+        authService.logoutWithKakao(request);
+        return ResponseEntity.ok().build();
+    }
+
+
+    @PostMapping(value = "/google/logout", headers = {"Content-type=application/json"})
+    public ResponseEntity<Void> logoutWithGoogle(HttpServletRequest request
+    ) {
+        authService.logoutWithGoogle(request);
+        return ResponseEntity.ok().build();
+    }
+
+
+
+
     @GetMapping(value = "/check/accountId", headers = {"Content-type=application/json"})
     public ResponseEntity<Void> validateUserAccountId(@RequestParam String userAccountId) {
         authService.validateUserAccountId(userAccountId);
@@ -70,6 +89,25 @@ public class UserController {
         return ResponseEntity.ok(authService.reissue(request, refreshToken));
     }
 
+    @PostMapping(value = "/kakao/reissue")
+    public ResponseEntity<TokenDto> kakaoReissue(HttpServletRequest request, String userId) throws JsonProcessingException {
+
+        ResponseEntity<KakaoTokenResponseDTO> reissue = snsLoginService.kakaoReissue(userId);
+        ResponseEntity<KakaoIDToken> idInfo = snsLoginService.decodeIdToken(reissue.getBody().getId_token());
+
+        return ResponseEntity.ok(authService.kakaoReissue(request,reissue, idInfo));
+    }
+
+
+    @PostMapping(value = "/google/reissue")
+    public ResponseEntity<TokenDto> googleReissue(HttpServletRequest request, String userId) throws Exception {
+
+        ResponseEntity<ResponseTokenDTO> reissue = snsLoginService.googleReissue(userId);
+        ResponseEntity<GoogleIDToken> idInfo = snsLoginService.getGoogleIDToken(reissue);
+
+        return ResponseEntity.ok(authService.googleReissue(request,reissue, idInfo));
+    }
+
 
     //구글 로그인 (회원가입이 되지 않은 경우 회원가입 까지 해주기)
     @PostMapping(value = "/oauth/callback/google", headers = {"Content-type=application/json"})
@@ -83,7 +121,7 @@ public class UserController {
         ResponseEntity<GoogleIDToken> res2 = snsLoginService.getGoogleIDToken(res);
 
         //mathrone signup with google id token
-        return ResponseEntity.ok(authService.googleLogin(res2));
+        return ResponseEntity.ok(authService.googleLogin(res2, res));
     }
 
     //구글 로그아웃
@@ -96,7 +134,8 @@ public class UserController {
 
     //accoutID update -> "PUT"으로 변경
     @PutMapping(value = "/accountId", headers = {"Content-type=application/json"})
-    public ResponseEntity<Void> updateAccountId(@RequestBody ChangeAccountIdDto accountId, HttpServletRequest request) {
+    public ResponseEntity<Void> updateAccountId(@RequestBody ChangeAccountIdDto accountId,
+        HttpServletRequest request) {
 
         //accessToken을 통해 userID알아내기 (primary key)
         UserInfo user = authService.findUserFromRequest(request);
@@ -108,20 +147,9 @@ public class UserController {
 
     }
 
-    //구글 로그인
-//    @PostMapping(value = "/snslogin", headers = {"Content-type=application/json"})
-//    public ResponseEntity<TokenDto> moveGoogleInitUrl(@RequestBody RequestCodeDTO requestCodeDto) throws Exception {
-//
-//        //get token from code
-//        ResponseEntity<ResponseTokenDTO> res = snsLoginService.getToken(requestCodeDto.getCode());
-//
-//        //get id token from accesstoken
-//        ResponseEntity<GoogleIDToken> res2 = snsLoginService.getGoogleIDToken(res);
-//
-//        //mathrone login with google id token
-//        return ResponseEntity.ok(authService.googleLogin(res2));
 
 
+    //카카오 로그인 (회원가입 안되어 있는 경우 회원가입도)
     @PostMapping(value = "/oauth/callback/kakao", headers = {"Content-type=application/json"})
     public ResponseEntity<TokenDto> moveKakaoInitUrl(@RequestBody RequestCodeDTO requestCodeDto)
         throws Exception {

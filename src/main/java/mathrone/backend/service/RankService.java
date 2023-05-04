@@ -32,6 +32,7 @@ public class RankService {
         ObjectMapper mapper = new ObjectMapper();
         ArrayNode arrayNode = mapper.createArrayNode();
         Set<ZSetOperations.TypedTuple<String>> rankSet = zSetOperations.reverseRangeWithScores("test", 0, -1);
+
         //LinkedHashMap으로 리턴함
         for(ZSetOperations.TypedTuple<String> str : rankSet) {
             ObjectNode node = mapper.createObjectNode();
@@ -45,10 +46,6 @@ public class RankService {
     }
 
     public ObjectNode getMyRank(String accessToken){ // 리더보드에 필요한 나의 rank 조회
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
-        }
-
         int userId = Integer.parseInt(
                 tokenProviderUtil.getAuthentication(accessToken).getName());
 
