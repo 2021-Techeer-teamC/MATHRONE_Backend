@@ -12,10 +12,11 @@ import lombok.Setter;
 @Setter
 public class ProblemGradeRequestDto {
     private List<problemSolve> answerSubmitList;
+    private Boolean isAll;
 
     @Getter
     public static class problemSolve{
         private String problemId;
-        private int solution;
+        private String solution;
     }
 }
