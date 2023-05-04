@@ -58,14 +58,8 @@ public class RankService {
         return node;
     }
 
-//    public void setRank(String accessToken){ // 문제를 풀었을 시에 스코어를 올려주는 용도
-//        if (!tokenProviderUtil.validateToken(accessToken)) {
-//            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
-//        }
-//        Integer userId = Integer.parseInt(
-//                tokenProviderUtil.getAuthentication(accessToken).getName());
-//        String userName = userInfoRepository.findByUserId(userId).getId();
-//        zSetOperations.incrementScore("rankscore", userName, 1);
-//        // value값에 해당하는 score에 delta값을 더해줌, value 값이 없을시 자동 추가
-//    }
+    public void setRank(Integer userId, Integer upScore){ // 문제를 풀었을 시에 스코어를 올려주는 용도
+        zSetOperations.incrementScore("test", userId.toString(), upScore);
+        // value값에 해당하는 score에 delta값을 더해줌, value 값이 없을시 자동 추가
+    }
 }
