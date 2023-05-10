@@ -3,6 +3,7 @@ package mathrone.backend.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.ProblemGradeRequestDto;
@@ -11,6 +12,7 @@ import mathrone.backend.domain.Problem;
 import mathrone.backend.domain.ProblemTry;
 import mathrone.backend.domain.Solution;
 import mathrone.backend.domain.UserInfo;
+import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.repository.ProblemRepository;
 import mathrone.backend.repository.ProblemTryRepository;
 import mathrone.backend.repository.SolutionRepository;
@@ -30,22 +32,23 @@ public class AnswerServiceImpl implements AnswerService {
     private final RankService rankService;
 
     public List<ProblemGradeResponseDto> gradeProblem(
-        ProblemGradeRequestDto problemGradeRequestDtoList, String accessToken){
+        ProblemGradeRequestDto problemGradeRequestDtoList, HttpServletRequest request){
             if(problemGradeRequestDtoList.getIsAll()) // 전체 채점일 경우
-                return gradeProblemAll(problemGradeRequestDtoList, accessToken);
+                return gradeProblemAll(problemGradeRequestDtoList, request);
             else
-                return gradeSolvedProblem(problemGradeRequestDtoList, accessToken);
+                return gradeSolvedProblem(problemGradeRequestDtoList, request);
         }
 
 
     @Transactional
     public List<ProblemGradeResponseDto> gradeProblemAll( // 전체 채점 진행
-        ProblemGradeRequestDto problemGradeRequestDtoList, String accessToken) {
+        ProblemGradeRequestDto problemGradeRequestDtoList, HttpServletRequest request) {
 
         Integer upScore = 0;
+        String accessToken = tokenProviderUtil.resolveToken(request);
         // token 검증
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
         }
         // access token에서 userId 가져오기
         Integer userId = Integer.parseInt(
@@ -99,12 +102,13 @@ public class AnswerServiceImpl implements AnswerService {
 
     @Transactional
     public List<ProblemGradeResponseDto> gradeSolvedProblem(
-            ProblemGradeRequestDto problemGradeRequestDtoList, String accessToken) {
+            ProblemGradeRequestDto problemGradeRequestDtoList, HttpServletRequest request) {
 
         Integer upScore = 0;
+        String accessToken = tokenProviderUtil.resolveToken(request);
         // token 검증
-        if (!tokenProviderUtil.validateToken(accessToken)) {
-            throw new RuntimeException("Access Token 이 유효하지 않습니다.");
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
         }
 
         // access token에서 userId 가져오기
