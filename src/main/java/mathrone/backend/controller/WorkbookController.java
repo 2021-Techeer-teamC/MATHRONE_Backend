@@ -1,16 +1,18 @@
 package mathrone.backend.controller;
 
-import mathrone.backend.domain.*;
+import java.util.List;
+import javax.servlet.http.HttpServletRequest;
+import mathrone.backend.domain.UserWorkbookData;
+import mathrone.backend.domain.bookContent;
+import mathrone.backend.domain.bookItem;
 import mathrone.backend.service.WorkBookService;
-//import org.apache.commons.lang3.tuple.Pair;
-
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;//자료형 때문에 오류였음.. awt.print.Pageable아님
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.web.bind.annotation.*;
-
-
-import java.util.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/workbook")
@@ -49,6 +51,18 @@ public class WorkbookController {
     @GetMapping("/summary")
     public List<bookContent> workbookList() {
         return workBookService.getWorkbookList();
+    }
+
+    @GetMapping("/try")
+    public List<UserWorkbookData> getTryingList(
+        HttpServletRequest request) {
+        return workBookService.getTryingBook(request);
+    }
+
+    @GetMapping("/star")
+    public List<UserWorkbookData> getStarList(
+        HttpServletRequest request) {
+        return workBookService.getStarBook(request);
     }
 
 }
