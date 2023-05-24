@@ -1,5 +1,6 @@
 package mathrone.backend.repository;
 
+import java.util.List;
 import mathrone.backend.domain.PubCatPair;
 import mathrone.backend.domain.WorkBookInfo;
 import org.springframework.data.domain.Page;
@@ -7,8 +8,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface WorkBookRepository extends JpaRepository<WorkBookInfo, String> {
@@ -32,5 +31,7 @@ public interface WorkBookRepository extends JpaRepository<WorkBookInfo, String> 
     List<PubCatPair> findGroupByPublisherAndCategory();
 
     // workbookId로 해당 workbook 조회
-    WorkBookInfo findByWorkbookId(String workbookId);
+    WorkBookInfo findByWorkbookId(WorkBookInfo workBookInfo);
+
+
 }
