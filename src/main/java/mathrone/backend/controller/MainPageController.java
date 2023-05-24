@@ -1,17 +1,15 @@
 package mathrone.backend.controller;
 
+import java.util.List;
 import mathrone.backend.controller.dto.CarouselResponseDto;
-import mathrone.backend.domain.userWorkbookData;
 import mathrone.backend.service.MainPageService;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 
 @RestController
-
+@RequestMapping("/main")
 public class MainPageController {
 
     private final MainPageService mainPageService;
@@ -20,25 +18,14 @@ public class MainPageController {
         this.mainPageService = mainPageService;
     }
 
-    @GetMapping("/main/workbook/try")
-    public List<userWorkbookData> getTryingList(
-        @RequestParam(value = "userId", required = false) Integer userId) {
-        return mainPageService.getTryingBook(userId);
-    }
-
-    @GetMapping("/main/carousel/list")
+    @GetMapping("/carousel/list")
     public List<CarouselResponseDto> getCarousel() {
         return mainPageService.getCarousel();
-    }
-
-    @GetMapping("/main/workbook/star")
-    public List<userWorkbookData> getStarList(
-        @RequestParam(value = "userId", required = false) Integer userId) {
-        return mainPageService.getStarBook(userId);
     }
 
 //    @GetMapping("/main/problem/try")
 //    public List<RecentTryDto> getRecentTry(){
 //        return mainPageService.getRecentTry();
 //    }
+
 }
