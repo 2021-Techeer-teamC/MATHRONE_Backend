@@ -3,14 +3,14 @@ package mathrone.backend.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
+import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.repository.UserInfoRepository;
+import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
-import mathrone.backend.util.TokenProviderUtil;
-
-
-import java.util.Set;
 
 
 @Service
@@ -28,6 +28,10 @@ public class RankService {
         this.tokenProviderUtil = tokenProviderUtil;
     }
 
+    /**
+     * 모든 사용자의 rank 데이터(유저 이름, 시도, 맞은 개수)를 기반으로 rank 측정
+     * @return ArrayNode
+     */
     public ArrayNode getAllRank(){ // 리더보드에 필요한 rank 데이터 조회
         ObjectMapper mapper = new ObjectMapper();
         ArrayNode arrayNode = mapper.createArrayNode();
@@ -45,7 +49,19 @@ public class RankService {
         return arrayNode;
     }
 
-    public ObjectNode getMyRank(String accessToken){ // 리더보드에 필요한 나의 rank 조회
+    /**
+     * 특정 사용자의 rank 데이터 반환
+     * @param request access token 정보를 추출하기 위한 매개변수
+     * @return ObjectNode
+     */
+    public ObjectNode getMyRank(HttpServletRequest request){
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
+        }
+
+        // 리더보드에 필요한 나의 rank 조회
         int userId = Integer.parseInt(
                 tokenProviderUtil.getAuthentication(accessToken).getName());
 
