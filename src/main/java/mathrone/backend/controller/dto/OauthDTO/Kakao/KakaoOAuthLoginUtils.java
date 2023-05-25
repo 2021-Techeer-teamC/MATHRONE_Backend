@@ -29,4 +29,7 @@ public class KakaoOAuthLoginUtils {
 
     @Value("${kakao.auth.grantType}")
     private String grantType;
+
+    @Value("${kakao.admin.key}")
+    private String adminKey;
 }
