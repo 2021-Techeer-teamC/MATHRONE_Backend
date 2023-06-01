@@ -1,6 +1,6 @@
 package mathrone.backend.domain;
 import com.sun.istack.NotNull;
-import com.vladmihalcea.hibernate.type.array.IntArrayType;
+import com.vladmihalcea.hibernate.type.array.StringArrayType;
 import lombok.NoArgsConstructor;
 import mathrone.backend.controller.dto.CarouselResponseDto;
 import org.hibernate.annotations.Type;
@@ -11,7 +11,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Entity
 @Table(name = "workbook")
-@TypeDef(name = "int-array", typeClass = IntArrayType.class)
+@TypeDef(name = "String-array", typeClass = StringArrayType.class)
 public class WorkBookInfo {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) //JPA 사용시 필요
@@ -39,8 +39,8 @@ public class WorkBookInfo {
     private Short month;
 
     @Column(name="chapter_id")
-    @Type(type = "int-array")
-    private Integer[] chapterId;
+    @Type(type = "String-array")
+    private String[] chapterId;
 
     private String category;
 
@@ -76,7 +76,7 @@ public class WorkBookInfo {
         return month;
     }
 
-    public Integer[] getChapter_id() {
+    public String[] getChapterId() {
         return chapterId;
     }
 
