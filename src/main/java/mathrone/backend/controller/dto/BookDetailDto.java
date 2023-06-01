@@ -4,6 +4,7 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import mathrone.backend.domain.Tag;
 
 @Getter
 @AllArgsConstructor
@@ -21,7 +22,7 @@ public class BookDetailDto {
     private Short year;
     private Short month;
     private List<ChapterGroup> chapterGroup;
-//    private List<Tags> tags;
+    private List<Tag> tags;
     @Builder
     @Getter
     public static class ChapterGroup{
@@ -35,10 +36,4 @@ public class BookDetailDto {
         private String id; //03 or 02
         private String name;  //수열 or 삼각함수 등 // chapter table chapter에서 컬럼명 변경
     }
-//    @Builder
-//    @AllArgsConstructor
-//    public static class Tags{
-//        Integer id;
-//        String name;  // 수학1, 수학2 등
-//    }
 }
