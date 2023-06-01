@@ -1,5 +1,6 @@
 package mathrone.backend.controller;
 
+import mathrone.backend.controller.dto.BookDetailDto;
 import mathrone.backend.domain.*;
 import mathrone.backend.service.WorkBookService;
 //import org.apache.commons.lang3.tuple.Pair;
@@ -49,6 +50,12 @@ public class WorkbookController {
     @GetMapping("/summary")
     public List<bookContent> workbookList() {
         return workBookService.getWorkbookList();
+    }
+
+    @GetMapping("workbook/chapters")
+    public BookDetailDto workbookDetail(
+            @RequestParam(value = "workbook") String workbook) {
+        return workBookService.getWorkbookDetail(workbook);
     }
 
 }
