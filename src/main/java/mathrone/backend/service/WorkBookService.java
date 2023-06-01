@@ -1,13 +1,17 @@
 package mathrone.backend.service;
 
+import mathrone.backend.controller.dto.BookDetailDto;
+import mathrone.backend.controller.dto.BookDetailDto.ChapterGroup;
+import mathrone.backend.controller.dto.BookDetailDto.Chapters;
 import mathrone.backend.domain.*;
+import mathrone.backend.repository.ChapterRepository;
 import mathrone.backend.repository.LevelRepository;
 import mathrone.backend.repository.ProblemRepository;
+import mathrone.backend.repository.TagRepository;
 import mathrone.backend.repository.UserWorkbookRepository;
 import mathrone.backend.repository.WorkBookRepository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.data.domain.Sort;
 
 import java.util.*;
 
@@ -18,14 +22,18 @@ public class WorkBookService {
     private final LevelRepository levelRepository;
     private final UserWorkbookRepository userWorkbookRepository;
     private final ProblemRepository problemRepository;
-
+    private final ChapterRepository chapterRepository;
+    private final TagRepository tagRepository;
     //생성자
 
-    public WorkBookService(WorkBookRepository workBookRepository, ProblemRepository problemRepository, LevelRepository levelRepository, UserWorkbookRepository userWorkbookRepository){
+    public WorkBookService(WorkBookRepository workBookRepository, ProblemRepository problemRepository, LevelRepository levelRepository, UserWorkbookRepository userWorkbookRepository,
+            ChapterRepository chapterRepository, TagRepository tagRepository){
         this.workBookRepository = workBookRepository;
         this.levelRepository = levelRepository;
         this.userWorkbookRepository = userWorkbookRepository;
         this.problemRepository = problemRepository;
+        this.chapterRepository = chapterRepository;
+        this.tagRepository = tagRepository;
     }
 
 
@@ -63,6 +71,62 @@ public class WorkBookService {
         else if(maxValue==mid) return "2";
         else return "3";
 
+    }
+
+
+    // 워크북 상세 페이지에 대한 정보를 불러옴
+    public BookDetailDto getWorkbookDetail(String workbookId){
+        Map< String, List<Chapters>> arrMap = new HashMap<>(); // 그룹 별로 정리하기 위함
+        List<Chapters> list = new ArrayList<>();
+        List<ChapterGroup> chapterGroups = new ArrayList<>();
+        List<Tag> tags = new ArrayList<>();
+
+        WorkBookInfo workBookInfo = workBookRepository.findByWorkbookId(workbookId);
+
+        // 각 그룹별로 챕터 정리
+        for(String s : workBookInfo.getChapterId()){
+            ChapterInfo chapterInfo = chapterRepository.findByChapterId(s).get();
+            Chapters chapters = Chapters.builder()
+                    .id(chapterInfo.getChapterId())
+                    .name(chapterInfo.getName())
+                    .build();
+            if (arrMap.containsKey(chapterInfo.getGroup())) {
+                list = arrMap.get(chapterInfo.getGroup());
+                list.add(chapters);
+            }else {
+                list.clear();
+                list.add(chapters);
+            }
+            arrMap.put(chapterInfo.getGroup(), list);
+        }
+        // 그룹별로 정리한 챕터 정보를 ChapterGroup 리스트 형식에 맞게 변환
+        for (String key : arrMap.keySet()) {
+            chapterGroups.add(
+                    ChapterGroup.builder()
+                    .group(key)
+                    .chapters(arrMap.get(key))
+                    .build());
+        }
+
+        for(Long i : workBookInfo.getTags()){
+            if(tagRepository.findById(i).isPresent())
+                tags.add(tagRepository.findById(i).get());
+        }
+
+        return BookDetailDto.builder()
+                .workbookId(workBookInfo.getWorkbookId())
+                .title(workBookInfo.getTitle())
+                .summary("summary")
+                .publisher(workBookInfo.getPublisher())
+                .category(workBookInfo.getCategory())
+                .thumbnail(workBookInfo.getThumbnail())
+                .content(workBookInfo.getContent())
+                .type(workBookInfo.getType())
+                .year(workBookInfo.getYear())
+                .month(workBookInfo.getMonth())
+                .chapterGroup(chapterGroups)
+                .tags(tags)
+                .build();
     }
 
     public Long getStar(String workbookId){
