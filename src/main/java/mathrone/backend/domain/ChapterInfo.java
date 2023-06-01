@@ -14,18 +14,18 @@ public class ChapterInfo {
     @Id
     @Column(name = "chapter_id")
     private String chapterId;
-    private String subject;
-    private String chapter;
+    private String group;
+    private String name;
 
     public String getChapterId() {
         return chapterId;
     }
 
-    public String getSubject() {
-        return subject;
+    public String getGroup() {
+        return group;
     }
 
-    public String getChapter() {
-        return chapter;
+    public String getName() {
+        return name;
     }
 }
