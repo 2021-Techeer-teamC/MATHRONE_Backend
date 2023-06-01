@@ -24,9 +24,9 @@ public class WorkBookInfo {
     @NotNull
     private String publisher;
 
-    @Column(name = "profile_img")
+    @Column(name = "thumbnail")
     @NotNull
-    private String profileImg;
+    private String thumbnail;
 
     @NotNull
     private String content;
@@ -56,8 +56,8 @@ public class WorkBookInfo {
         return publisher;
     }
 
-    public String getProfileImg() {
-        return profileImg;
+    public String thumbnail() {
+        return thumbnail;
     }
 
     public String getContent() {
