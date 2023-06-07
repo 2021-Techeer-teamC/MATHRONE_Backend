@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import mathrone.backend.domain.Problem;
 import mathrone.backend.domain.PubCatPair;
 import mathrone.backend.domain.UserWorkbookData;
-import mathrone.backend.domain.UserWorkbookRelInfo;
 import mathrone.backend.domain.WorkBookInfo;
 import mathrone.backend.domain.WorkbookLevelInfo;
 import mathrone.backend.domain.bookContent;
@@ -20,7 +19,6 @@ import mathrone.backend.domain.bookItem;
 import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.repository.LevelRepository;
 import mathrone.backend.repository.ProblemRepository;
-import mathrone.backend.repository.UserWorkbookRelRepository;
 import mathrone.backend.repository.UserWorkbookRepository;
 import mathrone.backend.repository.WorkBookRepository;
 import mathrone.backend.util.TokenProviderUtil;
@@ -36,7 +34,6 @@ public class WorkBookService {
     private final UserWorkbookRepository userWorkbookRepository;
     private final ProblemRepository problemRepository;
     private final TokenProviderUtil tokenProviderUtil;
-    private final UserWorkbookRelRepository workBookRelRepository;
 
     public List<WorkBookInfo> findWorkbook(String publisher, String category, Pageable pageable) {
         if (publisher.equals("all")) {
@@ -213,22 +210,22 @@ public class WorkBookService {
 
         int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
 
-        List<UserWorkbookRelInfo> userTriedWorkbookList = workBookRelRepository.findUserTriedWorkbook(
-            userId, true);
+        List<WorkBookInfo> userTriedWorkbookList = workBookRepository.findUserTriedWorkbook(
+            userId);
 
         // user가 시도한 문제집이 있는 경우
-        return getUserWorkbookDataList(userTriedWorkbookList);
+        return getUserWorkbookDataList(userTriedWorkbookList, false);
     }
 
     /**
-     * 모든 유저가 시도한 문제집 리스트 반환
+     * 모든 유저가 시도한 문제집 리스트를 많이 시도한 순으로 6개 반환
      *
      * @return List<userWorkbookData>
      */
     private List<UserWorkbookData> getAllUserTriedBook() {
-        List<UserWorkbookRelInfo> allUserTriedWorkBookList = workBookRelRepository.findAllUserTriedWorkbook();
+        List<WorkBookInfo> allUserTriedWorkBookList = workBookRepository.findAllUserTriedWorkbook();
 
-        return getUserWorkbookDataList(allUserTriedWorkBookList);
+        return getUserWorkbookDataList(allUserTriedWorkBookList, false);
     }
 
     /**
@@ -251,13 +248,13 @@ public class WorkBookService {
      * @return List<userWorkbookData>
      */
     private List<UserWorkbookData> getAllUserStarBook() {
-        List<UserWorkbookRelInfo> userStarBookList = workBookRelRepository.findAllUserStarWorkBook();
+        List<WorkBookInfo> userStarBookList = workBookRepository.findAllUserStarWorkBook();
 
-        return getUserWorkbookDataList(userStarBookList);
+        return getUserWorkbookDataList(userStarBookList, false);
     }
 
     /**
-     * 모든 유저가 즐겨찾는 문제집 리스트 반환
+     * 모든 유저가 즐겨찾는 문제집 리스트를 많이 즐겨찾는 순으로 6개 반환
      *
      * @param accessToken 유저 정보에 해당하는 jwt token
      * @return List<userWorkbookData>
@@ -270,10 +267,10 @@ public class WorkBookService {
 
         int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
 
-        List<UserWorkbookRelInfo> userStarBookList = workBookRelRepository.findUserStarWorkBook(
-            userId, true);
+        List<WorkBookInfo> userStarBookList = workBookRepository.findUserStarWorkBook(
+            userId);
 
-        return getUserWorkbookDataList(userStarBookList);
+        return getUserWorkbookDataList(userStarBookList, false);
     }
 
 
@@ -284,19 +281,16 @@ public class WorkBookService {
      * @return List<UserWorkbookData>
      */
     private List<UserWorkbookData> getUserWorkbookDataList(
-        List<UserWorkbookRelInfo> userWorkbookRelList) {
+        List<WorkBookInfo> userWorkbookRelList, boolean isStar) {
         List<UserWorkbookData> result = new ArrayList<UserWorkbookData>();
 
-        for (UserWorkbookRelInfo userWorkbookRelInfo : userWorkbookRelList) {
-            WorkBookInfo workBookInfo = userWorkbookRelInfo.getWorkbook();
+        for (WorkBookInfo workBookInfo : userWorkbookRelList) {
             UserWorkbookData userWorkbookData = new UserWorkbookData(workBookInfo.getWorkbookId(),
                 workBookInfo.getTitle(), workBookInfo.getProfileImg(), workBookInfo.getPublisher(),
-                getLevel(workBookInfo.getWorkbookId()), userWorkbookRelInfo.getWorkbookStar());
+                getLevel(workBookInfo.getWorkbookId()), isStar);
             result.add(userWorkbookData);
         }
 
         return result;
     }
-
-
 }
