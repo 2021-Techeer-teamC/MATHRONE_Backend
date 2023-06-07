@@ -33,5 +33,51 @@ public interface WorkBookRepository extends JpaRepository<WorkBookInfo, String> 
     // workbookId로 해당 workbook 조회
     WorkBookInfo findByWorkbookId(WorkBookInfo workBookInfo);
 
+    // 모든 유저가 즐겨찾는 문제집 중, 많이 즐겨찾는 순으로 6개 조회
+    @Query(value = "SELECT workbook.*"
+        + "FROM (SELECT workbook_id, count(workbook_id) AS star_count "
+        + "FROM user_workbook_rel "
+        + "WHERE workbook_star = TRUE "
+        + "GROUP BY workbook_id "
+        + "ORDER BY star_count DESC , workbook_id) AS relation "
+        + "INNER JOIN workbook "
+        + "ON workbook.workbook_id = relation.workbook_id LIMIT 6;", nativeQuery = true)
+    List<WorkBookInfo> findAllUserStarWorkBook();
+
+    // 특정 유저가 즐겨찾는 문제집 조회
+    @Query(value = "SELECT workbook.* "
+        + "FROM (SELECT workbook_id "
+        + "FROM user_workbook_rel "
+        + "WHERE workbook_star = TRUE "
+        + "AND user_id = :userId "
+        + "GROUP BY workbook_id "
+        + "ORDER BY workbook_id) AS relation "
+        + "INNER JOIN workbook "
+        + "ON workbook.workbook_id = relation.workbook_id;", nativeQuery = true)
+    List<WorkBookInfo> findUserStarWorkBook(int userId);
+
+    // 모든 유저가 시도한 문제집 중, 많이 시도한 순으로 6개 조회
+    @Query(value = "SELECT workbook.*"
+        + "FROM (SELECT workbook_id, count(workbook_id) AS star_count "
+        + "FROM user_workbook_rel "
+        + "WHERE workbook_try = TRUE "
+        + "GROUP BY workbook_id "
+        + "ORDER BY star_count DESC , workbook_id) AS relation "
+        + "INNER JOIN workbook "
+        + "ON workbook.workbook_id = relation.workbook_id LIMIT 6;", nativeQuery = true)
+    List<WorkBookInfo> findAllUserTriedWorkbook();
+
+    // 특정 유저가 시도한 문제집 조회
+    @Query(value = "SELECT workbook.* "
+        + "FROM (SELECT workbook_id "
+        + "FROM user_workbook_rel "
+        + "WHERE workbook_try = TRUE "
+        + "AND user_id = :userId "
+        + "GROUP BY workbook_id "
+        + "ORDER BY workbook_id) AS relation "
+        + "INNER JOIN workbook "
+        + "ON workbook.workbook_id = relation.workbook_id;", nativeQuery = true)
+    List<WorkBookInfo> findUserTriedWorkbook(int userId);
+
 
 }
