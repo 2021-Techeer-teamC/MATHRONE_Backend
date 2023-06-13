@@ -1,16 +1,21 @@
 package mathrone.backend.controller;
 
-import mathrone.backend.domain.*;
+import io.swagger.annotations.ApiOperation;
+import java.util.List;
+import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
+import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
+import mathrone.backend.domain.bookContent;
+import mathrone.backend.domain.bookItem;
 import mathrone.backend.service.WorkBookService;
-//import org.apache.commons.lang3.tuple.Pair;
-
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;//자료형 때문에 오류였음.. awt.print.Pageable아님
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.web.bind.annotation.*;
-
-
-import java.util.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/workbook")
@@ -45,10 +50,18 @@ public class WorkbookController {
         return workBookService.countWorkbook(publisher, category);
     }
 
-
     @GetMapping("/summary")
     public List<bookContent> workbookList() {
         return workBookService.getWorkbookList();
     }
+
+    @GetMapping({"/track/solved", "/track/solved/{workbookId}"})
+    @ApiOperation(value = "유저가 푼 문제집의 풀이 tracking", notes = "유저의 token 필요, workbookId 여부에 따라 필터링된 풀이 정보 반환")
+    public List<UserSolvedWorkbookResponseDtoInterface> trackSolvedWorkbook(
+        HttpServletRequest request,
+        @PathVariable(value = "workbookId", required = false) Optional<String> workbookId) {
+        return workBookService.trackSolvedWorkbook(request, workbookId);
+    }
+
 
 }
