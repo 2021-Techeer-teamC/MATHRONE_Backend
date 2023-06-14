@@ -9,10 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
+import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
 import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.domain.Problem;
 import mathrone.backend.domain.PubCatPair;
-import mathrone.backend.domain.UserInfo;
 import mathrone.backend.domain.WorkBookInfo;
 import mathrone.backend.domain.WorkbookLevelInfo;
 import mathrone.backend.domain.bookContent;
@@ -21,10 +22,9 @@ import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.LevelRepository;
 import mathrone.backend.repository.ProblemRepository;
-import mathrone.backend.repository.ProblemTryRepository;
-import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.UserWorkbookRepository;
 import mathrone.backend.repository.WorkBookRepository;
+import mathrone.backend.repository.WorkbookLevelRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,23 +37,20 @@ public class WorkBookService {
     private final UserWorkbookRepository userWorkbookRepository;
     private final ProblemRepository problemRepository;
     private final TokenProviderUtil tokenProviderUtil;
-    private final UserInfoRepository userInfoRepository;
-    private final ProblemTryRepository problemTryRepository;
+    private final WorkbookLevelRepository workbookLevelRepository;
 
     //생성자
 
     public WorkBookService(WorkBookRepository workBookRepository,
         ProblemRepository problemRepository, LevelRepository levelRepository,
         UserWorkbookRepository userWorkbookRepository, TokenProviderUtil tokenProviderUtil,
-        UserInfoRepository userInfoRepository,
-        ProblemTryRepository problemTryRepository) {
+        WorkbookLevelRepository workbookLevelRepository) {
         this.workBookRepository = workBookRepository;
         this.levelRepository = levelRepository;
         this.userWorkbookRepository = userWorkbookRepository;
         this.problemRepository = problemRepository;
         this.tokenProviderUtil = tokenProviderUtil;
-        this.userInfoRepository = userInfoRepository;
-        this.problemTryRepository = problemTryRepository;
+        this.workbookLevelRepository = workbookLevelRepository;
     }
 
 
@@ -223,13 +220,6 @@ public class WorkBookService {
         }
         int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
 
-        Optional<UserInfo> isUser = userInfoRepository.findById(userId);
-
-        // 유저 검증
-        if (isUser.isEmpty()) {
-            throw new CustomException(ErrorCode.USER_NOT_FOUND);
-        }
-
         // 특정 문제집에 대한 유저의 풀이 정보 tracking
         if (workbookId.isPresent()) {
             Optional<WorkBookInfo> byWorkbook = workBookRepository.findById(workbookId.get());
@@ -244,4 +234,38 @@ public class WorkBookService {
         }
     }
 
+    /**
+     * user의 Workbook 평가 요청 처리
+     *
+     * @param request http request
+     * @param userEvaluateLevelRequestDto 평가 요청에 필요한 정보 dto
+     */
+    @Transactional
+    public void evaluateWorkbook(HttpServletRequest request,
+        UserEvaluateLevelRequestDto userEvaluateLevelRequestDto) {
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
+        }
+
+        Optional<WorkbookLevelInfo> isWorkbookLevelInfo = workbookLevelRepository.findByWorkbookId(
+            userEvaluateLevelRequestDto.getWorkbookId());
+
+        if (isWorkbookLevelInfo.isEmpty()) {
+            throw new CustomException(ErrorCode.NOT_FOUND_WORKBOOK);
+        }
+
+        WorkbookLevelInfo workbookLevelInfo = isWorkbookLevelInfo.get();
+        int level = userEvaluateLevelRequestDto.getLevel();
+
+        switch (level) {
+            case 1:
+                workbookLevelInfo.updateLowCount(workbookLevelInfo.getLowCnt() + 1);
+            case 2:
+                workbookLevelInfo.updateMidCount(workbookLevelInfo.getMidCnt() + 1);
+            case 3:
+                workbookLevelInfo.updateHighCount(workbookLevelInfo.getHighCnt() + 1);
+        }
+    }
 }
