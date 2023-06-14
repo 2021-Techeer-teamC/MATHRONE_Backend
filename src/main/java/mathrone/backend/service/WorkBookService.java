@@ -266,6 +266,9 @@ public class WorkBookService {
                 workbookLevelInfo.updateMidCount(workbookLevelInfo.getMidCnt() + 1);
             case 3:
                 workbookLevelInfo.updateHighCount(workbookLevelInfo.getHighCnt() + 1);
+            default:
+                throw new CustomException(ErrorCode.INVALID_LEVEL_VALUE);
+
         }
     }
 }
