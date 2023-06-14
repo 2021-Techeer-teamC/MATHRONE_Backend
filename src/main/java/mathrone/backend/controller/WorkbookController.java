@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
+import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
 import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.domain.bookContent;
 import mathrone.backend.domain.bookItem;
@@ -11,9 +12,12 @@ import mathrone.backend.service.WorkBookService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -62,6 +66,15 @@ public class WorkbookController {
         HttpServletRequest request,
         @PathVariable(value = "workbookId", required = false) Optional<String> workbookId) {
         return ResponseEntity.ok(workBookService.trackSolvedWorkbook(request, workbookId));
+    }
+
+    @PostMapping("/level")
+    @ApiOperation(value = "유저의 문제집 평가", notes = "유저 token 필요")
+    public ResponseEntity<Void> evaluateWorkbook(
+        HttpServletRequest request, @RequestBody UserEvaluateLevelRequestDto userEvaluateLevelRequestDto
+    ){
+        workBookService.evaluateWorkbook(request, userEvaluateLevelRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
 
