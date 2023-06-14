@@ -11,6 +11,7 @@ import mathrone.backend.service.WorkBookService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -57,10 +58,10 @@ public class WorkbookController {
 
     @GetMapping({"/track/solved", "/track/solved/{workbookId}"})
     @ApiOperation(value = "유저가 푼 문제집의 풀이 tracking", notes = "유저의 token 필요, workbookId 여부에 따라 필터링된 풀이 정보 반환")
-    public List<UserSolvedWorkbookResponseDtoInterface> trackSolvedWorkbook(
+    public ResponseEntity<List<UserSolvedWorkbookResponseDtoInterface>> trackSolvedWorkbook(
         HttpServletRequest request,
         @PathVariable(value = "workbookId", required = false) Optional<String> workbookId) {
-        return workBookService.trackSolvedWorkbook(request, workbookId);
+        return ResponseEntity.ok(workBookService.trackSolvedWorkbook(request, workbookId));
     }
 
 
