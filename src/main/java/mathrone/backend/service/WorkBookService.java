@@ -262,10 +262,13 @@ public class WorkBookService {
         switch (level) {
             case 1:
                 workbookLevelInfo.updateLowCount(workbookLevelInfo.getLowCnt() + 1);
+                break;
             case 2:
                 workbookLevelInfo.updateMidCount(workbookLevelInfo.getMidCnt() + 1);
+                break;
             case 3:
                 workbookLevelInfo.updateHighCount(workbookLevelInfo.getHighCnt() + 1);
+                break;
             default:
                 throw new CustomException(ErrorCode.INVALID_LEVEL_VALUE);
 
