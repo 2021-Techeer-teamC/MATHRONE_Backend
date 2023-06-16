@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.domain.Problem;
@@ -17,9 +18,10 @@ import mathrone.backend.domain.WorkbookLevelInfo;
 import mathrone.backend.domain.bookContent;
 import mathrone.backend.domain.bookItem;
 import mathrone.backend.error.exception.CustomException;
+import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.LevelRepository;
 import mathrone.backend.repository.ProblemRepository;
-import mathrone.backend.repository.UserWorkbookRepository;
+import mathrone.backend.repository.UserWorkbookRelRepository;
 import mathrone.backend.repository.WorkBookRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.domain.Pageable;
@@ -31,9 +33,9 @@ public class WorkBookService {
 
     private final WorkBookRepository workBookRepository;
     private final LevelRepository levelRepository;
-    private final UserWorkbookRepository userWorkbookRepository;
     private final ProblemRepository problemRepository;
     private final TokenProviderUtil tokenProviderUtil;
+    private final UserWorkbookRelRepository userWorkbookRelRepository;
 
     public List<WorkBookInfo> findWorkbook(String publisher, String category, Pageable pageable) {
         if (publisher.equals("all")) {
@@ -79,7 +81,13 @@ public class WorkBookService {
     }
 
     public Long getStar(String workbookId) {
-        return userWorkbookRepository.countByWorkbookIdAndWorkbookStar(workbookId,
+        Optional<WorkBookInfo> isWorkbook = workBookRepository.findById(workbookId);
+
+        // Workbook이 없는 경우 error처리
+        if (isWorkbook.isEmpty())
+            throw new CustomException(ErrorCode.NOT_FOUND_WORKBOOK);
+
+        return userWorkbookRelRepository.countByWorkbookAndWorkbookStar(isWorkbook.get(),
             true); //좋아요 표시 눌린것만
     }
 
