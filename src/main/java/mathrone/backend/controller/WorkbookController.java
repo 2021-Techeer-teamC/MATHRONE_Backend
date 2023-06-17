@@ -52,10 +52,10 @@ public class WorkbookController {
         return workBookService.getWorkbookList();
     }
 
-    @GetMapping("workbook/chapters")
+    @GetMapping("/")
     public BookDetailDto workbookDetail(
-            @RequestParam(value = "workbook") String workbook) {
-        return workBookService.getWorkbookDetail(workbook);
+            @RequestParam(value = "id") String bookId) {
+        return workBookService.getWorkbookDetail(bookId);
     }
 
 }
