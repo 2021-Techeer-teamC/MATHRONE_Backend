@@ -108,9 +108,12 @@ public class WorkBookService {
                     .build());
         }
 
-        for(Long i : workBookInfo.getTags()){
-            if(tagRepository.findById(i).isPresent())
-                tags.add(tagRepository.findById(i).get());
+        Long[] tagList = workBookInfo.getTags();
+        if(tagList != null){
+            for(Long i : tagList){
+                if(tagRepository.findById(i).isPresent())
+                    tags.add(tagRepository.findById(i).get());
+            }
         }
 
         return BookDetailDto.builder()
