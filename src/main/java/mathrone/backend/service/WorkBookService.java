@@ -84,28 +84,30 @@ public class WorkBookService {
         WorkBookInfo workBookInfo = workBookRepository.findByWorkbookId(workbookId);
 
         // 각 그룹별로 챕터 정리
-        for(String s : workBookInfo.getChapterId()){
-            ChapterInfo chapterInfo = chapterRepository.findByChapterId(s).get();
-            Chapters chapters = Chapters.builder()
-                    .id(chapterInfo.getChapterId())
-                    .name(chapterInfo.getName())
-                    .build();
-            if (arrMap.containsKey(chapterInfo.getGroup())) {
-                list = arrMap.get(chapterInfo.getGroup());
-                list.add(chapters);
-            }else {
-                list.clear();
-                list.add(chapters);
+        if(workBookInfo.getChapterId() != null){
+            for (String s : workBookInfo.getChapterId()) {
+                ChapterInfo chapterInfo = chapterRepository.findByChapterId(s).get();
+                Chapters chapters = Chapters.builder()
+                        .id(chapterInfo.getChapterId())
+                        .name(chapterInfo.getName())
+                        .build();
+                if (arrMap.containsKey(chapterInfo.getGroup())) {
+                    list = arrMap.get(chapterInfo.getGroup());
+                    list.add(chapters);
+                } else {
+                    list.clear();
+                    list.add(chapters);
+                }
+                arrMap.put(chapterInfo.getGroup(), list);
             }
-            arrMap.put(chapterInfo.getGroup(), list);
-        }
-        // 그룹별로 정리한 챕터 정보를 ChapterGroup 리스트 형식에 맞게 변환
-        for (String key : arrMap.keySet()) {
-            chapterGroups.add(
-                    ChapterGroup.builder()
-                    .group(key)
-                    .chapters(arrMap.get(key))
-                    .build());
+            // 그룹별로 정리한 챕터 정보를 ChapterGroup 리스트 형식에 맞게 변환
+            for (String key : arrMap.keySet()) {
+                chapterGroups.add(
+                        ChapterGroup.builder()
+                                .group(key)
+                                .chapters(arrMap.get(key))
+                                .build());
+            }
         }
 
         Long[] tagList = workBookInfo.getTags();
@@ -115,6 +117,9 @@ public class WorkBookService {
                     tags.add(tagRepository.findById(i).get());
             }
         }
+
+        if(chapterGroups.isEmpty())
+            chapterGroups = null;
 
         return BookDetailDto.builder()
                 .workbookId(workBookInfo.getWorkbookId())
