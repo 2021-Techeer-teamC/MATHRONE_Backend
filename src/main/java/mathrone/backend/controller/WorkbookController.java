@@ -3,7 +3,7 @@ package mathrone.backend.controller;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
-import mathrone.backend.domain.UserWorkbookData;
+import mathrone.backend.controller.dto.UserWorkbookDataInterface;
 import mathrone.backend.domain.bookContent;
 import mathrone.backend.domain.bookItem;
 import mathrone.backend.service.WorkBookService;
@@ -56,16 +56,16 @@ public class WorkbookController {
 
     @GetMapping("/try")
     @ApiOperation(value = "사용자가 시도한 문제집 리스트 반환", notes = "access token가 존재하면 특정 사용자, 존재하지 않으면 모든 사용자가 시도한 문제집 리스트를 반환")
-    public List<UserWorkbookData> getTryingList(
+    public List<UserWorkbookDataInterface> getTriedWorkbooks(
         HttpServletRequest request) {
-        return workBookService.getTryingBook(request);
+        return workBookService.getTriedWorkbook(request);
     }
 
     @GetMapping("/star")
     @ApiOperation(value = "사용자가 즐겨찾는 문제집 리스트 반환", notes = "access token가 존재하면 특정 사용자, 존재하지 않으면 모든 사용자가 즐겨찾는 문제집 리스트를 반환")
-    public List<UserWorkbookData> getStarList(
+    public List<UserWorkbookDataInterface> getStarWorkbooks(
         HttpServletRequest request) {
-        return workBookService.getStarBook(request);
+        return workBookService.getStarWorkbook(request);
     }
 
 }
