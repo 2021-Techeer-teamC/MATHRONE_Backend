@@ -117,10 +117,6 @@ public class WorkBookService {
                     tags.add(tagRepository.findById(i).get());
             }
         }
-
-        if(chapterGroups.isEmpty())
-            chapterGroups = null;
-
         return BookDetailDto.builder()
                 .workbookId(workBookInfo.getWorkbookId())
                 .title(workBookInfo.getTitle())
