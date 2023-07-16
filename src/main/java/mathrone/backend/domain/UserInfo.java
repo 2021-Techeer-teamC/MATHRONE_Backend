@@ -63,10 +63,13 @@ public class UserInfo {
     }
 
     //업데이트 될만한 거
-    public UserInfo update(String userImg, boolean premium) {
+    public UserInfo updateImg(String userImg) {
         this.userImg = userImg;
-        this.premium = premium;
+        return this;
+    }
 
+    public UserInfo updatePremium(boolean premium){
+        this.premium = premium;
         return this;
     }
 
