@@ -3,6 +3,8 @@ package mathrone.backend.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import mathrone.backend.error.exception.CustomException;
@@ -35,7 +37,8 @@ public class RankService {
     public ArrayNode getAllRank(){ // 리더보드에 필요한 rank 데이터 조회
         ObjectMapper mapper = new ObjectMapper();
         ArrayNode arrayNode = mapper.createArrayNode();
-        Set<ZSetOperations.TypedTuple<String>> rankSet = zSetOperations.reverseRangeWithScores("test", 0, -1);
+        Set<ZSetOperations.TypedTuple<String>> rankSet =
+            Optional.ofNullable(zSetOperations.reverseRangeWithScores("test", 0, -1)).orElse(new HashSet<>());
 
         //LinkedHashMap으로 리턴함
         for(ZSetOperations.TypedTuple<String> str : rankSet) {
@@ -67,10 +70,16 @@ public class RankService {
 
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
-        node.put("rank", zSetOperations.reverseRank("test", Integer.toString(userId)) + 1);
-        node.put("user_name", userInfoRepository.findByUserId(userId).getAccountId());
-        node.put("correct_count", zSetOperations.score("test", Integer.toString(userId)));
-        node.put("try_count", userInfoRepository.getTryByUserID(userId));
+        Optional<Long> test = Optional.ofNullable(
+            zSetOperations.reverseRank("test", Integer.toString(userId)));
+
+        // redis에 data가 존재하는 경우
+        if (test.isPresent()){
+            node.put("rank", test.get() + 1);
+            node.put("user_name", userInfoRepository.findByUserId(userId).getAccountId());
+            node.put("correct_count", zSetOperations.score("test", Integer.toString(userId)));
+            node.put("try_count", userInfoRepository.getTryByUserID(userId));
+        }
         return node;
     }
 
