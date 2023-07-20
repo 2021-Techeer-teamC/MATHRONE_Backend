@@ -35,10 +35,10 @@ public enum ErrorCode {
 
     // workbook
     NOT_FOUND_WORKBOOK(NOT_FOUND, "해당 workbook이 존재하지 않습니다", "W001"),
-
+    INVALID_LEVEL_VALUE(BAD_REQUEST, "문제집을 평가하기 위한 level값이 잘못되었습니다", "W002"),
 
     // chapter
-    NOT_FOUND_CHAPTER(NOT_FOUND, "workbook에 chapter가 존재하지 않습니다. ", "W002"),
+    NOT_FOUND_CHAPTER(NOT_FOUND, "workbook에 chapter가 존재하지 않습니다. ", "WC01"),
 
     // token
     INVALID_ACCESS_TOKEN(UNAUTHORIZED, "Access token이 유효하지 않습니다.", "T001"),
