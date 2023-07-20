@@ -158,7 +158,7 @@ public class WorkBookService {
         for (WorkBookInfo wb: res) {
             String level = getLevel(wb.getWorkbookId());
             Long star = getStar(wb.getWorkbookId());
-            bookItem b = new bookItem(wb.getWorkbookId(), wb.getTitle(), wb.getPublisher(), wb.thumbnail(),level, star);
+            bookItem b = new bookItem(wb.getWorkbookId(), wb.getTitle(), wb.getPublisher(), wb.getThumbnail(),level, star);
             result.add(b);
         }
 

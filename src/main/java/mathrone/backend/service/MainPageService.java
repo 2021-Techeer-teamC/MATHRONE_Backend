@@ -73,7 +73,7 @@ public class MainPageService {
 //                    b = "3";
 //            }
             userWorkbookData a = new userWorkbookData(workBookInfo.getWorkbookId(),
-                workBookInfo.getTitle(), workBookInfo.thumbnail(), workBookInfo.getPublisher(),
+                workBookInfo.getTitle(), workBookInfo.getThumbnail(), workBookInfo.getPublisher(),
                 getLevel(workBookInfo.getWorkbookId()), userWorkbookRelInfo.getWorkbookStar());
             result.add(a);
         }
@@ -91,7 +91,7 @@ public class MainPageService {
                 .workbookTitle(workBookInfo.getTitle())
                 .month(workBookInfo.getMonth())
                 .year(workBookInfo.getYear())
-                .profileImg(workBookInfo.thumbnail())
+                .profileImg(workBookInfo.getThumbnail())
                 .intro(workbookRecommend.getIntro())
                 .build());
         }
@@ -119,7 +119,7 @@ public class MainPageService {
         for (WorkBookInfo wb : workbookList) {
             String level = getLevel(wb.getWorkbookId());
             userWorkbookData b = new userWorkbookData(wb.getWorkbookId(), wb.getTitle(),
-                wb.getPublisher(), wb.thumbnail(), level, true); //이미 true인 값에 대해서만해서 항상 true
+                wb.getPublisher(), wb.getThumbnail(), level, true); //이미 true인 값에 대해서만해서 항상 true
             result.add(b);
         }
 
