@@ -32,7 +32,6 @@ import mathrone.backend.repository.ProblemRepository;
 import mathrone.backend.repository.UserWorkbookRelRepository;
 import mathrone.backend.repository.ChapterRepository;
 import mathrone.backend.repository.TagRepository;
-import mathrone.backend.repository.UserWorkbookRepository;
 import mathrone.backend.repository.WorkBookRepository;
 import mathrone.backend.repository.WorkbookLevelRepository;
 import mathrone.backend.util.TokenProviderUtil;
