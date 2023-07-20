@@ -17,7 +17,7 @@ public interface UserWorkbookRelRepository extends
 
     // 모든 유저가 즐겨찾는 문제집 중, 많이 즐겨찾는 순으로 6개 조회
     @Query(value =
-        "SELECT r.workbook_id as workbookId, w.title, w.profile_img as profileImg, w.publisher, false AS star, "
+        "SELECT r.workbook_id as workbookId, w.title, w.thumbnail, w.publisher, false AS star, "
             + "(CASE GREATEST(l.low_cnt, l.mid_cnt, l.high_cnt) "
             + "WHEN l.low_cnt THEN '1' "
             + "WHEN l.mid_cnt THEN '2' "
@@ -35,7 +35,7 @@ public interface UserWorkbookRelRepository extends
 
     // 특정 유저가 즐겨찾는 문제집 조회
     @Query(value =
-        "SELECT w.workbook_id AS workbookId, w.title, w.profile_img AS profileImg, w.publisher, r.workbook_star AS star, "
+        "SELECT w.workbook_id AS workbookId, w.title, w.thumbnail, w.publisher, r.workbook_star AS star, "
             + "(CASE GREATEST(l.low_cnt, l.mid_cnt, l.high_cnt) "
             + "WHEN l.low_cnt THEN '1' "
             + "WHEN l.mid_cnt THEN '2' "
@@ -53,7 +53,7 @@ public interface UserWorkbookRelRepository extends
 
     // 모든 유저가 시도한 문제집 중, 많이 시도한 순으로 6개 조회
     @Query(value =
-        "SELECT r.workbook_id as workbookId, w.title, w.profile_img as profileImg, w.publisher, false AS star, "
+        "SELECT r.workbook_id as workbookId, w.title, w.thumbnail, w.publisher, false AS star, "
             + "(CASE GREATEST(l.low_cnt, l.mid_cnt, l.high_cnt) "
             + "WHEN l.low_cnt THEN '1' "
             + "WHEN l.mid_cnt THEN '2' "
@@ -71,7 +71,7 @@ public interface UserWorkbookRelRepository extends
 
     // 특정 유저가 시도한 문제집 조회
     @Query(value =
-        "SELECT w.workbook_id AS workbookId, w.title, w.profile_img AS profileImg, w.publisher, r.workbook_star AS star, "
+        "SELECT w.workbook_id AS workbookId, w.title, w.thumbnail, w.publisher, r.workbook_star AS star, "
             + "(CASE GREATEST(l.low_cnt, l.mid_cnt, l.high_cnt) "
             + "WHEN l.low_cnt THEN '1' "
             + "WHEN l.mid_cnt THEN '2' "

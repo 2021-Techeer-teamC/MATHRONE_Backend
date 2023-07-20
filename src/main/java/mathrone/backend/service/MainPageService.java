@@ -29,7 +29,7 @@ public class MainPageService {
                 .workbookTitle(workBookInfo.getTitle())
                 .month(workBookInfo.getMonth())
                 .year(workBookInfo.getYear())
-                .profileImg(workBookInfo.getProfileImg())
+                .thumbnail(workBookInfo.getThumbnail())
                 .intro(workbookRecommend.getIntro())
                 .build());
         }
