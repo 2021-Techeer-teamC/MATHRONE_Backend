@@ -79,15 +79,15 @@ public class SubscribeService {
 
         KakaoPaymentRequest request = KakaoPaymentRequest.builder()
                 .cid(cid)
-                .partner_order_id(orderId) //주문번호?? table을 따로 만들어야하나..
-                .partner_user_id(userId) // 회원 번호? 회원 id하면되나
+                .partner_order_id(orderId) //주문번호
+                .partner_user_id(userId) // 회원 번호
                 .item_name(item)
                 .quantity(quantity)
                 .total_amount(price * quantity)
                 .tax_free_amount(price)
-                .approval_url("http://3.34.120.209:3000")
-                .cancel_url("http://3.34.120.209:3000/info")
-                .fail_url("http://3.34.120.209:3000/books")
+                .approval_url("http://localhost:3000/payment/success")
+                .cancel_url("http://localhost:3000/payment/cancel")
+                .fail_url("http://localhost:3000/payment/fail")
                 .build();
 
         KakaoPaymentResponse kakaoPaymentResponse = kakaoPayService.readyForKakaoPayment(request);

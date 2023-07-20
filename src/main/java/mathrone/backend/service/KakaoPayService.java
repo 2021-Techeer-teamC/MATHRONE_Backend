@@ -68,9 +68,9 @@ public class KakaoPayService {
             );    // return Object
 
 
-            System.out.println(apiResponseJson.toString());
-            System.out.println(apiResponseJson.getBody().toString());
-
+//            System.out.println(apiResponseJson.toString());
+//            System.out.println(apiResponseJson.getBody().toString());
+//
             // ObjectMapper를 통해 String to Object로 변환
             ObjectMapper objectMapper = new ObjectMapper();
 
@@ -136,8 +136,8 @@ public class KakaoPayService {
             );    // return Object
 
 
-            System.out.println(apiResponseJson.toString());
-            System.out.println(apiResponseJson.getBody().toString());
+//            System.out.println(apiResponseJson.toString());
+//            System.out.println(apiResponseJson.getBody().toString());
 
             // ObjectMapper를 통해 String to Object로 변환
             ObjectMapper objectMapper = new ObjectMapper();
