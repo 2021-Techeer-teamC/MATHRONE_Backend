@@ -4,9 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import mathrone.backend.domain.WorkBookInfo;
-
-import javax.persistence.Column;
 
 @Getter
 @AllArgsConstructor
@@ -22,7 +19,7 @@ public class CarouselResponseDto {
 
     private Short month;
 
-    private String profileImg;
+    private String thumbnail;
 
     private String intro;
 
