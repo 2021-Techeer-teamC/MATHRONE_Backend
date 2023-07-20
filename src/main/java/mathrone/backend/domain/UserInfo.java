@@ -2,6 +2,8 @@ package mathrone.backend.domain;
 
 import com.sun.istack.NotNull;
 import com.vladmihalcea.hibernate.type.array.IntArrayType;
+import java.util.LinkedList;
+import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -52,6 +54,11 @@ public class UserInfo {
 
     @Column(name = "register_type")
     private String resType;
+
+    @OneToMany(
+        mappedBy = "user",
+        cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<UserWorkbookRelInfo> userWorkbookRelInfo = new LinkedList<>();
 
     @Builder
     public UserInfo(String email, String password, String role, String accountId, String resType) {

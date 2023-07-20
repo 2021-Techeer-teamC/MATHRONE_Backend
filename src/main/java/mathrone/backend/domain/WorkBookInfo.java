@@ -1,8 +1,10 @@
 package mathrone.backend.domain;
 import com.sun.istack.NotNull;
 import com.vladmihalcea.hibernate.type.array.IntArrayType;
+import java.util.LinkedList;
+import java.util.List;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import mathrone.backend.controller.dto.CarouselResponseDto;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
@@ -12,6 +14,7 @@ import javax.persistence.*;
 @Entity
 @Table(name = "workbook")
 @TypeDef(name = "int-array", typeClass = IntArrayType.class)
+@Getter
 public class WorkBookInfo {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) //JPA 사용시 필요
@@ -44,41 +47,10 @@ public class WorkBookInfo {
 
     private String category;
 
-    public String getWorkbookId() {
-        return workbookId;
-    }
+    @OneToMany(
+        mappedBy = "workbook",
+        cascade = CascadeType.ALL,
+        fetch = FetchType.LAZY)
+    private List<UserWorkbookRelInfo> userWorkbookRelInfo = new LinkedList<>();
 
-    public String getTitle() {
-        return title;
-    }
-
-    public String getPublisher() {
-        return publisher;
-    }
-
-    public String getProfileImg() {
-        return profileImg;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public Short getYear() {
-        return year;
-    }
-
-    public Short getMonth() {
-        return month;
-    }
-
-    public Integer[] getChapter_id() {
-        return chapterId;
-    }
-
-    public String getCategory(){return category;}
 }
