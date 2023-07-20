@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserInfoRepository extends JpaRepository<UserInfo, Integer> {
 
-    UserInfo findByUserId(Integer userId);
+    UserInfo findByUserId(int userId);
 
     Optional<UserInfo> findByAccountId(String accountId);
 
@@ -24,7 +24,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Integer> {
 
     boolean existsByEmailAndResType(String email, String resType);
 
-    boolean existsByUserId(Integer userId);
+    boolean existsByUserId(int userId);
 
     boolean existsByAccountId(String accountId);
 

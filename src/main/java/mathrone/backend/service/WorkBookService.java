@@ -10,7 +10,9 @@ import java.util.Map;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
+import mathrone.backend.controller.dto.UserWorkbookDataInterface;
 import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.domain.Problem;
 import mathrone.backend.domain.PubCatPair;
@@ -22,7 +24,7 @@ import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.LevelRepository;
 import mathrone.backend.repository.ProblemRepository;
-import mathrone.backend.repository.UserWorkbookRepository;
+import mathrone.backend.repository.UserWorkbookRelRepository;
 import mathrone.backend.repository.WorkBookRepository;
 import mathrone.backend.repository.WorkbookLevelRepository;
 import mathrone.backend.util.TokenProviderUtil;
@@ -30,28 +32,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class WorkBookService {
 
     private final WorkBookRepository workBookRepository;
     private final LevelRepository levelRepository;
-    private final UserWorkbookRepository userWorkbookRepository;
     private final ProblemRepository problemRepository;
     private final TokenProviderUtil tokenProviderUtil;
+    private final UserWorkbookRelRepository userWorkbookRelRepository;
     private final WorkbookLevelRepository workbookLevelRepository;
-
-    //생성자
-
-    public WorkBookService(WorkBookRepository workBookRepository,
-        ProblemRepository problemRepository, LevelRepository levelRepository,
-        UserWorkbookRepository userWorkbookRepository, TokenProviderUtil tokenProviderUtil,
-        WorkbookLevelRepository workbookLevelRepository) {
-        this.workBookRepository = workBookRepository;
-        this.levelRepository = levelRepository;
-        this.userWorkbookRepository = userWorkbookRepository;
-        this.problemRepository = problemRepository;
-        this.tokenProviderUtil = tokenProviderUtil;
-        this.workbookLevelRepository = workbookLevelRepository;
-    }
 
 
     public List<WorkBookInfo> findWorkbook(String publisher, String category, Pageable pageable) {
@@ -75,10 +64,8 @@ public class WorkBookService {
         }
     }
 
-    public String getLevel(String workbookId) {
+    public String getLevel(WorkbookLevelInfo wb) {
         //해당 문제집의 레벨투표 정보를 가져옴
-        WorkbookLevelInfo wb = levelRepository.findByWorkbookId(workbookId);
-
         //각 난이도별 투표수
         int high = wb.getHighCnt();
         int mid = wb.getMidCnt();
@@ -98,7 +85,14 @@ public class WorkBookService {
     }
 
     public Long getStar(String workbookId) {
-        return userWorkbookRepository.countByWorkbookIdAndWorkbookStar(workbookId,
+        Optional<WorkBookInfo> isWorkbook = workBookRepository.findById(workbookId);
+
+        // Workbook이 없는 경우 error처리
+        if (isWorkbook.isEmpty()) {
+            throw new CustomException(ErrorCode.NOT_FOUND_WORKBOOK);
+        }
+
+        return userWorkbookRelRepository.countByWorkbookAndWorkbookStar(isWorkbook.get(),
             true); //좋아요 표시 눌린것만
     }
 
@@ -122,10 +116,12 @@ public class WorkBookService {
 
         //결과에 level,like을 attach하여 리스트로 생성
         for (WorkBookInfo wb : res) {
-            String level = getLevel(wb.getWorkbookId());
+            WorkbookLevelInfo workbookLevelInfo = levelRepository.findByWorkbookId(
+                wb.getWorkbookId());
+            String level = getLevel(workbookLevelInfo);
             Long star = getStar(wb.getWorkbookId());
             bookItem b = new bookItem(wb.getWorkbookId(), wb.getTitle(), wb.getPublisher(),
-                wb.getProfileImg(), level, star);
+                wb.getThumbnail(), level, star);
             result.add(b);
         }
 
@@ -202,6 +198,76 @@ public class WorkBookService {
     }
 
     /**
+     * jwt 여부에 따라 시도한 문제집 리스트
+     * <p> token이 있는 경우 : 특정 유저가 시도한 문제집 리스트 반환
+     * <p> token이 없는 경우 : 모든 유저가 시도한 문제집 리스트를 많이 시도한 순으로 6개 반환
+     *
+     * @return List<UserWorkbookDataInterface>
+     */
+    public List<UserWorkbookDataInterface> getTriedWorkbook(HttpServletRequest request) {
+        String accessToken = tokenProviderUtil.resolveToken(request);
+        if (accessToken != null) {
+            return getUserTriedWorkbook(accessToken, request);
+        } else {
+            return userWorkbookRelRepository.findAllUserTriedWorkbook();
+        }
+    }
+
+    /**
+     * 특정 유저가 시도한 문제집 리스트 반환
+     *
+     * @param accessToken 유저 정보에 해당하는 jwt token
+     * @return List<UserWorkbookDataInterface>
+     */
+    public List<UserWorkbookDataInterface> getUserTriedWorkbook(String accessToken,
+        HttpServletRequest request) {
+        // 유저의 token 유효성 검사
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
+        }
+
+        int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
+
+        return userWorkbookRelRepository.findUserTriedWorkbook(
+            userId);
+    }
+
+    /**
+     * jwt 여부에 따라 즐겨찾는 문제집 리스트 반환
+     * <p> token이 있는 경우 : 특정 유저가 즐겨찾는 문제집 리스트 반환
+     * <p> token이 없는 경우 : 모든 유저가 즐겨찾는 문제집 리스트를 많이 즐겨찾는 순으로 6개 반환
+     *
+     * @return List<UserWorkbookDataInterface>
+     */
+    public List<UserWorkbookDataInterface> getStarWorkbook(HttpServletRequest request) {
+        String accessToken = tokenProviderUtil.resolveToken(request);
+        if (accessToken != null) {
+            return getUserStarWorkbook(accessToken, request);
+        } else {
+            return userWorkbookRelRepository.findAllUserStarWorkBook();
+        }
+    }
+
+    /**
+     * 모든 유저가 즐겨찾는 문제집 리스트를 많이 즐겨찾는 순으로 6개 반환
+     *
+     * @param accessToken 유저 정보에 해당하는 jwt token
+     * @return List<UserWorkbookDataInterface>
+     */
+    private List<UserWorkbookDataInterface> getUserStarWorkbook(String accessToken,
+        HttpServletRequest request) {
+        // 유저의 token 유효성 검사
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
+        }
+
+        int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
+
+        return userWorkbookRelRepository.findUserStarWorkBook(
+            userId);
+    }
+
+    /**
      * workbookId 유무에 따라 logic 처리
      * <p>- workbookId가 있는 경우 : 유저가 푼 문제집에 대한 풀이 정보
      * <p>- workbookId가 없는 경우 : 유저가 푼 모든 문제집에 대한 풀이 정보
@@ -237,7 +303,7 @@ public class WorkBookService {
     /**
      * user의 Workbook 평가 요청 처리
      *
-     * @param request http request
+     * @param request                     http request
      * @param userEvaluateLevelRequestDto 평가 요청에 필요한 정보 dto
      */
     @Transactional

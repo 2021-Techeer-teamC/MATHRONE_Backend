@@ -32,6 +32,8 @@ public interface WorkBookRepository extends JpaRepository<WorkBookInfo, String> 
     List<PubCatPair> findGroupByPublisherAndCategory();
 
     // workbookId로 해당 workbook 조회
+    WorkBookInfo findByWorkbookId(WorkBookInfo workBookInfo);
+
     WorkBookInfo findByWorkbookId(String workbookId);
 
     // 유저가 푼 문제집에 대해 문제집 Id, 전체 문제 개수, 푼 문제 개수 반환
