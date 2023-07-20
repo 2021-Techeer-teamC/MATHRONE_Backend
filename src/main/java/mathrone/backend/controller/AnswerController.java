@@ -1,5 +1,6 @@
 package mathrone.backend.controller;
 
+import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ public class AnswerController {
     private final AnswerServiceImpl answerService;
 
     @PutMapping("/problem")
+    @ApiOperation(value = "문제 체점 api", notes = "사용자가 푼 문제 리스트를 받아 채점 및 정답여부를 반환")
     public List<ProblemGradeResponseDto> problemGrade(
         @RequestBody ProblemGradeRequestDto problemGradeRequestDtoList,
         HttpServletRequest request) {
