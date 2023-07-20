@@ -1,4 +1,4 @@
-package mathrone.backend.domain;
+package mathrone.backend.domain.kakaoPay;
 
 
 import lombok.Builder;
