@@ -14,7 +14,6 @@ import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -33,17 +32,11 @@ public class ProblemTry {
     @ManyToOne(fetch = FetchType.LAZY)  // N+1 문제 회피
     @JoinColumn(name = "user_id")
     private UserInfo user;
-//    @Id
-//    @Column(name = "user_id")
-//    private String user;
 
     @Id
     @ManyToOne(fetch = FetchType.LAZY)  // N+1 문제 회피
     @JoinColumn(name = "problem_id")
     private Problem problem;
-//    @Id
-//    @Column(name = "problem_id")
-//    private String problemId;
 
     @NotNull
     private boolean iscorrect;

@@ -1,11 +1,11 @@
 package mathrone.backend.domain;
 import com.sun.istack.NotNull;
-import com.vladmihalcea.hibernate.type.array.IntArrayType;
 import com.vladmihalcea.hibernate.type.array.LongArrayType;
 import com.vladmihalcea.hibernate.type.array.StringArrayType;
+import java.util.LinkedList;
+import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import mathrone.backend.controller.dto.CarouselResponseDto;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
@@ -29,7 +29,6 @@ public class WorkBookInfo {
     @NotNull
     private String publisher;
 
-    @Column(name = "thumbnail")
     @NotNull
     private String thumbnail;
 
@@ -51,4 +50,10 @@ public class WorkBookInfo {
     private Long[] tags;
 
     private String category;
+
+    @OneToMany(
+        mappedBy = "workbook",
+        cascade = CascadeType.ALL,
+        fetch = FetchType.LAZY)
+    private List<UserWorkbookRelInfo> userWorkbookRelInfo = new LinkedList<>();
 }
