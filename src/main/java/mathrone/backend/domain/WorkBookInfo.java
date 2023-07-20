@@ -3,6 +3,7 @@ import com.sun.istack.NotNull;
 import com.vladmihalcea.hibernate.type.array.IntArrayType;
 import com.vladmihalcea.hibernate.type.array.LongArrayType;
 import com.vladmihalcea.hibernate.type.array.StringArrayType;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import mathrone.backend.controller.dto.CarouselResponseDto;
 import org.hibernate.annotations.Type;
@@ -15,6 +16,7 @@ import javax.persistence.*;
 @Table(name = "workbook")
 @TypeDef(name = "String-array", typeClass = StringArrayType.class)
 @TypeDef(name = "Long-array", typeClass = LongArrayType.class)
+@Getter
 public class WorkBookInfo {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) //JPA 사용시 필요
@@ -49,50 +51,4 @@ public class WorkBookInfo {
     private Long[] tags;
 
     private String category;
-
-    public String getWorkbookId() {
-        return workbookId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getPublisher() {
-        return publisher;
-    }
-
-    public String thumbnail() {
-        return thumbnail;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getThumbnail() {
-        return thumbnail;
-    }
-
-    public Long[] getTags() {
-        return tags;
-    }
-
-    public Short getYear() {
-        return year;
-    }
-
-    public Short getMonth() {
-        return month;
-    }
-
-    public String[] getChapterId() {
-        return chapterId;
-    }
-
-    public String getCategory(){return category;}
 }
