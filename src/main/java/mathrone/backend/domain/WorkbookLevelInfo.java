@@ -32,4 +32,16 @@ public class WorkbookLevelInfo {
     @Column(name = "workbook_id")
     private String workbookId;
 
+    public void updateLowCount(int count){
+        this.lowCnt = count;
+    }
+
+    public void updateMidCount(int count){
+        this.midCnt = count;
+    }
+
+    public void updateHighCount(int count){
+        this.highCnt = count;
+    }
+
 }

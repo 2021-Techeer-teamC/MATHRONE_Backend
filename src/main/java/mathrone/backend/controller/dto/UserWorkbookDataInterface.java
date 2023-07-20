@@ -6,7 +6,7 @@ public interface UserWorkbookDataInterface {
 
     String getTitle();
 
-    String getProfileImg();
+    String getThumbnail();
 
     String getPublisher();
 

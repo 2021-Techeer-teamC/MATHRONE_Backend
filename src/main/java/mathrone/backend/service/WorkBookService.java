@@ -9,8 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
 import mathrone.backend.controller.dto.UserWorkbookDataInterface;
+import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.domain.Problem;
 import mathrone.backend.domain.PubCatPair;
 import mathrone.backend.domain.WorkBookInfo;
@@ -23,6 +26,7 @@ import mathrone.backend.repository.LevelRepository;
 import mathrone.backend.repository.ProblemRepository;
 import mathrone.backend.repository.UserWorkbookRelRepository;
 import mathrone.backend.repository.WorkBookRepository;
+import mathrone.backend.repository.WorkbookLevelRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,6 +40,8 @@ public class WorkBookService {
     private final ProblemRepository problemRepository;
     private final TokenProviderUtil tokenProviderUtil;
     private final UserWorkbookRelRepository userWorkbookRelRepository;
+    private final WorkbookLevelRepository workbookLevelRepository;
+
 
     public List<WorkBookInfo> findWorkbook(String publisher, String category, Pageable pageable) {
         if (publisher.equals("all")) {
@@ -115,7 +121,7 @@ public class WorkBookService {
             String level = getLevel(workbookLevelInfo);
             Long star = getStar(wb.getWorkbookId());
             bookItem b = new bookItem(wb.getWorkbookId(), wb.getTitle(), wb.getPublisher(),
-                wb.getProfileImg(), level, star);
+                wb.getThumbnail(), level, star);
             result.add(b);
         }
 
@@ -261,4 +267,77 @@ public class WorkBookService {
             userId);
     }
 
+    /**
+     * workbookId 유무에 따라 logic 처리
+     * <p>- workbookId가 있는 경우 : 유저가 푼 문제집에 대한 풀이 정보
+     * <p>- workbookId가 없는 경우 : 유저가 푼 모든 문제집에 대한 풀이 정보
+     *
+     * @param request    Http request
+     * @param workbookId 문제집 Id
+     * @return List<UserSolvedWorkbookResponseDtoInterface>
+     */
+    public List<UserSolvedWorkbookResponseDtoInterface> trackSolvedWorkbook(
+        HttpServletRequest request,
+        Optional<String> workbookId) {
+
+        String accessToken = tokenProviderUtil.resolveToken(request);
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
+        }
+        int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
+
+        // 특정 문제집에 대한 유저의 풀이 정보 tracking
+        if (workbookId.isPresent()) {
+            Optional<WorkBookInfo> byWorkbook = workBookRepository.findById(workbookId.get());
+            if (byWorkbook.isEmpty()) {
+                throw new CustomException(ErrorCode.NOT_FOUND_WORKBOOK);
+            }
+            return workBookRepository.findByUserSolvedWorkbook(
+                workbookId.get(), userId);
+        } else {
+            // 유저가 푼 모든 문제집에 대한 풀이 정보 tracking
+            return workBookRepository.findByUserSolvedAllWorkbook(userId);
+        }
+    }
+
+    /**
+     * user의 Workbook 평가 요청 처리
+     *
+     * @param request                     http request
+     * @param userEvaluateLevelRequestDto 평가 요청에 필요한 정보 dto
+     */
+    @Transactional
+    public void evaluateWorkbook(HttpServletRequest request,
+        UserEvaluateLevelRequestDto userEvaluateLevelRequestDto) {
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
+        }
+
+        Optional<WorkbookLevelInfo> isWorkbookLevelInfo = workbookLevelRepository.findByWorkbookId(
+            userEvaluateLevelRequestDto.getWorkbookId());
+
+        if (isWorkbookLevelInfo.isEmpty()) {
+            throw new CustomException(ErrorCode.NOT_FOUND_WORKBOOK);
+        }
+
+        WorkbookLevelInfo workbookLevelInfo = isWorkbookLevelInfo.get();
+        int level = userEvaluateLevelRequestDto.getLevel();
+
+        switch (level) {
+            case 1:
+                workbookLevelInfo.updateLowCount(workbookLevelInfo.getLowCnt() + 1);
+                break;
+            case 2:
+                workbookLevelInfo.updateMidCount(workbookLevelInfo.getMidCnt() + 1);
+                break;
+            case 3:
+                workbookLevelInfo.updateHighCount(workbookLevelInfo.getHighCnt() + 1);
+                break;
+            default:
+                throw new CustomException(ErrorCode.INVALID_LEVEL_VALUE);
+
+        }
+    }
 }
