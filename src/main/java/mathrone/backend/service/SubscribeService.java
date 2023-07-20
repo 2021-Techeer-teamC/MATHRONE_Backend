@@ -1,8 +1,8 @@
 package mathrone.backend.service;
 
 
-import mathrone.backend.domain.KakaoPayApproveRequest;
-import mathrone.backend.domain.KakaoPayRequestResponse;
+import mathrone.backend.domain.kakaoPay.KakaoPayApproveRequest;
+import mathrone.backend.domain.kakaoPay.KakaoPayRequestResponse;
 import mathrone.backend.domain.Subscription;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.domain.kakaoPay.KakaoPaymentApproveRequest;
@@ -11,7 +11,6 @@ import mathrone.backend.domain.kakaoPay.KakaoPaymentRequest;
 import mathrone.backend.domain.kakaoPay.KakaoPaymentResponse;
 import mathrone.backend.repository.SubscriptionRepository;
 import mathrone.backend.repository.UserInfoRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
