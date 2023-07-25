@@ -1,6 +1,7 @@
 package mathrone.backend.domain;
 import com.sun.istack.NotNull;
-import com.vladmihalcea.hibernate.type.array.IntArrayType;
+import com.vladmihalcea.hibernate.type.array.LongArrayType;
+import com.vladmihalcea.hibernate.type.array.StringArrayType;
 import java.util.LinkedList;
 import java.util.List;
 import lombok.Getter;
@@ -13,7 +14,8 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Entity
 @Table(name = "workbook")
-@TypeDef(name = "int-array", typeClass = IntArrayType.class)
+@TypeDef(name = "String-array", typeClass = StringArrayType.class)
+@TypeDef(name = "Long-array", typeClass = LongArrayType.class)
 @Getter
 public class WorkBookInfo {
 
@@ -41,8 +43,11 @@ public class WorkBookInfo {
     private Short month;
 
     @Column(name="chapter_id")
-    @Type(type = "int-array")
-    private Integer[] chapterId;
+    @Type(type = "String-array")
+    private String[] chapterId;
+
+    @Type(type = "Long-array")
+    private Long[] tags;
 
     private String category;
 
@@ -51,5 +56,4 @@ public class WorkBookInfo {
         cascade = CascadeType.ALL,
         fetch = FetchType.LAZY)
     private List<UserWorkbookRelInfo> userWorkbookRelInfo = new LinkedList<>();
-
 }
