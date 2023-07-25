@@ -224,7 +224,7 @@ public class ProfileService {
                     orElseThrow(() -> new CustomException(NOT_FOUND_CHAPTER));
 
                 userFailedTriedChapterRList.put(chapterId,
-                    new UserFailedTriedChapterR(chapter.getChapter(),
+                    new UserFailedTriedChapterR(chapter.getName(),
                         userFailedTriedChaptersForRedis.get(chapterId)));
             }
 
