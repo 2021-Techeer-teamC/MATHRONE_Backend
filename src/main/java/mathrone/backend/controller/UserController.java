@@ -17,6 +17,7 @@ import mathrone.backend.controller.dto.UserResponseDto;
 import mathrone.backend.controller.dto.UserSignUpDto;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.service.AuthService;
+import mathrone.backend.service.MailService;
 import mathrone.backend.service.SnsLoginService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +37,7 @@ public class UserController {
 
     private final AuthService authService;
     private final SnsLoginService snsLoginService;
+    private final MailService mailService;
 
     @GetMapping("/delUser")
     @ApiOperation(value = "사용자 삭제", notes = "DB에 존재하는 사용자를 삭제")
@@ -168,6 +170,11 @@ public class UserController {
             res.getBody().getId_token());
 
         return ResponseEntity.ok(authService.kakaoLogin(res, idInfo));
+    }
+
+    @PostMapping("/find/Id")
+    public void findId(){
+        mailService.sendMail();
     }
 
 }
