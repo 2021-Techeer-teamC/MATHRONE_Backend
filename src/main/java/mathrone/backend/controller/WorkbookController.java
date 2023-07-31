@@ -1,9 +1,11 @@
 package mathrone.backend.controller;
 
+
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
+import mathrone.backend.controller.dto.BookDetailDto;
 import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
 import mathrone.backend.controller.dto.UserWorkbookDataInterface;
 import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
@@ -62,6 +64,11 @@ public class WorkbookController {
         return workBookService.getWorkbookList();
     }
 
+    @GetMapping("/")
+    public BookDetailDto workbookDetail(
+            @RequestParam(value = "id") String bookId) {
+        return workBookService.getWorkbookDetail(bookId);
+    }
     @GetMapping("/try")
     @ApiOperation(value = "사용자가 시도한 문제집 리스트 반환", notes = "access token가 존재하면 특정 사용자, 존재하지 않으면 모든 사용자가 시도한 문제집 리스트를 반환")
     public List<UserWorkbookDataInterface> getTriedWorkbooks(
@@ -92,6 +99,4 @@ public class WorkbookController {
         workBookService.evaluateWorkbook(request, userEvaluateLevelRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
-
-
 }
