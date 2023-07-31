@@ -49,6 +49,7 @@ public class AuthService {
     private final LogoutAccessTokenRedisRepository logoutAccessTokenRedisRepository;
     private final KakaoRefreshTokenRedisRepository kakaoRefreshTokenRedisRepository;
     private final GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository;
+    private final MailService mailService;
 
     @Transactional
     public UserResponseDto signup(UserSignUpDto userSignUpDto) {
@@ -526,4 +527,9 @@ public class AuthService {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
     }
+
+    public void findId(String email){
+        mailService.sendId(userinfoRepository.findByEmail(email));
+    }
+
 }

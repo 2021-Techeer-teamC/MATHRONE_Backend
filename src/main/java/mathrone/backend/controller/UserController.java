@@ -172,9 +172,9 @@ public class UserController {
         return ResponseEntity.ok(authService.kakaoLogin(res, idInfo));
     }
 
-    @PostMapping("/find/Id")
-    public void findId(){
-        mailService.sendMail();
+    @PostMapping("/findId")
+    public void findId(String email){ // 이메일 입력
+        authService.findId(email);
     }
 
 }
