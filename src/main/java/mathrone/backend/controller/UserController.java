@@ -173,8 +173,13 @@ public class UserController {
     }
 
     @PostMapping("/findId")
-    public void findId(String email){ // 이메일 입력
+    public void findId(@RequestParam String email){ // 이메일 입력
         authService.findId(email);
     }
 
+    @PostMapping("/change/password")
+    public void changePw(HttpServletRequest request,
+            @RequestParam String newPassword){
+        authService.changePw(request, newPassword);
+    }
 }
