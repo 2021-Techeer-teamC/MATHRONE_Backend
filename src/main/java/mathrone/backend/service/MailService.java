@@ -38,6 +38,11 @@ public class MailService {
         }
     }
 
+    public void sendPw(UserInfo user, String password) {
+        String subject = "Mathrone 임시 비밀번호 안내";
+        String content = "당신의 임시 비밀번호는? " + password;
+        String to = user.getEmail();
+
         try {
             MimeMessage mail = javaMailSender.createMimeMessage();
             MimeMessageHelper mailHelper = new MimeMessageHelper(mail, true, "UTF-8");

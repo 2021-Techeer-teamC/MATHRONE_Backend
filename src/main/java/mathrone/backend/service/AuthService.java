@@ -1,5 +1,6 @@
 package mathrone.backend.service;
 
+import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 
 import lombok.RequiredArgsConstructor;
@@ -533,6 +534,16 @@ public class AuthService {
         mailService.sendId(userinfoRepository.findByEmail(email));
     }
 
+    // 비밀번호 찾기, 임시 비밀번호 발급 후 이메일 발송
+    @Transactional
+    public void findPw(String accountId, String email){
+        String newPassword = UUID.randomUUID().toString().substring(0,10);
+        UserInfo user = userinfoRepository.findByEmailAndAccountId(email, accountId);
+        user.changePassword(passwordEncoder, newPassword);
+        mailService.sendPw(user, newPassword);
+    }
+
+    //일반적인 비밀변호 변경 로직
     @Transactional
     public void changePw(HttpServletRequest request ,String newPassword){
         String accessToken = tokenProviderUtil.resolveToken(request);

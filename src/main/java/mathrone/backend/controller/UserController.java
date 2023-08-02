@@ -177,6 +177,11 @@ public class UserController {
         authService.findId(email);
     }
 
+    @PostMapping("/findPw")
+    public void findPw(@RequestParam String accountId, String email){
+        authService.findPw(accountId, email);
+    }
+
     @PostMapping("/change/password")
     public void changePw(HttpServletRequest request,
             @RequestParam String newPassword){
