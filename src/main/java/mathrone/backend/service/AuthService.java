@@ -528,8 +528,23 @@ public class AuthService {
         }
     }
 
+    // 아이디 찾기, 아이디 찾아서 이메일 발송
     public void findId(String email){
         mailService.sendId(userinfoRepository.findByEmail(email));
+    }
+
+    @Transactional
+    public void changePw(HttpServletRequest request ,String newPassword){
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
+        }
+        int userId = Integer.parseInt(
+                tokenProviderUtil.getAuthentication(accessToken).getName());
+
+        UserInfo user = userinfoRepository.findByUserId(userId);
+        user.changePassword(passwordEncoder, newPassword);
     }
 
 }
