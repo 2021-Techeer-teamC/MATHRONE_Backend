@@ -2,6 +2,7 @@ package mathrone.backend.controller;
 
 
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
 
 import io.swagger.annotations.ApiOperation;
@@ -83,6 +84,14 @@ public class WorkbookController {
     public ResponseEntity<List<UserWorkbookDataInterface>> getStarWorkbooks(
         HttpServletRequest request) {
         return ResponseEntity.status(OK).body(workBookService.getStarWorkbook(request));
+    }
+
+    @PostMapping("/star/{workbookId}")
+    @ApiOperation(value = "사용자의 특정 문제집 즐겨찾기 추가 or 제거", notes = "사용자 인증 후, 문제집 즐겨찾기 처리")
+    public ResponseEntity<Object> starWorkbook(
+        HttpServletRequest request, @PathVariable String workbookId) {
+        workBookService.starWorkbook(request, workbookId);
+        return ResponseEntity.status(NO_CONTENT).build();
     }
 
     @GetMapping({"/track/solved", "/track/solved/{workbookId}"})
