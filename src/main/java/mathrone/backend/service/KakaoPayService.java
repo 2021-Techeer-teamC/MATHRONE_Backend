@@ -33,6 +33,7 @@ public class KakaoPayService {
 
         try {
 
+
             RestTemplate rt = new RestTemplate();
             rt.setRequestFactory(
                     new HttpComponentsClientHttpRequestFactory()); //error message type및 description확인 가능
