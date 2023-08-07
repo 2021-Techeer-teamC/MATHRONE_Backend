@@ -9,11 +9,14 @@ import mathrone.backend.domain.kakaoPay.KakaoPaymentApproveRequest;
 import mathrone.backend.domain.kakaoPay.KakaoPaymentApproveResponse;
 import mathrone.backend.domain.kakaoPay.KakaoPaymentRequest;
 import mathrone.backend.domain.kakaoPay.KakaoPaymentResponse;
+import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.repository.SubscriptionRepository;
 import mathrone.backend.repository.UserInfoRepository;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+
+import static mathrone.backend.error.exception.ErrorCode.SUBSCRIPTION_ERROR_ALREADY_SUBSCRIBED;
 
 @Service
 public class SubscribeService {
@@ -60,17 +63,18 @@ public class SubscribeService {
 
 
         UserInfo u = authService.findUserFromRequest(payRequest);
-        Subscription s = createSubscription(item, u.getUserId(), price);
 
         /*
         이미 이번달에 구독이미 되어있는 사람은 더 구독못하게 막기
          */
 
         if(u.isPremium()){ ///일단 런타임 에러로 두고 나중에 에러코드 생기면 그떄 수저할 것
-            throw new RuntimeException();
+            throw new CustomException(SUBSCRIPTION_ERROR_ALREADY_SUBSCRIBED);
         }
 
 
+        //프리미엄 이미 한사람 리턴 전에 데베에 저장해버리니까 영원히 팬딩상태로 데베에 쌓이기만해서 밑으로 내려야함
+        Subscription s = createSubscription(item, u.getUserId(), price);
 
 
         String orderId = Integer.toString(s.getSubId());
@@ -94,7 +98,7 @@ public class SubscribeService {
 
         Subscription updatedSub = s.updateTid(kakaoPaymentResponse.getTid());
 
-        subscriptionRepository.save(updatedSub);
+
 
 //        System.out.println(kakaoPaymentResponse.getTid());
 //        System.out.println(kakaoPaymentResponse.getAndroid_app_scheme());
@@ -103,6 +107,9 @@ public class SubscribeService {
 //        System.out.println(kakaoPaymentResponse.getNext_redirect_app_url());
 //        System.out.println(kakaoPaymentResponse.getNext_redirect_pc_url());
 //        System.out.println(kakaoPaymentResponse.getNext_redirect_mobile_url());
+
+
+
 
         return KakaoPayRequestResponse.builder()
                 .tid(updatedSub.getTid())
