@@ -23,7 +23,7 @@ public class SubscribeController {
     }
 
 
-    @PostMapping("/pay-request") // 결제 요청
+    @PostMapping("/request") // 결제 요청
     public KakaoPayRequestResponse kakaoPayRequest(HttpServletRequest request){
 
         return  subscribeService.kakaoPaymentReady(request);
@@ -31,7 +31,7 @@ public class SubscribeController {
     }
 
 
-    @PostMapping("/pay-approve") // 결제 승인
+    @PostMapping("/approve") // 결제 승인
     public KakaoPaymentApproveResponse kakaoPayApprove(KakaoPayApproveRequest kakaoPayApproveRequest){
 
         return  subscribeService.kakaoPaymentApprove(kakaoPayApproveRequest);
@@ -39,7 +39,7 @@ public class SubscribeController {
     }
 
 
-    @PostMapping("/pay-error") // 결제 에러
+    @PostMapping("/error") // 결제 에러
     public void kakaoPayError(String tid){
 
         subscribeService.kakaoPaymentNotApproved(tid, "ERROR");
@@ -47,7 +47,7 @@ public class SubscribeController {
     }
 
 
-    @PostMapping("/pay-canceled") // 결제 취소
+    @PostMapping("/canceled") // 결제 취소
     public void kakaoPayCanceled(String tid){
 
         subscribeService.kakaoPaymentNotApproved(tid,"CANCELED");
