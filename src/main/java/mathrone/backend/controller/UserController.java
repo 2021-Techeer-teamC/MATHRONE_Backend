@@ -23,6 +23,7 @@ import mathrone.backend.service.SnsLoginService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -173,17 +174,17 @@ public class UserController {
         return ResponseEntity.ok(authService.kakaoLogin(res, idInfo));
     }
 
-    @PostMapping("/findId")
+    @PostMapping("/find/id")
     public void findId(@RequestBody FindDto request){ // 이메일 입력
         authService.findId(request);
     }
 
-    @PostMapping("/findPw")
+    @PostMapping("/find/pw")
     public void findPw(@RequestBody FindDto request){
         authService.findPw(request);
     }
 
-    @PostMapping("/change/password")
+    @PatchMapping("/password")
     public void changePw(HttpServletRequest request,
             @RequestBody String newPassword){
         authService.changePw(request, newPassword);
