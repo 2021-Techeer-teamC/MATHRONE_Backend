@@ -530,15 +530,19 @@ public class AuthService {
     }
 
     // 아이디 찾기, 아이디 찾아서 이메일 발송
-    public void findId(String email){
-        mailService.sendId(userinfoRepository.findByEmail(email));
+    public void findId(FindDto request){
+        UserInfo user = userinfoRepository.findByEmail(request.getEmail());
+        validateUser(user);
+        mailService.sendId(user);
     }
 
     // 비밀번호 찾기, 임시 비밀번호 발급 후 이메일 발송
     @Transactional
-    public void findPw(String accountId, String email){
+    public void findPw(FindDto request){
         String newPassword = UUID.randomUUID().toString().substring(0,10);
-        UserInfo user = userinfoRepository.findByEmailAndAccountId(email, accountId);
+        UserInfo user = userinfoRepository.findByEmailAndAccountId(request.getEmail(),
+                request.getAccountId());
+        validateUser(user);
         user.changePassword(passwordEncoder, newPassword);
         mailService.sendPw(user, newPassword);
     }
