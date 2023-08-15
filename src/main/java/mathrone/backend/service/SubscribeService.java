@@ -98,6 +98,8 @@ public class SubscribeService {
 
         Subscription updatedSub = s.updateTid(kakaoPaymentResponse.getTid());
 
+        //TID update
+        subscriptionRepository.save(updatedSub);
 
 
 //        System.out.println(kakaoPaymentResponse.getTid());
