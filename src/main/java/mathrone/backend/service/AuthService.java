@@ -193,9 +193,6 @@ public class AuthService {
         UserInfo user = userinfoRepository.findByEmailAndResType(kakaoIDToken.getBody().getEmail(), KAKAO.getTypeName());
 
         //로그인 시 프리미엄 검사
-        System.out.println("user is ");
-        System.out.println(user.getUserId());
-        System.out.println(user.isPremium());
         if(user.isPremium()) {
             checkPremiumUser(user.getUserId());
         }
@@ -575,10 +572,6 @@ public class AuthService {
 
             long diffDays =  (today.getTime() - s.getLastModifiedDate().getTime()) / (24*60*60*1000);
 
-            System.out.println("================");
-            System.out.println(today);
-            System.out.println(s.getLastModifiedDate());
-            System.out.println(diffDays);
 
             //구독 만료 대상자 -> premium = false로 변경
             if(diffDays >= 30){
