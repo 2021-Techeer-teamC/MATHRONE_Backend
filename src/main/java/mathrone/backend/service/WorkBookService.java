@@ -11,12 +11,12 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
-import mathrone.backend.controller.dto.UserWorkbookDataInterface;
-import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.controller.dto.BookDetailDto;
 import mathrone.backend.controller.dto.BookDetailDto.ChapterGroup;
 import mathrone.backend.controller.dto.BookDetailDto.Chapters;
+import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
+import mathrone.backend.controller.dto.UserWorkbookDataInterface;
+import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.domain.ChapterInfo;
 import mathrone.backend.domain.Problem;
 import mathrone.backend.domain.PubCatPair;
@@ -29,17 +29,16 @@ import mathrone.backend.domain.bookContent;
 import mathrone.backend.domain.bookItem;
 import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.error.exception.ErrorCode;
+import mathrone.backend.repository.ChapterRepository;
 import mathrone.backend.repository.LevelRepository;
 import mathrone.backend.repository.ProblemRepository;
+import mathrone.backend.repository.TagRepository;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.UserWorkbookRelRepository;
-import mathrone.backend.repository.ChapterRepository;
-import mathrone.backend.repository.TagRepository;
 import mathrone.backend.repository.WorkBookRepository;
 import mathrone.backend.repository.WorkbookLevelRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -445,7 +444,7 @@ public class WorkBookService {
                 .workbookStar(true).build());
         } else {
             UserWorkbookRelInfo userWorkbookRelInfo = byUserAndWorkbook.get();
-            userWorkbookRelInfo.updateStar(!userWorkbookRelInfo.getWorkbookStar());
+            userWorkbookRelInfo.updateStar(true);
         }
     }
 }
