@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -91,6 +92,14 @@ public class WorkbookController {
     public ResponseEntity<Object> starWorkbook(
         HttpServletRequest request, @PathVariable String workbookId) {
         workBookService.starWorkbook(request, workbookId);
+        return ResponseEntity.status(NO_CONTENT).build();
+    }
+
+    @DeleteMapping("/star/{workbookId}")
+    @ApiOperation(value = "사용자의 특정 문제집 즐겨찾기 제거", notes = "사용자 인증 후, 문제집 즐겨찾기 처리")
+    public ResponseEntity<Object> deleteStarWorkbook(
+        HttpServletRequest request, @PathVariable String workbookId) {
+        workBookService.deleteStarWorkbook(request, workbookId);
         return ResponseEntity.status(NO_CONTENT).build();
     }
 

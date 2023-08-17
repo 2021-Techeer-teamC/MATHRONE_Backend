@@ -447,4 +447,32 @@ public class WorkBookService {
             userWorkbookRelInfo.updateStar(true);
         }
     }
+
+    public void deleteStarWorkbook(HttpServletRequest request, String workbookId) {
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
+        }
+
+        int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
+
+        UserInfo user = userInfoRepository.getById(userId);
+        WorkBookInfo workbook = workBookRepository.findById(workbookId).orElseThrow(() ->
+            new CustomException(ErrorCode.NOT_FOUND_WORKBOOK));
+
+        Optional<UserWorkbookRelInfo> byUserAndWorkbook = userWorkbookRelRepository.findByUserAndWorkbook(
+            user, workbook);
+
+        if (byUserAndWorkbook.isEmpty()){
+            userWorkbookRelRepository.save(UserWorkbookRelInfo.builder()
+                .workbook(workbook)
+                .user(user)
+                .workbookStar(false).build());
+        } else {
+            UserWorkbookRelInfo userWorkbookRelInfo = byUserAndWorkbook.get();
+            userWorkbookRelInfo.updateStar(false);
+        }
+
+    }
 }
