@@ -87,7 +87,7 @@ public class WorkbookController {
     }
 
     @PostMapping("/star/{workbookId}")
-    @ApiOperation(value = "사용자의 특정 문제집 즐겨찾기 추가 or 제거", notes = "사용자 인증 후, 문제집 즐겨찾기 처리")
+    @ApiOperation(value = "사용자의 특정 문제집 즐겨찾기 추가", notes = "사용자 인증 후, 문제집 즐겨찾기 처리")
     public ResponseEntity<Object> starWorkbook(
         HttpServletRequest request, @PathVariable String workbookId) {
         workBookService.starWorkbook(request, workbookId);
