@@ -566,7 +566,7 @@ public class AuthService {
 
         if(u.isPremium()){
 
-            Subscription s = subscriptionRepository.findByUserId(userId).orElseThrow(() -> new CustomException(ErrorCode.SUBSCRIBE_USER_NOT_FOUND));
+            Subscription s = subscriptionRepository.checkLastSubscription(userId).orElseThrow(() -> new CustomException(ErrorCode.SUBSCRIBE_USER_NOT_FOUND));
 
             Date today = new Date();
 
