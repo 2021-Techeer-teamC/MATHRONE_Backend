@@ -12,5 +12,5 @@ import lombok.Setter;
 public class FindDto {
 
     String email;
-    String accountId;
+    String id;
 }
