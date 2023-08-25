@@ -541,7 +541,7 @@ public class AuthService {
     public void findPw(FindDto request){
         String newPassword = UUID.randomUUID().toString().substring(0,10);
         UserInfo user = userinfoRepository.findByEmailAndAccountId(request.getEmail(),
-                request.getAccountId());
+                request.getId());
         validateUser(user);
         user.changePassword(passwordEncoder, newPassword);
         mailService.sendPw(user, newPassword);
