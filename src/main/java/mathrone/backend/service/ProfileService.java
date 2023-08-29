@@ -4,34 +4,27 @@ import static mathrone.backend.error.exception.ErrorCode.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Month;
+import java.time.ZoneId;
+import java.util.*;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Map;
+
 import mathrone.backend.controller.dto.UserFailedTriedProblemsOfChapterDto;
 import mathrone.backend.controller.dto.UserProblemTryDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto.UserFailedTriedChapterDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto.UserFailedTriedWorkbookDto;
-import mathrone.backend.domain.ChapterInfo;
-import mathrone.backend.domain.ProblemTry;
-import mathrone.backend.domain.UserFailedTriedWorkbookRedis;
+import mathrone.backend.domain.*;
 import mathrone.backend.domain.UserFailedTriedWorkbookRedis.UserFailedTriedChapterR;
 import mathrone.backend.domain.UserFailedTriedWorkbookRedis.UserFailedTriedWorkbookR;
-import mathrone.backend.domain.UserInfo;
-import mathrone.backend.domain.UserProfile;
-import mathrone.backend.domain.UserRank;
-import mathrone.backend.domain.WorkBookInfo;
 import mathrone.backend.error.exception.CustomException;
-import mathrone.backend.repository.ChapterRepository;
-import mathrone.backend.repository.ProblemRepository;
-import mathrone.backend.repository.ProblemTryRepository;
+import mathrone.backend.error.exception.ErrorCode;
+import mathrone.backend.repository.*;
 import mathrone.backend.repository.redisRepository.UserFailedTriedWorkbookRedisRepository;
-import mathrone.backend.repository.UserInfoRepository;
-import mathrone.backend.repository.WorkBookRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -48,6 +41,7 @@ public class ProfileService {
     private final WorkBookRepository workBookRepository;
     private final ChapterRepository chapterRepository;
     private final UserFailedTriedWorkbookRedisRepository userFailedTriedWorkbookRedisRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
 
     public ProfileService(UserInfoRepository userInfoRepository,
@@ -56,7 +50,8 @@ public class ProfileService {
         ProblemRepository problemRepository,
         ProblemTryRepository problemTryRepository, WorkBookRepository workBookRepository,
         ChapterRepository chapterRepository,
-        UserFailedTriedWorkbookRedisRepository userFailedTriedWorkbookRedisRepository) {
+        UserFailedTriedWorkbookRedisRepository userFailedTriedWorkbookRedisRepository,
+        SubscriptionRepository subscriptionRepository ) {
         this.userInfoRepository = userInfoRepository;
         this.zSetOperations = redisTemplate.opsForZSet();
         this.tokenProviderUtil = tokenProviderUtil;
@@ -65,6 +60,7 @@ public class ProfileService {
         this.workBookRepository = workBookRepository;
         this.chapterRepository = chapterRepository;
         this.userFailedTriedWorkbookRedisRepository = userFailedTriedWorkbookRedisRepository;
+        this.subscriptionRepository = subscriptionRepository;
     }
 
     //userId를 받아와서 전송
@@ -89,11 +85,42 @@ public class ProfileService {
 
         }
 
+        //구독정보 초기값 null
+        SubscriptionInfo s;
+
+        //구독회원인 경우
+        if(userinfo.isPremium()){
+            Subscription sub = subscriptionRepository.checkLastSubscription(userinfo.getUserId()).orElseThrow(() -> new CustomException(ErrorCode.SUBSCRIBE_USER_NOT_FOUND));
+
+
+            Date subscribedDate = sub.getLastModifiedDate();
+
+            LocalDate localDate = subscribedDate.toInstant()   // Date -> Instant
+                    .atZone(ZoneId.systemDefault())  // Instant -> ZonedDateTime
+                    .toLocalDate();
+
+            LocalDate expiredDate = localDate.plusMonths(1);
+
+            Timestamp expire = Timestamp.valueOf(expiredDate.atStartOfDay());
+            Timestamp subscribe = new Timestamp(subscribedDate.getTime());
+
+            s = SubscriptionInfo.builder()
+                    .expired_data(expire)
+                    .subscribed_date(subscribe)
+                    .item(sub.getItem())
+                    .price(sub.getPrice())
+                    .build();
+        }else{
+            s = null;
+        }
+
+
+
         //최종 Profile 생성
         return new UserProfile(userinfo.getUserId(), userinfo.getAccountId(),
-            userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
-            userinfo.isPremium(), userinfo.getEmail(), userinfo.getPhoneNum(),
-            userinfo.getUserImg(), userinfo.getRole(), r);
+                userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
+                userinfo.getEmail(), userinfo.getPhoneNum(),
+                userinfo.getUserImg(), userinfo.getRole(), r, userinfo.isPremium(),s);
     }
 
 
