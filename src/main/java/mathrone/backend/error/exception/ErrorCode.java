@@ -65,7 +65,9 @@ public enum ErrorCode {
 
 
     // subscribe error
-    SUBSCRIPTION_ERROR_ALREADY_SUBSCRIBED(LOCKED,"이미 구독중인 계정입니다.","S001");
+    SUBSCRIPTION_ERROR_ALREADY_SUBSCRIBED(LOCKED,"이미 구독중인 계정입니다.","S001"),
+
+    SUBSCRIBE_USER_NOT_FOUND(NOT_FOUND, "해당 유저의 최근 구독 이력을 찾을 수 없습니다.", "S002");
 
     private final HttpStatus httpStatus;
 
