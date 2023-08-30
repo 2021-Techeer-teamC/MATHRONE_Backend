@@ -448,6 +448,7 @@ public class WorkBookService {
         }
     }
 
+    @Transactional
     public void deleteStarWorkbook(HttpServletRequest request, String workbookId) {
         String accessToken = tokenProviderUtil.resolveToken(request);
 
