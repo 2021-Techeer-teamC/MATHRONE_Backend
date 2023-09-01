@@ -39,7 +39,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         "/problem/**",
         "/answer/**",
         "/rank/**",
-        "/oauth/**"
+        "/oauth/**",
+        "/subscribe/**",
+        "/profile/**",
     };
 
     @Bean // user password 암호화

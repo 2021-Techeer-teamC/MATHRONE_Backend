@@ -61,8 +61,13 @@ public enum ErrorCode {
     // Common
     SERVER_ERROR(INTERNAL_SERVER_ERROR, "예상치 못한 에러가 발생하였습니다.", "C001"),
     AUTHENTICATION_ERROR(UNAUTHORIZED, "인증 정보가 유효하지 않습니다.", "C002"),
-    ACCESS_DENIED_ERROR(FORBIDDEN, "해당 요청에 대한 접근 권한이 존재하지 않습니다.", "C003");
+    ACCESS_DENIED_ERROR(FORBIDDEN, "해당 요청에 대한 접근 권한이 존재하지 않습니다.", "C003"),
 
+
+    // subscribe error
+    SUBSCRIPTION_ERROR_ALREADY_SUBSCRIBED(LOCKED,"이미 구독중인 계정입니다.","S001"),
+
+    SUBSCRIBE_USER_NOT_FOUND(NOT_FOUND, "해당 유저의 최근 구독 이력을 찾을 수 없습니다.", "S002");
 
     private final HttpStatus httpStatus;
 
