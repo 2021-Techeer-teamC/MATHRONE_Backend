@@ -42,19 +42,24 @@ public class UserProfile {
 
     private UserRank rankInfo;
 
+    private boolean Premium;
 
-    public UserProfile(int userId, String id, String password, String profileImg, int exp, boolean premium, String email, String phoneNum, String userImg, String role, UserRank rankInfo) {
+    private SubscriptionInfo subscription;
+
+
+    public UserProfile(int userId, String id, String password, String profileImg, int exp, String email, String phoneNum, String userImg, String role, UserRank rankInfo, boolean premium ,SubscriptionInfo subscription) {
         this.userId = userId;
         this.id = id;
         this.password = password;
         this.profileImg = profileImg;
         this.exp = exp;
-        this.premium = premium;
         this.email = email;
         this.phoneNum = phoneNum;
         this.userImg = userImg;
         this.role = role;
         this.rankInfo = rankInfo;
+        this.premium=premium;
+        this.subscription = subscription;
     }
 
 }

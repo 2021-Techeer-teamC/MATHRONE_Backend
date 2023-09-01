@@ -9,11 +9,13 @@ import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
 import mathrone.backend.controller.dto.OauthDTO.ResponseTokenDTO;
+import mathrone.backend.domain.Subscription;
 import mathrone.backend.domain.token.*;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.RefreshTokenRepository;
+import mathrone.backend.repository.SubscriptionRepository;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.redisRepository.KakaoRefreshTokenRedisRepository;
 import mathrone.backend.repository.redisRepository.LogoutAccessTokenRedisRepository;
@@ -27,6 +29,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
+import java.time.LocalDate;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import mathrone.backend.domain.token.LogoutAccessToken;
@@ -51,6 +56,8 @@ public class AuthService {
     private final KakaoRefreshTokenRedisRepository kakaoRefreshTokenRedisRepository;
     private final GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository;
     private final MailService mailService;
+    private final SubscriptionRepository subscriptionRepository;
+
 
     @Transactional
     public UserResponseDto signup(UserSignUpDto userSignUpDto) {
@@ -110,6 +117,14 @@ public class AuthService {
         }
 
         UserInfo user = userinfoRepository.findByEmailAndResType(googleIDToken.getBody().getEmail(), GOOGLE.getTypeName());
+
+
+        //프리미엄
+        if(user.isPremium()) {
+            checkPremiumUser(user.getUserId());
+        }
+
+
         UserRequestDto userRequestDto = new UserRequestDto(user.getAccountId(),
                     "googleLogin");
 
@@ -179,6 +194,14 @@ public class AuthService {
             signupWithKakao(kakaoIDToken, tmpId); //카카오계정 으로 회원가입 진행
         }
         UserInfo user = userinfoRepository.findByEmailAndResType(kakaoIDToken.getBody().getEmail(), KAKAO.getTypeName());
+
+        //로그인 시 프리미엄 검사
+        if(user.isPremium()) {
+            checkPremiumUser(user.getUserId());
+        }
+
+
+
         UserRequestDto userRequestDto = new UserRequestDto(user.getAccountId(),
             "kakaoLogin");
 
@@ -254,6 +277,7 @@ public class AuthService {
         // Login ID/PW 를 기반으로 AuthenticationToken 생성
         UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
 
+
         // 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
         //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
         Authentication authentication = authenticationManagerBuilder.getObject()
@@ -261,6 +285,14 @@ public class AuthService {
         // token 생성
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
             userRequestDto.getAccountId());
+
+
+        int userId = Integer.parseInt(tokenDto.getUserInfo().getUserId());
+        UserInfo u = userinfoRepository.findByUserId(userId);
+        if(u.isPremium()) {
+            checkPremiumUser(userId);
+        }
+
         // refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
         RefreshToken refreshToken = RefreshToken.builder()
             .userid(authentication.getName())
@@ -562,4 +594,27 @@ public class AuthService {
         user.changePassword(passwordEncoder, newPassword.getNewPassword());
     }
 
+    //authService.java -> 로그인 하는 경우에 프리미엄 구독 만료 대상이면 만료시킴
+    public void checkPremiumUser(int userId){
+
+        UserInfo u = userinfoRepository.findByUserId(userId);
+
+        if(u.isPremium()){
+
+            Subscription s = subscriptionRepository.checkLastSubscription(userId).orElseThrow(() -> new CustomException(ErrorCode.SUBSCRIBE_USER_NOT_FOUND));
+
+            Date today = new Date();
+
+            long diffDays =  (today.getTime() - s.getLastModifiedDate().getTime()) / (24*60*60*1000);
+
+
+            //구독 만료 대상자 -> premium = false로 변경
+            if(diffDays >= 30){
+                UserInfo updatedUser = u.updatePremium(false);
+                userinfoRepository.save(updatedUser);
+            }
+
+        }
+
+    }
 }
