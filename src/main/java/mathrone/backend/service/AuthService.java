@@ -549,7 +549,7 @@ public class AuthService {
 
     //일반적인 비밀변호 변경 로직
     @Transactional
-    public void changePw(HttpServletRequest request ,String newPassword){
+    public void changePw(HttpServletRequest request ,ChangePasswordDto newPassword){
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         if (!tokenProviderUtil.validateToken(accessToken, request)) {
@@ -559,7 +559,7 @@ public class AuthService {
                 tokenProviderUtil.getAuthentication(accessToken).getName());
 
         UserInfo user = userinfoRepository.findByUserId(userId);
-        user.changePassword(passwordEncoder, newPassword);
+        user.changePassword(passwordEncoder, newPassword.getNewPassword());
     }
 
 }
