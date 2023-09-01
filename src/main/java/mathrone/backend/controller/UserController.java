@@ -6,6 +6,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.ChangeAccountIdDto;
+import mathrone.backend.controller.dto.ChangePasswordDto;
 import mathrone.backend.controller.dto.FindDto;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
@@ -179,14 +180,14 @@ public class UserController {
         authService.findId(request);
     }
 
-    @PostMapping("/find/pw")
+    @PostMapping("/find/password")
     public void findPw(@RequestBody FindDto request){
         authService.findPw(request);
     }
 
     @PatchMapping("/password")
     public void changePw(HttpServletRequest request,
-            @RequestBody String newPassword){
+            @RequestBody ChangePasswordDto newPassword){
         authService.changePw(request, newPassword);
     }
 }
