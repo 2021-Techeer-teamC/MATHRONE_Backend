@@ -38,18 +38,26 @@ public class UserWorkbookRelInfo {
     private WorkBookInfo workbook;
 
     @NotNull
-    Boolean hide;
+    @Builder.Default()
+    Boolean hide = false;
 
     @NotNull
     @Column(name = "is_vote")
-    Boolean isVote;
+    @Builder.Default()
+    Boolean isVote = false;
 
     @NotNull
     @Column(name = "workbook_star")
-    Boolean workbookStar;
+    @Builder.Default()
+    Boolean workbookStar = false;
 
     @NotNull
     @Column(name = "workbook_try")
-    Boolean workbookTry;
+    @Builder.Default()
+    Boolean workbookTry = false;
+
+    public void updateStar(boolean star){
+        this.workbookStar = star;
+    }
 
 }
