@@ -13,6 +13,7 @@ import mathrone.backend.domain.ProblemTry;
 import mathrone.backend.domain.Solution;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.error.exception.CustomException;
+import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.ProblemRepository;
 import mathrone.backend.repository.ProblemTryRepository;
 import mathrone.backend.repository.SolutionRepository;
@@ -62,7 +63,8 @@ public class AnswerServiceImpl implements AnswerService {
         for (ProblemGradeRequestDto.problemSolve problem : list) {
             Solution solutionProblem = solutionRepository.findSolutionByProblemId(
                 problem.getProblemId());
-            Problem registedProblem = problemRepository.findByProblemId(problem.getProblemId());
+            Problem registedProblem = problemRepository.findById(problem.getProblemId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_PROBLEM));
             boolean isCorrect = false;
             ProblemTry problemTry;
             Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
@@ -125,7 +127,8 @@ public class AnswerServiceImpl implements AnswerService {
             }
             Solution solutionProblem = solutionRepository.findSolutionByProblemId(
                     problem.getProblemId());
-            Problem registedProblem = problemRepository.findByProblemId(problem.getProblemId());
+            Problem registedProblem = problemRepository.findById(problem.getProblemId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_PROBLEM));
 
             boolean isCorrect = false;
             if (solutionProblem.getAnswer() == Integer.parseInt(problem.getSolution())) {
