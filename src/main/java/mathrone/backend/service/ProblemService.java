@@ -1,12 +1,12 @@
 package mathrone.backend.service;
 
-import java.util.List;
-import mathrone.backend.domain.Problem;
+import java.util.Set;
+import mathrone.backend.controller.dto.ProblemDto;
 
 interface ProblemService {
 
-    public Problem findProblembyId(String problemId);
+    ProblemDto findProblembyId(String problemId);
 
-    public List<Problem> findProblem(String workbookId, String chapterId);
+    Set<ProblemDto> findProblem(String workbookId, String chapterId);
 
 }
