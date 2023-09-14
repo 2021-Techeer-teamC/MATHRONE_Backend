@@ -1,12 +1,10 @@
 package mathrone.backend.controller;
 
 import io.swagger.annotations.ApiOperation;
-import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.UserFailedTriedProblemsOfChapterDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto;
-import mathrone.backend.controller.dto.UserProblemTryDto;
 import mathrone.backend.domain.UserProfile;
 import mathrone.backend.service.AuthService;
 import mathrone.backend.service.ProfileService;
@@ -30,12 +28,6 @@ public class ProfileController {
     @ApiOperation(value = "유저의 프로필 정보 조회")
     public UserProfile getProfile(HttpServletRequest request) {
         return profileService.getProfile(authService.getUserIdFromAT(request));
-    }
-
-    @GetMapping("/problme")
-    @ApiOperation(value = "유저가 시도한 문제 반환")
-    public ResponseEntity<List<UserProblemTryDto>> getTryProblem(HttpServletRequest request) {
-        return ResponseEntity.ok(profileService.getTryProblem(request));
     }
 
     @GetMapping("/problem/analysis")
