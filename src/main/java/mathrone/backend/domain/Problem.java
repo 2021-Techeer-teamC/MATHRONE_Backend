@@ -2,60 +2,25 @@ package mathrone.backend.domain;
 
 import com.sun.istack.NotNull;
 import com.vladmihalcea.hibernate.type.array.IntArrayType;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.ColumnResult;
-import javax.persistence.ConstructorResult;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.NamedNativeQuery;
-import javax.persistence.SqlResultSetMapping;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import mathrone.backend.controller.dto.UserProblemTryDto;
 import org.hibernate.annotations.TypeDef;
-
-@SqlResultSetMapping(
-    name = "problemTryDTOMapping",
-    classes = @ConstructorResult(
-        targetClass = UserProblemTryDto.class,
-        columns = {
-            @ColumnResult(name = "problemId", type = String.class),
-            @ColumnResult(name = "problemNum", type = Integer.class),
-            @ColumnResult(name = "chapterId", type = String.class),
-            @ColumnResult(name = "workbookId", type = String.class),
-            @ColumnResult(name = "levelOfDiff", type = Integer.class),
-            @ColumnResult(name = "iscorrect", type = Boolean.class),
-            @ColumnResult(name = "title", type = String.class)
-        }
-    )
-)
-
-@NamedNativeQuery(name = "Problem.findUserTryProblem",
-    resultClass = UserProblemTryDto.class,
-    resultSetMapping = "problemTryDTOMapping",
-    query = "select P.problem_id as problemId,"
-        + "P.problem_num as problemNum,"
-        + "P.chapter_id as chapterId,"
-        + "P.workbook_id as workbookId,"
-        + "P.level_of_diff as levelOfDiff,"
-        + "PT.iscorrect, W.title "
-        + "from problem P, problem_try PT, workbook W "
-        + "where P.problem_id = PT.problem_id "
-        + "and P.workbook_id = W.workbook_id "
-        + "and PT.user_id = :userId"
-
-)
 
 @NoArgsConstructor
 @Entity
 @Table(name = "problem")
 @TypeDef(name = "int-array", typeClass = IntArrayType.class)
 @Getter
-@Setter
 public class Problem {
 
     @Id
@@ -67,13 +32,13 @@ public class Problem {
     @NotNull
     private String problemNum;
 
-    @Column(name = "chapter_id")
-    @NotNull
-    private String chapterId;
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "workbook_id")
+    private WorkBookInfo workbook;
 
-    @Column(name = "workbook_id")
-    @NotNull
-    private String workbookId;
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "chapter_id")
+    private ChapterInfo chapter;
 
     @Column(name = "problem_img")
     @NotNull
@@ -86,12 +51,5 @@ public class Problem {
     @NotNull
     private boolean multiple;
 
-//    @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true) //영속화 설정
-//    private List<ProblemTry> problemTryList = new LinkedList<>();   // null 에러 방지
-
-//    @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true) //영속화 설정
-//    private List<ProblemTry> problemTryList = new LinkedList<>();   // null 에러 방지
-
-//    replace the getter annotation
 }
 
