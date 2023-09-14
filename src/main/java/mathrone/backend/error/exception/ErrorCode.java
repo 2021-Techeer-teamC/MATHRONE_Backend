@@ -40,6 +40,9 @@ public enum ErrorCode {
     // chapter
     NOT_FOUND_CHAPTER(NOT_FOUND, "workbook에 chapter가 존재하지 않습니다. ", "WC01"),
 
+    // problem
+    NOT_FOUND_PROBLEM(NOT_FOUND, "problem이 존재하지 않습니다. ", "P001"),
+
     // token
     INVALID_ACCESS_TOKEN(UNAUTHORIZED, "Access token이 유효하지 않습니다.", "T001"),
     EXPIRED_TOKEN(UNAUTHORIZED, "만료된 JWT 토큰입니다.", "T002"),
