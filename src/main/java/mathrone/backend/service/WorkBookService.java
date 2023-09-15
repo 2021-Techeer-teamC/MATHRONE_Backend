@@ -11,27 +11,30 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
-import mathrone.backend.controller.dto.UserWorkbookDataInterface;
-import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.controller.dto.BookDetailDto;
 import mathrone.backend.controller.dto.BookDetailDto.ChapterGroup;
 import mathrone.backend.controller.dto.BookDetailDto.Chapters;
+import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
+import mathrone.backend.controller.dto.UserWorkbookDataInterface;
+import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.domain.ChapterInfo;
 import mathrone.backend.domain.Problem;
 import mathrone.backend.domain.PubCatPair;
 import mathrone.backend.domain.Tag;
+import mathrone.backend.domain.UserInfo;
+import mathrone.backend.domain.UserWorkbookRelInfo;
 import mathrone.backend.domain.WorkBookInfo;
 import mathrone.backend.domain.WorkbookLevelInfo;
 import mathrone.backend.domain.bookContent;
 import mathrone.backend.domain.bookItem;
 import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.error.exception.ErrorCode;
+import mathrone.backend.repository.ChapterRepository;
 import mathrone.backend.repository.LevelRepository;
 import mathrone.backend.repository.ProblemRepository;
-import mathrone.backend.repository.UserWorkbookRelRepository;
-import mathrone.backend.repository.ChapterRepository;
 import mathrone.backend.repository.TagRepository;
+import mathrone.backend.repository.UserInfoRepository;
+import mathrone.backend.repository.UserWorkbookRelRepository;
 import mathrone.backend.repository.WorkBookRepository;
 import mathrone.backend.repository.WorkbookLevelRepository;
 import mathrone.backend.util.TokenProviderUtil;
@@ -50,6 +53,7 @@ public class WorkBookService {
     private final TokenProviderUtil tokenProviderUtil;
     private final UserWorkbookRelRepository userWorkbookRelRepository;
     private final WorkbookLevelRepository workbookLevelRepository;
+    private final UserInfoRepository userInfoRepository;
 
 
     public List<WorkBookInfo> findWorkbook(String publisher, String category, Pageable pageable) {
@@ -94,8 +98,8 @@ public class WorkBookService {
     }
 
     // 워크북 상세 페이지에 대한 정보를 불러옴
-    public BookDetailDto getWorkbookDetail(String workbookId){
-        Map< String, List<Chapters>> arrMap = new HashMap<>(); // 그룹 별로 정리하기 위함
+    public BookDetailDto getWorkbookDetail(String workbookId) {
+        Map<String, List<Chapters>> arrMap = new HashMap<>(); // 그룹 별로 정리하기 위함
         List<Chapters> list = new ArrayList<>();
         List<ChapterGroup> chapterGroups = new ArrayList<>();
         List<Tag> tags = new ArrayList<>();
@@ -103,13 +107,13 @@ public class WorkBookService {
         WorkBookInfo workBookInfo = workBookRepository.findByWorkbookId(workbookId);
 
         // 각 그룹별로 챕터 정리
-        if(workBookInfo.getChapterId() != null){
+        if (workBookInfo.getChapterId() != null) {
             for (String s : workBookInfo.getChapterId()) {
                 ChapterInfo chapterInfo = chapterRepository.findByChapterId(s).get();
                 Chapters chapters = Chapters.builder()
-                        .id(chapterInfo.getChapterId())
-                        .name(chapterInfo.getName())
-                        .build();
+                    .id(chapterInfo.getChapterId())
+                    .name(chapterInfo.getName())
+                    .build();
                 if (arrMap.containsKey(chapterInfo.getGroup())) {
                     list = arrMap.get(chapterInfo.getGroup());
                     list.add(chapters);
@@ -122,34 +126,35 @@ public class WorkBookService {
             // 그룹별로 정리한 챕터 정보를 ChapterGroup 리스트 형식에 맞게 변환
             for (String key : arrMap.keySet()) {
                 chapterGroups.add(
-                        ChapterGroup.builder()
-                                .group(key)
-                                .chapters(arrMap.get(key))
-                                .build());
+                    ChapterGroup.builder()
+                        .group(key)
+                        .chapters(arrMap.get(key))
+                        .build());
             }
         }
 
         Long[] tagList = workBookInfo.getTags();
-        if(tagList != null){
-            for(Long i : tagList){
-                if(tagRepository.findById(i).isPresent())
+        if (tagList != null) {
+            for (Long i : tagList) {
+                if (tagRepository.findById(i).isPresent()) {
                     tags.add(tagRepository.findById(i).get());
+                }
             }
         }
         return BookDetailDto.builder()
-                .workbookId(workBookInfo.getWorkbookId())
-                .title(workBookInfo.getTitle())
-                .summary("summary")
-                .publisher(workBookInfo.getPublisher())
-                .category(workBookInfo.getCategory())
-                .thumbnail(workBookInfo.getThumbnail())
-                .content(workBookInfo.getContent())
-                .type(workBookInfo.getType())
-                .year(workBookInfo.getYear())
-                .month(workBookInfo.getMonth())
-                .chapterGroup(chapterGroups)
-                .tags(tags)
-                .build();
+            .workbookId(workBookInfo.getWorkbookId())
+            .title(workBookInfo.getTitle())
+            .summary("summary")
+            .publisher(workBookInfo.getPublisher())
+            .category(workBookInfo.getCategory())
+            .thumbnail(workBookInfo.getThumbnail())
+            .content(workBookInfo.getContent())
+            .type(workBookInfo.getType())
+            .year(workBookInfo.getYear())
+            .month(workBookInfo.getMonth())
+            .chapterGroup(chapterGroups)
+            .tags(tags)
+            .build();
     }
 
     public Long getStar(String workbookId) {
@@ -407,5 +412,68 @@ public class WorkBookService {
                 throw new CustomException(ErrorCode.INVALID_LEVEL_VALUE);
 
         }
+    }
+
+    /**
+     * 유저에 대한 workbook의 즐겨찾기 추가 or 삭제
+     *
+     * @param request       http request
+     * @param workbookId    workbook Id
+     */
+    @Transactional
+    public void starWorkbook(HttpServletRequest request, String workbookId) {
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
+        }
+
+        int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
+
+        UserInfo user = userInfoRepository.getById(userId);
+        WorkBookInfo workbook = workBookRepository.findById(workbookId).orElseThrow(() ->
+            new CustomException(ErrorCode.NOT_FOUND_WORKBOOK));
+
+        Optional<UserWorkbookRelInfo> byUserAndWorkbook = userWorkbookRelRepository.findByUserAndWorkbook(
+            user, workbook);
+
+        if (byUserAndWorkbook.isEmpty()){
+            userWorkbookRelRepository.save(UserWorkbookRelInfo.builder()
+                .workbook(workbook)
+                .user(user)
+                .workbookStar(true).build());
+        } else {
+            UserWorkbookRelInfo userWorkbookRelInfo = byUserAndWorkbook.get();
+            userWorkbookRelInfo.updateStar(true);
+        }
+    }
+
+    @Transactional
+    public void deleteStarWorkbook(HttpServletRequest request, String workbookId) {
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
+        }
+
+        int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
+
+        UserInfo user = userInfoRepository.getById(userId);
+        WorkBookInfo workbook = workBookRepository.findById(workbookId).orElseThrow(() ->
+            new CustomException(ErrorCode.NOT_FOUND_WORKBOOK));
+
+        Optional<UserWorkbookRelInfo> byUserAndWorkbook = userWorkbookRelRepository.findByUserAndWorkbook(
+            user, workbook);
+
+        if (byUserAndWorkbook.isEmpty()){
+            userWorkbookRelRepository.save(UserWorkbookRelInfo.builder()
+                .workbook(workbook)
+                .user(user)
+                .workbookStar(false).build());
+        } else {
+            UserWorkbookRelInfo userWorkbookRelInfo = byUserAndWorkbook.get();
+            userWorkbookRelInfo.updateStar(false);
+        }
+
     }
 }
