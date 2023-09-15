@@ -15,6 +15,10 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Integer> {
 
     UserInfo findByEmailAndResType(String email, String resType);
 
+    Optional<UserInfo> findByEmail(String email);
+
+    Optional<UserInfo> findByEmailAndAccountId(String email, String accountId);
+
     // user_id를 통해서 user_nickname 조회
     @Query(value = "SELECT COUNT(*) FROM problem_try WHERE user_id=:userId GROUP BY user_id", nativeQuery = true)
     Long getTryByUserID(int userId);

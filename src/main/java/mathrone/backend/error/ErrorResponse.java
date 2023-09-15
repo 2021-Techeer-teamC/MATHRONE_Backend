@@ -28,7 +28,18 @@ public class ErrorResponse {
             );
     }
 
-    public static ResponseEntity<ErrorResponse> toResponseEntity(ErrorCode errorCode,
+    public static ResponseEntity<Object> unConfirmedErrorTtoResponseEntity(ErrorCode errorCode){
+        return ResponseEntity
+            .status(errorCode.getHttpStatus())
+            .body(ErrorResponse.builder()
+                .status(errorCode.getHttpStatus().value())
+                .message(errorCode.getDetail())
+                .code(errorCode.getCode())
+                .build()
+            );
+    }
+
+    public static ResponseEntity<Object> toResponseEntity(ErrorCode errorCode,
         String errorMessage) {
         return ResponseEntity
             .status(errorCode.getHttpStatus())
