@@ -86,8 +86,10 @@ public class RankService {
         return node;
     }
 
+    @Transactional
     public void setRank(Integer userId, Integer upScore) { // 문제를 풀었을 시에 스코어를 올려주는 용도
         zSetOperations.incrementScore("test", userId.toString(), upScore);
         // value값에 해당하는 score에 delta값을 더해줌, value 값이 없을시 자동 추가
+        userInfoRepository.findByUserId(userId).updateExp(upScore);
     }
 }

@@ -88,4 +88,9 @@ public class UserInfo {
         return this;
     }
 
+    public UserInfo updateExp(int upScore){
+        this.exp = this.exp + upScore;
+        return this;
+    }
+
 }
