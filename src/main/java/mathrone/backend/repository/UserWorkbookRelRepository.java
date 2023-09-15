@@ -1,7 +1,9 @@
 package mathrone.backend.repository;
 
 import java.util.List;
+import java.util.Optional;
 import mathrone.backend.controller.dto.UserWorkbookDataInterface;
+import mathrone.backend.domain.UserInfo;
 import mathrone.backend.domain.UserWorkbookRelInfo;
 import mathrone.backend.domain.WorkBookInfo;
 import mathrone.backend.domain.WorkbookRelPK;
@@ -12,6 +14,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserWorkbookRelRepository extends
     JpaRepository<UserWorkbookRelInfo, WorkbookRelPK> {
+    Optional<UserWorkbookRelInfo> findByUserAndWorkbook(UserInfo user, WorkBookInfo workBook);
+
 
     Long countByWorkbookAndWorkbookStar(WorkBookInfo workBookInfo, boolean star);
 
