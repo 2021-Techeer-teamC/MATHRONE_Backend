@@ -1,13 +1,16 @@
 package mathrone.backend.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
+import mathrone.backend.controller.dto.MyRankDto;
+import mathrone.backend.controller.dto.AllRankDto;
 import mathrone.backend.error.exception.CustomException;
+import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -35,23 +38,22 @@ public class RankService {
      *
      * @return ArrayNode
      */
-    public ArrayNode getAllRank() { // 리더보드에 필요한 rank 데이터 조회
-        ObjectMapper mapper = new ObjectMapper();
-        ArrayNode arrayNode = mapper.createArrayNode();
+    public List<AllRankDto> getAllRank() { // 리더보드에 필요한 rank 데이터 조회
         Set<ZSetOperations.TypedTuple<String>> rankSet =
             Optional.ofNullable(zSetOperations.reverseRangeWithScores("test", 0, -1))
                 .orElse(new HashSet<>());
 
         //LinkedHashMap으로 리턴함
+        List<AllRankDto> result = new ArrayList<>();
         for (ZSetOperations.TypedTuple<String> str : rankSet) {
-            ObjectNode node = mapper.createObjectNode();
             int temp = Integer.parseInt(str.getValue());
-            node.put("user_name", userInfoRepository.findByUserId(temp).getAccountId());
-            node.put("correct_count", str.getScore());
-            node.put("try_count", userInfoRepository.getTryByUserID(temp));
-            arrayNode.add(node);
-        } // 해당 유저가 시도한 문제 수를 포함한 JSON 형식 다시 생성
-        return arrayNode;
+            result.add(AllRankDto.builder()
+                        .user_name(userInfoRepository.findByUserId(temp).getAccountId())
+                        .correct_count(Long.parseLong(String.valueOf(str.getScore())))
+                        .try_count((long)userInfoRepository.getTryByUserID(temp))
+                        .build());
+        }
+        return result;
     }
 
     /**
@@ -60,30 +62,31 @@ public class RankService {
      * @param request access token 정보를 추출하기 위한 매개변수
      * @return ObjectNode
      */
-    public ObjectNode getMyRank(HttpServletRequest request) {
+    public MyRankDto getMyRank(HttpServletRequest request) {
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         if (!tokenProviderUtil.validateToken(accessToken, request)) {
             throw (CustomException) request.getAttribute("Exception");
         }
-
         // 리더보드에 필요한 나의 rank 조회
         int userId = Integer.parseInt(
             tokenProviderUtil.getAuthentication(accessToken).getName());
 
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectNode node = mapper.createObjectNode();
-        Optional<Long> test = Optional.ofNullable(
+        Optional<Long> rankList = Optional.ofNullable( // redis에서 가져온 랭킹 데이터
             zSetOperations.reverseRank("test", Integer.toString(userId)));
 
-        // redis에 data가 존재하는 경우
-        if (test.isPresent()) {
-            node.put("rank", test.get() + 1);
-            node.put("user_name", userInfoRepository.findByUserId(userId).getAccountId());
-            node.put("correct_count", zSetOperations.score("test", Integer.toString(userId)));
-            node.put("try_count", userInfoRepository.getTryByUserID(userId));
+
+        if (rankList.isPresent()) { // redis에 data가 존재하는 경우
+             return MyRankDto.builder()
+                            .rank(rankList.get() + 1)
+                            .user_name(userInfoRepository.findByUserId(userId).getAccountId())
+                            .correct_count(Long.parseLong(String.valueOf(zSetOperations.score("test", userId))))
+                            .try_count((long)userInfoRepository.getTryByUserID(userId))
+                                    .build();
         }
-        return node;
+        else{ // redis에 data가 없을 경우
+            throw new CustomException(ErrorCode.SERVER_ERROR);
+        }
     }
 
     @Transactional
