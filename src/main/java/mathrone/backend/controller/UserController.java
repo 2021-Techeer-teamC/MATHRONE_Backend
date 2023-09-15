@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.ChangeAccountIdDto;
 import mathrone.backend.controller.dto.ChangePasswordDto;
@@ -19,7 +20,6 @@ import mathrone.backend.controller.dto.UserResponseDto;
 import mathrone.backend.controller.dto.UserSignUpDto;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.service.AuthService;
-import mathrone.backend.service.MailService;
 import mathrone.backend.service.SnsLoginService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +40,6 @@ public class UserController {
 
     private final AuthService authService;
     private final SnsLoginService snsLoginService;
-    private final MailService mailService;
 
     @GetMapping("/delUser")
     @ApiOperation(value = "사용자 삭제", notes = "DB에 존재하는 사용자를 삭제")
@@ -176,18 +175,21 @@ public class UserController {
     }
 
     @PostMapping("/find/id")
-    public void findId(@RequestBody FindDto request){ // 이메일 입력
+    @ApiOperation(value = "아이디 찾기", notes = "입력받은 이메일에 대한 아이디를 찾아 이메일 발송")
+    public void findId(@RequestBody @Valid FindDto request) {
         authService.findId(request);
     }
 
     @PostMapping("/find/password")
-    public void findPw(@RequestBody FindDto request){
+    @ApiOperation(value = "비밀번호 찾기", notes = "입력받은 아이디에 대한 임시 패스워드를 발급하여 이메일 발송")
+    public void findPw(@RequestBody @Valid FindDto request) {
         authService.findPw(request);
     }
 
     @PatchMapping("/password")
+    @ApiOperation(value = "비밀번호 변경", notes = "현재 유저의 패스워드 수정")
     public void changePw(HttpServletRequest request,
-            @RequestBody ChangePasswordDto newPassword){
+        @RequestBody @Valid ChangePasswordDto newPassword) {
         authService.changePw(request, newPassword);
     }
 }

@@ -23,9 +23,4 @@ public class MainPageController {
         return mainPageService.getCarousel();
     }
 
-//    @GetMapping("/main/problem/try")
-//    public List<RecentTryDto> getRecentTry(){
-//        return mainPageService.getRecentTry();
-//    }
-
 }
