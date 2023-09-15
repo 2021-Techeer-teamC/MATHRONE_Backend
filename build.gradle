@@ -52,6 +52,11 @@ dependencies {
     // 카카오 로그인
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
 
+    // 이메일 sending
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+    // Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     // DataTime formatter
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
