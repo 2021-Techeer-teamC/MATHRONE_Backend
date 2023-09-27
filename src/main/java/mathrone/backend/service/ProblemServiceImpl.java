@@ -1,7 +1,6 @@
 package mathrone.backend.service;
 
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -33,7 +32,7 @@ public class ProblemServiceImpl implements ProblemService {
     private final ChapterRepository chapterRepository;
 
     @Override
-    public ProblemDto findProblembyId(String problemId) {
+    public ProblemDto findProblemById(String problemId) {
         Problem problem = problemRepository.findById(problemId)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_PROBLEM));
         return new ProblemDto(problem);
@@ -52,7 +51,7 @@ public class ProblemServiceImpl implements ProblemService {
             Collectors.toSet());
     }
 
-    public Set<ProblemDto> getTryProblem(HttpServletRequest request, Optional<Boolean> correct) {
+    public Set<ProblemDto> getTryProblem(HttpServletRequest request, Boolean onlyIncorrect) {
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         if (accessToken == null) {
@@ -63,11 +62,11 @@ public class ProblemServiceImpl implements ProblemService {
             Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName())
         ).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (correct.isEmpty()) {
+        if (!onlyIncorrect) {
             return problemTryRepository.findAllByUser(user).stream().map(
                 a -> new ProblemDto(a.getProblem())).collect(Collectors.toSet());
         } else {
-            return problemTryRepository.findAllByUserAndIscorrect(user, correct.get()).stream().map(
+            return problemTryRepository.findAllByUserAndIscorrect(user, onlyIncorrect).stream().map(
                 a -> new ProblemDto(a.getProblem())).collect(Collectors.toSet());
         }
     }

@@ -5,7 +5,7 @@ import mathrone.backend.controller.dto.ProblemDto;
 
 interface ProblemService {
 
-    ProblemDto findProblembyId(String problemId);
+    ProblemDto findProblemById(String problemId);
 
     Set<ProblemDto> findProblem(String workbookId, String chapterId);
 
