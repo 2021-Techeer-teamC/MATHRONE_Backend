@@ -12,7 +12,7 @@ public class ProblemDto {
     private String problemId;
     private String problemNum;
     private String problemImg;
-    private int levelOfDiff;
+    private int level;
     private boolean multiple;
     private Workbook workbook;
     private Chapter chapter;
@@ -21,7 +21,7 @@ public class ProblemDto {
         this.problemId = problem.getProblemId();
         this.problemNum = problem.getProblemNum();
         this.problemImg = problem.getProblemImg();
-        this.levelOfDiff = problem.getLevelOfDiff();
+        this.level = problem.getLevel();
         this.multiple = problem.isMultiple();
         this.workbook = new Workbook(problem.getWorkbook().getWorkbookId(), problem.getWorkbook().getTitle());
         this.chapter = new Chapter(problem.getChapter().getChapterId(), problem.getChapter().getName());
