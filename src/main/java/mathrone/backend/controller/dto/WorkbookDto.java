@@ -1,4 +1,4 @@
-package mathrone.backend.domain;
+package mathrone.backend.controller.dto;
 
 import com.sun.istack.NotNull;
 import javax.persistence.Entity;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Getter
-public class bookItem {
+public class WorkbookDto {
 
     //bookItem에 필요한 attribute
     @Id
@@ -28,11 +28,11 @@ public class bookItem {
     private String thumbnail;
 
     private String level;
-    private Long star;
+    private boolean star;
 
     //생성자
-    public bookItem(String workbookId, String title, String publisher, String thumbnail,
-        String level, Long star) {
+    public WorkbookDto(String workbookId, String title, String publisher, String thumbnail,
+        String level, boolean star) {
         this.workbookId = workbookId;
         this.title = title;
         this.publisher = publisher;
