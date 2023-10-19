@@ -8,7 +8,6 @@ import mathrone.backend.controller.dto.ProblemDto;
 import mathrone.backend.service.ProblemServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,11 +33,11 @@ public class ProblemController {
         }
     }
 
-    @GetMapping(value = {"/try/{onlyIncorrect}"})
+    @GetMapping(value = {"/try"})
     @ApiOperation(value = "유저가 시도한 문제 반환", notes = "프리미엄 유저가 푼 문제에 대한 분석 그래프 제공 기능을 위함\n"
         + " correct의 여부에 따라 유저가 시도한 문제의 정답여부에 따른 문제 반환")
     public ResponseEntity<List<ProblemDto>> getTryProblem(HttpServletRequest request,
-        @PathVariable Boolean onlyIncorrect) {
+        @RequestParam Boolean onlyIncorrect) {
         return ResponseEntity.ok(problemServiceImpl.getTryProblem(request, onlyIncorrect));
     }
 
