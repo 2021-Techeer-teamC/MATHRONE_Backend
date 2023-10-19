@@ -44,8 +44,8 @@ public class Problem {
     @NotNull
     private String problemImg;
 
-    @Column(name = "level_of_diff")
-    private int levelOfDiff;
+    @Column(name = "level")
+    private int level;
 
     @Column(name = "is_multiple")
     @NotNull

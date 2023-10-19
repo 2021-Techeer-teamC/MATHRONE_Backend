@@ -1,8 +1,7 @@
 package mathrone.backend.service;
 
 
-import java.util.Optional;
-import java.util.Set;
+import java.util.List;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -33,26 +32,39 @@ public class ProblemServiceImpl implements ProblemService {
     private final ChapterRepository chapterRepository;
 
     @Override
-    public ProblemDto findProblembyId(String problemId) {
+    public ProblemDto findProblemById(String problemId) {
         Problem problem = problemRepository.findById(problemId)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_PROBLEM));
         return new ProblemDto(problem);
     }
 
     @Override
-    public Set<ProblemDto> findProblem(String workbookId, String chapterId) {
-        WorkBookInfo workBook = workBookRepository.findById(workbookId)
-            .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_WORKBOOK));
-        ChapterInfo chapter = chapterRepository.findById(chapterId)
-            .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CHAPTER));
-        Set<Problem> problems = problemRepository.findByWorkbookAndChapter(workBook,
-            chapter);
+    public List<ProblemDto> findProblem(String workbookId, String chapterId) {
+        if (workbookId.isEmpty()) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+        List<Problem> problems;
+        WorkBookInfo workBook;
+        ChapterInfo chapter;
+
+        if (chapterId.isEmpty()) {
+            workBook = workBookRepository.findById(workbookId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_WORKBOOK));
+            problems = problemRepository.findByWorkbookOrderByProblemId(workBook);
+        } else {
+            workBook = workBookRepository.findById(workbookId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_WORKBOOK));
+            chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CHAPTER));
+            problems = problemRepository.findByWorkbookAndChapterOrderByProblemId(workBook,
+                chapter);
+        }
 
         return problems.stream().map(ProblemDto::new).collect(
-            Collectors.toSet());
+            Collectors.toList());
     }
 
-    public Set<ProblemDto> getTryProblem(HttpServletRequest request, Optional<Boolean> correct) {
+    public List<ProblemDto> getTryProblem(HttpServletRequest request, Boolean onlyIncorrect) {
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         if (accessToken == null) {
@@ -63,12 +75,13 @@ public class ProblemServiceImpl implements ProblemService {
             Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName())
         ).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (correct.isEmpty()) {
-            return problemTryRepository.findAllByUser(user).stream().map(
-                a -> new ProblemDto(a.getProblem())).collect(Collectors.toSet());
+        if (!onlyIncorrect) {
+            return problemTryRepository.findAllByUserOrderByProblem(user).stream().map(
+                a -> new ProblemDto(a.getProblem())).collect(Collectors.toList());
         } else {
-            return problemTryRepository.findAllByUserAndIscorrect(user, correct.get()).stream().map(
-                a -> new ProblemDto(a.getProblem())).collect(Collectors.toSet());
+            return problemTryRepository.findAllByUserAndIscorrectOrderByProblem(user, false)
+                .stream().map(
+                    a -> new ProblemDto(a.getProblem())).collect(Collectors.toList());
         }
     }
 }

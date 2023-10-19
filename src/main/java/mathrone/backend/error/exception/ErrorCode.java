@@ -1,6 +1,11 @@
 package mathrone.backend.error.exception;
 
-import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.LOCKED;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -38,10 +43,10 @@ public enum ErrorCode {
     INVALID_LEVEL_VALUE(BAD_REQUEST, "문제집을 평가하기 위한 level값이 잘못되었습니다", "W002"),
 
     // chapter
-    NOT_FOUND_CHAPTER(NOT_FOUND, "workbook에 chapter가 존재하지 않습니다. ", "WC01"),
+    NOT_FOUND_CHAPTER(NOT_FOUND, "workbook에 chapter가 존재하지 않습니다.", "WC01"),
 
     // problem
-    NOT_FOUND_PROBLEM(NOT_FOUND, "problem이 존재하지 않습니다. ", "P001"),
+    NOT_FOUND_PROBLEM(NOT_FOUND, "problem이 존재하지 않습니다.", "P001"),
 
     // token
     INVALID_ACCESS_TOKEN(UNAUTHORIZED, "Access token이 유효하지 않습니다.", "T001"),
@@ -52,14 +57,12 @@ public enum ErrorCode {
     NOT_AUTH_INFORMATION(UNAUTHORIZED, "권한 정보가 없는 토큰입니다.", "T006"),
     AlREADY_LOGOUT(UNAUTHORIZED, "이미 로그아웃한 회원입니다.", "T007"),
 
-
     // google
     GOOGLE_ACCOUNT_IS_DUPLICATION(UNAUTHORIZED, "이미 해당 구글계정으로 가입이 진행되었습니다.", "G001"),
     GOOGLE_ACCOUNT_NOT_FOUND(UNAUTHORIZED, "해당 계정으로 가입이 진행되지 않았습니다. 회원가입을 진행한 후 로그인해주세요.", "G002"),
 
     //google server error
     GOOGLE_SERVER_ERROR(UNAUTHORIZED, "해당 계정으로 가입이 진행되지 않았습니다. 회원가입을 진행한 후 로그인해주세요.", "G003"),
-
 
     // Common
     SERVER_ERROR(INTERNAL_SERVER_ERROR, "예상치 못한 에러가 발생하였습니다.", "C001"),
@@ -68,8 +71,7 @@ public enum ErrorCode {
     INVALID_REQUEST(BAD_REQUEST, "요청이 잘못되었습니다.", "C004"),
 
     // subscribe error
-    SUBSCRIPTION_ERROR_ALREADY_SUBSCRIBED(LOCKED,"이미 구독중인 계정입니다.","S001"),
-
+    SUBSCRIPTION_ERROR_ALREADY_SUBSCRIBED(LOCKED, "이미 구독중인 계정입니다.", "S001"),
     SUBSCRIBE_USER_NOT_FOUND(NOT_FOUND, "해당 유저의 최근 구독 이력을 찾을 수 없습니다.", "S002");
 
     private final HttpStatus httpStatus;

@@ -82,10 +82,10 @@ public class AnswerServiceImpl implements AnswerService {
                         .build();
             }
             try {
-                if (solutionProblem.getAnswer() == Integer.parseInt(problem.getSolution())) {
+                if (solutionProblem.getAnswer() == Integer.parseInt(problem.getMyAnswer())) {
                     isCorrect = true;
                     upScore++;
-                    problemTry.setAnswerSubmitted(Integer.parseInt(problem.getSolution()));
+                    problemTry.setAnswerSubmitted(Integer.parseInt(problem.getMyAnswer()));
                 }
             }
             catch(Exception e){
@@ -95,8 +95,8 @@ public class AnswerServiceImpl implements AnswerService {
 
             problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
                 .problemId(problem.getProblemId())
-                .solution(problemTry.getAnswerSubmitted())
-                .answer(solutionProblem.getAnswer()).build());
+                .correctAnswer(problemTry.getAnswerSubmitted())
+                .myAnswer(solutionProblem.getAnswer()).build());
         }
         rankService.setRank(userId, upScore);
         return problemGradeResponseDtoList;
@@ -122,7 +122,7 @@ public class AnswerServiceImpl implements AnswerService {
         UserInfo user = userInfoRepository.findByUserId(userId);
 
         for (ProblemGradeRequestDto.problemSolve problem : list) {
-            if (problem.getSolution().equals("a")) { // 답이 'a'인거 -> 풀지 않는 문제로 채점하지 않음
+            if (problem.getMyAnswer().equals("a")) { // 답이 'a'인거 -> 풀지 않는 문제로 채점하지 않음
                 continue;
             }
             Solution solutionProblem = solutionRepository.findSolutionByProblemId(
@@ -131,7 +131,7 @@ public class AnswerServiceImpl implements AnswerService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_PROBLEM));
 
             boolean isCorrect = false;
-            if (solutionProblem.getAnswer() == Integer.parseInt(problem.getSolution())) {
+            if (solutionProblem.getAnswer() == Integer.parseInt(problem.getMyAnswer())) {
                 isCorrect = true;
             }
             Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
@@ -143,11 +143,11 @@ public class AnswerServiceImpl implements AnswerService {
                     upScore++; // 이전에 틀렸던 문제를 이번에 맞았을 경우 스코어 업
                 ProblemTry problemTry = registedProblemTry.get();
                 problemTry.setIscorrect(isCorrect);
-                problemTry.setAnswerSubmitted(Integer.parseInt(problem.getSolution()));
+                problemTry.setAnswerSubmitted(Integer.parseInt(problem.getMyAnswer()));
                 problemTryRepository.save(problemTry);
             } else { // 문제를 푼 적이 없을 경우 try레포에 새로 저장
                 ProblemTry problemTry = ProblemTry.builder()
-                        .answerSubmitted(Integer.parseInt(problem.getSolution()))
+                        .answerSubmitted(Integer.parseInt(problem.getMyAnswer()))
                         .iscorrect(isCorrect)
                         .user(user)
                         .problem(registedProblem)
@@ -160,8 +160,8 @@ public class AnswerServiceImpl implements AnswerService {
 
             problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
                     .problemId(problem.getProblemId().substring(8))
-                    .solution(Integer.parseInt(problem.getSolution()))
-                    .answer(solutionProblem.getAnswer()).build());
+                    .correctAnswer(Integer.parseInt(problem.getMyAnswer()))
+                    .myAnswer(solutionProblem.getAnswer()).build());
         }
         rankService.setRank(userId, upScore); // redis 랭킹 점수 업데이트
         return problemGradeResponseDtoList;
