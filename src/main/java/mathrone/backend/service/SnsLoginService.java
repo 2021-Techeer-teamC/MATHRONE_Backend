@@ -31,7 +31,9 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import java.net.URI;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,15 +49,19 @@ public class SnsLoginService {
     private final KakaoOAuthLoginUtils kakaoOAuthLoginUtils;
     private final GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository;
     private final KakaoRefreshTokenRedisRepository kakaoRefreshTokenRedisRepository;
+    private final AuthService authService;
 
     SnsLoginService(OAuthLoginUtils oAuthLoginUtils, KakaoOAuthLoginUtils kakaoOAuthLoginUtils,
         GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository,
-        KakaoRefreshTokenRedisRepository kakaoRefreshTokenRedisRepository) {
+        KakaoRefreshTokenRedisRepository kakaoRefreshTokenRedisRepository,
+        AuthService authService
+    ) {
 
         this.oAuthLoginUtils = oAuthLoginUtils;
         this.kakaoOAuthLoginUtils = kakaoOAuthLoginUtils;
         this.googleRefreshTokenRedisRepository = googleRefreshTokenRedisRepository;
         this.kakaoRefreshTokenRedisRepository = kakaoRefreshTokenRedisRepository;
+        this.authService = authService;
     }
 
 
@@ -184,6 +190,9 @@ public class SnsLoginService {
             KakaoTokenResponseDTO kakaoLoginResponse = objectMapper.readValue(
                 apiResponseJson.getBody(), new TypeReference<KakaoTokenResponseDTO>() {
                 });
+
+            System.out.println("kakao login response");
+            System.out.println(kakaoLoginResponse);
 
             return ResponseEntity.ok().body(kakaoLoginResponse);
 
@@ -330,4 +339,26 @@ public class SnsLoginService {
         return ResponseEntity.badRequest().body(null);
 
     }
+
+
+
+
+    public ResponseEntity redirectKakaoLoginPage(){
+        String redirect = kakaoOAuthLoginUtils.getKakaoAuthUrl() + "?client_id=" + kakaoOAuthLoginUtils.getClientId() + "&redirect_uri="+ kakaoOAuthLoginUtils.getKakaoRedirectUri() + "&response_type=code&scope=account_email,openid,profile_image";
+        //return redirect;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(URI.create(redirect));
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
+    }
+
+    public ResponseEntity redirectKakaoLogoutPage(){
+
+        String redirect = kakaoOAuthLoginUtils.getKakaoLogoutUrl() + "?client_id=" + kakaoOAuthLoginUtils.getClientId() + "&logout_redirect_uri="+ kakaoOAuthLoginUtils.getClientUrl();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(URI.create(redirect));
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
+    }
+
+
+
 }
