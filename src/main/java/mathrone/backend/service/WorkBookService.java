@@ -1,7 +1,6 @@
 package mathrone.backend.service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -16,9 +15,9 @@ import mathrone.backend.controller.dto.BookDetailDto.ChapterGroup;
 import mathrone.backend.controller.dto.BookDetailDto.Chapters;
 import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
 import mathrone.backend.controller.dto.UserWorkbookDataInterface;
+import mathrone.backend.controller.dto.WorkbookDto;
 import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.domain.ChapterInfo;
-import mathrone.backend.domain.Problem;
 import mathrone.backend.domain.PubCatPair;
 import mathrone.backend.domain.Tag;
 import mathrone.backend.domain.UserInfo;
@@ -26,12 +25,10 @@ import mathrone.backend.domain.UserWorkbookRelInfo;
 import mathrone.backend.domain.WorkBookInfo;
 import mathrone.backend.domain.WorkbookLevelInfo;
 import mathrone.backend.domain.bookContent;
-import mathrone.backend.domain.bookItem;
 import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.ChapterRepository;
 import mathrone.backend.repository.LevelRepository;
-import mathrone.backend.repository.ProblemRepository;
 import mathrone.backend.repository.TagRepository;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.UserWorkbookRelRepository;
@@ -47,7 +44,6 @@ public class WorkBookService {
 
     private final WorkBookRepository workBookRepository;
     private final LevelRepository levelRepository;
-    private final ProblemRepository problemRepository;
     private final ChapterRepository chapterRepository;
     private final TagRepository tagRepository;
     private final TokenProviderUtil tokenProviderUtil;
@@ -109,7 +105,8 @@ public class WorkBookService {
         // 각 그룹별로 챕터 정리
         if (workBookInfo.getChapterId() != null) {
             for (String s : workBookInfo.getChapterId()) {
-                ChapterInfo chapterInfo = chapterRepository.findByChapterId(s).get();
+                ChapterInfo chapterInfo = chapterRepository.findByChapterId(s).
+                    orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CHAPTER));
                 Chapters chapters = Chapters.builder()
                     .id(chapterInfo.getChapterId())
                     .name(chapterInfo.getName())
@@ -157,60 +154,51 @@ public class WorkBookService {
             .build();
     }
 
-    public Long getStar(String workbookId) {
-        Optional<WorkBookInfo> isWorkbook = workBookRepository.findById(workbookId);
-
-        // Workbook이 없는 경우 error처리
-        if (isWorkbook.isEmpty()) {
-            throw new CustomException(ErrorCode.NOT_FOUND_WORKBOOK);
-        }
-
-        return userWorkbookRelRepository.countByWorkbookAndWorkbookStar(isWorkbook.get(),
-            true); //좋아요 표시 눌린것만
-    }
-
-
-    public List<Problem> findProblem(String workbookId, String chapterId) {
-        return problemRepository.findByWorkbookIdAndChapterId(workbookId, chapterId);
-    }
-
     public List<PubCatPair> getPublisherAndCategoryList() {
         return workBookRepository.findGroupByPublisherAndCategory();
     }
 
-    public List<bookItem> getBookList(Pageable paging, String publisher, String category,
+    public List<WorkbookDto> getBookList(HttpServletRequest request, Pageable paging,
+        String publisher,
+        String category,
         String sortType) {
-
         //1. 결과로 반환할 bookItem 리스트 (임시)
-        List<bookItem> result = new ArrayList<bookItem>();
-
+        List<WorkbookDto> result = new ArrayList<>();
         //파라미터 기반으로 결과 탐색
         List<WorkBookInfo> res = findWorkbook(publisher, category, paging);
 
-        //결과에 level,like을 attach하여 리스트로 생성
-        for (WorkBookInfo wb : res) {
-            WorkbookLevelInfo workbookLevelInfo = levelRepository.findByWorkbookId(
-                wb.getWorkbookId());
-            String level = getLevel(workbookLevelInfo);
-            Long star = getStar(wb.getWorkbookId());
-            bookItem b = new bookItem(wb.getWorkbookId(), wb.getTitle(), wb.getPublisher(),
-                wb.getThumbnail(), level, star);
-            result.add(b);
+        String accessToken = tokenProviderUtil.resolveToken(request);
+        if (accessToken == null) {
+            //결과에 level,like을 attach하여 리스트로 생성
+            for (WorkBookInfo wb : res) {
+                WorkbookLevelInfo workbookLevelInfo = levelRepository.findByWorkbookId(
+                    wb.getWorkbookId());
+                String level = getLevel(workbookLevelInfo);
+                result.add(new WorkbookDto(wb.getWorkbookId(), wb.getTitle(), wb.getPublisher(),
+                    wb.getThumbnail(), level, false));
+            }
+        } else {
+            UserInfo user = userInfoRepository.findById(
+                Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName())
+            ).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+            for (WorkBookInfo wb : res) {
+                WorkbookLevelInfo workbookLevelInfo = levelRepository.findByWorkbookId(
+                    wb.getWorkbookId());
+                String level = getLevel(workbookLevelInfo);
+
+                boolean star = userWorkbookRelRepository.findWorkbookStarByUserAndWorkbook(
+                    user.getUserId(), workbookLevelInfo.getWorkbookId());
+
+                result.add(new WorkbookDto(wb.getWorkbookId(), wb.getTitle(), wb.getPublisher(),
+                    wb.getThumbnail(), level, star));
+            }
+
         }
 
         //정렬 반영
-        if (sortType.equals("star")) {//좋아요 높은 순
-            Collections.sort(result, new Comparator<bookItem>() {
-                public int compare(bookItem o1, bookItem o2) {
-                    return o2.getStar().compareTo(o1.getStar());
-                }
-            });
-        } else {//level 난이도 높은 순
-            Collections.sort(result, new Comparator<bookItem>() {
-                public int compare(bookItem o1, bookItem o2) {
-                    return o2.getLevel().compareTo(o1.getLevel());
-                }
-            });
+        if (sortType.equals("level")) {//난이도 높은 순
+            result.sort(Comparator.comparing(WorkbookDto::getLevel));
         }
 
         return result;
@@ -219,13 +207,13 @@ public class WorkBookService {
 
     public List<bookContent> getWorkbookList() {
         //Nav bar
-        List<bookContent> contentList = new ArrayList<bookContent>(); //output
+        List<bookContent> contentList = new ArrayList<>(); //output
 
         //group by 한 결과 받아오기
         List<PubCatPair> res = getPublisherAndCategoryList();
 
         //정렬 (출판사 순으로 정렬->같은 출판사끼리 모으기, 가나 2가지 기능)
-        Collections.sort(res, Comparator.comparing(p -> p.getPublisher()));
+        res.sort(Comparator.comparing(PubCatPair::getPublisher));
 
         //Map을 이용해서 출판사, 카테고리 리스트 로 정렬 -> 리스트는 key find effective x
         HashMap<String, LinkedList<String>> navList = new HashMap<>();
@@ -417,8 +405,8 @@ public class WorkBookService {
     /**
      * 유저에 대한 workbook의 즐겨찾기 추가 or 삭제
      *
-     * @param request       http request
-     * @param workbookId    workbook Id
+     * @param request    http request
+     * @param workbookId workbook Id
      */
     @Transactional
     public void starWorkbook(HttpServletRequest request, String workbookId) {
@@ -437,7 +425,7 @@ public class WorkBookService {
         Optional<UserWorkbookRelInfo> byUserAndWorkbook = userWorkbookRelRepository.findByUserAndWorkbook(
             user, workbook);
 
-        if (byUserAndWorkbook.isEmpty()){
+        if (byUserAndWorkbook.isEmpty()) {
             userWorkbookRelRepository.save(UserWorkbookRelInfo.builder()
                 .workbook(workbook)
                 .user(user)
@@ -465,7 +453,7 @@ public class WorkBookService {
         Optional<UserWorkbookRelInfo> byUserAndWorkbook = userWorkbookRelRepository.findByUserAndWorkbook(
             user, workbook);
 
-        if (byUserAndWorkbook.isEmpty()){
+        if (byUserAndWorkbook.isEmpty()) {
             userWorkbookRelRepository.save(UserWorkbookRelInfo.builder()
                 .workbook(workbook)
                 .user(user)
