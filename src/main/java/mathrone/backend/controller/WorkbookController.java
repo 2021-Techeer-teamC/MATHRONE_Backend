@@ -14,7 +14,7 @@ import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
 import mathrone.backend.controller.dto.UserWorkbookDataInterface;
 import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.domain.bookContent;
-import mathrone.backend.domain.bookItem;
+import mathrone.backend.controller.dto.WorkbookDto;
 import mathrone.backend.service.WorkBookService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,15 +41,15 @@ public class WorkbookController {
 
     @GetMapping("/list")
     @ApiOperation(value = "workbook 조회", notes = "parameter에 따라 filtering된 workbook 리스트 가져오기")
-    public ResponseEntity<List<bookItem>> bookList(
+    public ResponseEntity<List<WorkbookDto>> bookList(
         @RequestParam(value = "publisher", required = false, defaultValue = "all") String publisher,
-        @RequestParam(value = "sortType", required = false, defaultValue = "star") String sortType,
+        @RequestParam(value = "sortType", required = false, defaultValue = "like") String sortType,
         @RequestParam(value = "category", required = false, defaultValue = "all") String category,
-        @RequestParam(value = "pageNum", required = false, defaultValue = "1") Integer pageNum) {
-
+        @RequestParam(value = "pageNum", required = false, defaultValue = "1") Integer pageNum,
+        HttpServletRequest request) {
         Pageable paging = PageRequest.of(pageNum - 1, 9, Sort.by("workbookId")); //page 0부터임!
         return ResponseEntity.status(OK)
-            .body(workBookService.getBookList(paging, publisher, category, sortType));
+            .body(workBookService.getBookList(request, paging, publisher, category, sortType));
     }
 
 
