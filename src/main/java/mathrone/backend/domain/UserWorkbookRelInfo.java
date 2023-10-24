@@ -56,7 +56,7 @@ public class UserWorkbookRelInfo {
     @Builder.Default()
     Boolean workbookTry = false;
 
-    public void updateStar(boolean star){
+    public void updateStar(boolean star) {
         this.workbookStar = star;
     }
 

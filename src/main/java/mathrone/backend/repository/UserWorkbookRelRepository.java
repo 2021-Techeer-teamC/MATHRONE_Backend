@@ -14,7 +14,14 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserWorkbookRelRepository extends
     JpaRepository<UserWorkbookRelInfo, WorkbookRelPK> {
+
     Optional<UserWorkbookRelInfo> findByUserAndWorkbook(UserInfo user, WorkBookInfo workBook);
+
+    @Query(value = "SELECT COALESCE((SELECT workbook_star "
+        + "FROM user_workbook_rel "
+        + "WHERE user_id = :userId "
+        + "AND workbook_id = :workbookId), FALSE)", nativeQuery = true)
+    Boolean findWorkbookStarByUserAndWorkbook(int userId, String workbookId);
 
 
     Long countByWorkbookAndWorkbookStar(WorkBookInfo workBookInfo, boolean star);
