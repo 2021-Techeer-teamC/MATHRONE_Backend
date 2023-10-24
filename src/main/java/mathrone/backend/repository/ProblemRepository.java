@@ -1,21 +1,18 @@
 package mathrone.backend.repository;
 
-import mathrone.backend.controller.dto.UserProblemTryDto;
+import java.util.List;
+import mathrone.backend.domain.ChapterInfo;
 import mathrone.backend.domain.Problem;
+import mathrone.backend.domain.WorkBookInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
-public interface ProblemRepository extends JpaRepository<Problem, Long> {
-    List<Problem> findByWorkbookIdAndChapterId(String workbookId, String chapterId);
+public interface ProblemRepository extends JpaRepository<Problem, String> {
 
-    Problem findByProblemId(String problemId);
+    List<Problem> findByWorkbookAndChapterOrderByProblemId(WorkBookInfo workBook,
+        ChapterInfo chapter);
 
-    @Query(nativeQuery = true)
-    List<UserProblemTryDto> findUserTryProblem(@Param(value = "userId") int userId);
+    List<Problem> findByWorkbookOrderByProblemId(WorkBookInfo workBookInfo);
 
 }
