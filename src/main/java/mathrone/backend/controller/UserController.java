@@ -199,7 +199,17 @@ public class UserController {
     }
 
 
+    @GetMapping(value = "/google/login-request", headers = {"Content-type=application/json"})
+    @ApiOperation(value = "구글 로그인 1단계 : 로그인 요청", notes = "구글 로그인 페이지로 리다이렉트")
+    public ResponseEntity requestGoogleLogin(){
+        return snsLoginService.redirectGoogleLoginPage();
+    }
 
 
+//    @GetMapping(value = "/google/logout-request", headers = {"Content-type=application/json"})
+//    @ApiOperation(value = "구글 로그아웃 2단계 : 구글에서 로그아웃", notes = "구글 로그아웃 페이지로 리다이렉트")
+//    public ResponseEntity requestGoogleLogoutFromGoogle(){
+//        return snsLoginService.redirectGoogleLogoutPage();
+//    }
 
 }

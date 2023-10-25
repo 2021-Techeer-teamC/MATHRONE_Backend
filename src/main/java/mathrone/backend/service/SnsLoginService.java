@@ -359,6 +359,17 @@ public class SnsLoginService {
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 
+    public ResponseEntity redirectGoogleLoginPage(){
+
+        String scope = oAuthLoginUtils.getScope().replaceAll(" ","%20");
+
+        String redirect = "https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&client_id=" + oAuthLoginUtils.getClientId() + "&redirect_uri="+ oAuthLoginUtils.getRedirectUri()+"&response_type=code&scope=" + scope;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(URI.create(redirect));
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
+    }
+
+
 
 
 }
