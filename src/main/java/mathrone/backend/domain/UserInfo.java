@@ -11,6 +11,7 @@ import lombok.Setter;
 import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @NoArgsConstructor
 @Entity
@@ -88,9 +89,15 @@ public class UserInfo {
         return this;
     }
 
+    public UserInfo changePassword(PasswordEncoder passwordEncoder, String password) {
+        this.password = passwordEncoder.encode(password);
+
+        return this;
+    }
+
+
     public UserInfo updateExp(int upScore){
         this.exp = this.exp + upScore;
         return this;
     }
-
 }

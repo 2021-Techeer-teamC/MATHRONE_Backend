@@ -3,6 +3,7 @@ package mathrone.backend.service;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
@@ -49,8 +50,8 @@ public class RankService {
             int temp = Integer.parseInt(str.getValue());
             result.add(AllRankDto.builder()
                         .user_name(userInfoRepository.findByUserId(temp).getAccountId())
-                        .correct_count(Long.parseLong(String.valueOf(str.getScore())))
-                        .try_count((long)userInfoRepository.getTryByUserID(temp))
+                        .correct_count(Objects.requireNonNull(str.getScore()).longValue())
+                        .try_count(userInfoRepository.getTryByUserID(temp))
                         .build());
         }
         return result;
@@ -80,8 +81,9 @@ public class RankService {
              return MyRankDto.builder()
                             .rank(rankList.get() + 1)
                             .user_name(userInfoRepository.findByUserId(userId).getAccountId())
-                            .correct_count(Long.parseLong(String.valueOf(zSetOperations.score("test", userId))))
-                            .try_count((long)userInfoRepository.getTryByUserID(userId))
+                            .correct_count(Objects.requireNonNull(
+                                    zSetOperations.score("test", Integer.toString(userId))).longValue()) // 형 변환 오류 찾음
+                            .try_count(userInfoRepository.getTryByUserID(userId))
                                     .build();
         }
         else{ // redis에 data가 없을 경우

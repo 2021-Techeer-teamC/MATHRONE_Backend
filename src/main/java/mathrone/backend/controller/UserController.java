@@ -4,8 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.ChangeAccountIdDto;
+import mathrone.backend.controller.dto.ChangePasswordDto;
+import mathrone.backend.controller.dto.FindDto;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
@@ -21,6 +24,7 @@ import mathrone.backend.service.SnsLoginService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -170,4 +174,22 @@ public class UserController {
         return ResponseEntity.ok(authService.kakaoLogin(res, idInfo));
     }
 
+    @PostMapping("/find/id")
+    @ApiOperation(value = "아이디 찾기", notes = "입력받은 이메일에 대한 아이디를 찾아 이메일 발송")
+    public void findId(@RequestBody @Valid FindDto request) {
+        authService.findId(request);
+    }
+
+    @PostMapping("/find/password")
+    @ApiOperation(value = "비밀번호 찾기", notes = "입력받은 아이디에 대한 임시 패스워드를 발급하여 이메일 발송")
+    public void findPw(@RequestBody @Valid FindDto request) {
+        authService.findPw(request);
+    }
+
+    @PatchMapping("/password")
+    @ApiOperation(value = "비밀번호 변경", notes = "현재 유저의 패스워드 수정")
+    public void changePw(HttpServletRequest request,
+        @RequestBody @Valid ChangePasswordDto newPassword) {
+        authService.changePw(request, newPassword);
+    }
 }

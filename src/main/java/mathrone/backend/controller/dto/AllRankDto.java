@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @Builder
+@Getter
 public class AllRankDto {
     Long correct_count;
     String user_name;

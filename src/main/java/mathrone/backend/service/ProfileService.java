@@ -1,29 +1,48 @@
 package mathrone.backend.service;
 
-import static mathrone.backend.error.exception.ErrorCode.*;
+import static mathrone.backend.error.exception.ErrorCode.EMPTY_FAILED_PROBLEM;
+import static mathrone.backend.error.exception.ErrorCode.EMPTY_FAILED_PROBLEM_IN_REDIS;
+import static mathrone.backend.error.exception.ErrorCode.NONEXISTENT_FAILED_CHAPTER;
+import static mathrone.backend.error.exception.ErrorCode.NONEXISTENT_FAILED_WORKBOOK;
+import static mathrone.backend.error.exception.ErrorCode.NOT_FOUND_CHAPTER;
+import static mathrone.backend.error.exception.ErrorCode.NOT_FOUND_WORKBOOK;
+import static mathrone.backend.error.exception.ErrorCode.NOT_PREMIUM;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.Month;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
-
 import mathrone.backend.controller.dto.UserFailedTriedProblemsOfChapterDto;
-import mathrone.backend.controller.dto.UserProblemTryDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto.UserFailedTriedChapterDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto.UserFailedTriedWorkbookDto;
-import mathrone.backend.domain.*;
+import mathrone.backend.domain.ChapterInfo;
+import mathrone.backend.domain.ProblemTry;
+import mathrone.backend.domain.Subscription;
+import mathrone.backend.domain.SubscriptionInfo;
+import mathrone.backend.domain.UserFailedTriedWorkbookRedis;
 import mathrone.backend.domain.UserFailedTriedWorkbookRedis.UserFailedTriedChapterR;
 import mathrone.backend.domain.UserFailedTriedWorkbookRedis.UserFailedTriedWorkbookR;
+import mathrone.backend.domain.UserInfo;
+import mathrone.backend.domain.UserProfile;
+import mathrone.backend.domain.UserRank;
+import mathrone.backend.domain.WorkBookInfo;
 import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.error.exception.ErrorCode;
-import mathrone.backend.repository.*;
+import mathrone.backend.repository.ChapterRepository;
+import mathrone.backend.repository.ProblemTryRepository;
+import mathrone.backend.repository.SubscriptionRepository;
+import mathrone.backend.repository.UserInfoRepository;
+import mathrone.backend.repository.WorkBookRepository;
 import mathrone.backend.repository.redisRepository.UserFailedTriedWorkbookRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -36,7 +55,6 @@ public class ProfileService {
     private final UserInfoRepository userInfoRepository;
     private final ZSetOperations<String, String> zSetOperations;
     private final TokenProviderUtil tokenProviderUtil;
-    private final ProblemRepository problemRepository;
     private final ProblemTryRepository problemTryRepository;
     private final WorkBookRepository workBookRepository;
     private final ChapterRepository chapterRepository;
@@ -47,15 +65,13 @@ public class ProfileService {
     public ProfileService(UserInfoRepository userInfoRepository,
         RedisTemplate<String, String> redisTemplate,
         TokenProviderUtil tokenProviderUtil,
-        ProblemRepository problemRepository,
         ProblemTryRepository problemTryRepository, WorkBookRepository workBookRepository,
         ChapterRepository chapterRepository,
         UserFailedTriedWorkbookRedisRepository userFailedTriedWorkbookRedisRepository,
-        SubscriptionRepository subscriptionRepository ) {
+        SubscriptionRepository subscriptionRepository) {
         this.userInfoRepository = userInfoRepository;
         this.zSetOperations = redisTemplate.opsForZSet();
         this.tokenProviderUtil = tokenProviderUtil;
-        this.problemRepository = problemRepository;
         this.problemTryRepository = problemTryRepository;
         this.workBookRepository = workBookRepository;
         this.chapterRepository = chapterRepository;
@@ -89,15 +105,15 @@ public class ProfileService {
         SubscriptionInfo s;
 
         //구독회원인 경우
-        if(userinfo.isPremium()){
-            Subscription sub = subscriptionRepository.checkLastSubscription(userinfo.getUserId()).orElseThrow(() -> new CustomException(ErrorCode.SUBSCRIBE_USER_NOT_FOUND));
-
+        if (userinfo.isPremium()) {
+            Subscription sub = subscriptionRepository.checkLastSubscription(userinfo.getUserId())
+                .orElseThrow(() -> new CustomException(ErrorCode.SUBSCRIBE_USER_NOT_FOUND));
 
             Date subscribedDate = sub.getLastModifiedDate();
 
             LocalDate localDate = subscribedDate.toInstant()   // Date -> Instant
-                    .atZone(ZoneId.systemDefault())  // Instant -> ZonedDateTime
-                    .toLocalDate();
+                .atZone(ZoneId.systemDefault())  // Instant -> ZonedDateTime
+                .toLocalDate();
 
             LocalDate expiredDate = localDate.plusMonths(1);
 
@@ -105,22 +121,20 @@ public class ProfileService {
             Timestamp subscribe = new Timestamp(subscribedDate.getTime());
 
             s = SubscriptionInfo.builder()
-                    .expired_data(expire)
-                    .subscribed_date(subscribe)
-                    .item(sub.getItem())
-                    .price(sub.getPrice())
-                    .build();
-        }else{
+                .expired_data(expire)
+                .subscribed_date(subscribe)
+                .item(sub.getItem())
+                .price(sub.getPrice())
+                .build();
+        } else {
             s = null;
         }
 
-
-
         //최종 Profile 생성
         return new UserProfile(userinfo.getUserId(), userinfo.getAccountId(),
-                userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
-                userinfo.getEmail(), userinfo.getPhoneNum(),
-                userinfo.getUserImg(), userinfo.getRole(), r, userinfo.isPremium(),s);
+            userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
+            userinfo.getEmail(), userinfo.getPhoneNum(),
+            userinfo.getUserImg(), userinfo.getRole(), r, userinfo.isPremium(), s);
     }
 
 
@@ -133,24 +147,13 @@ public class ProfileService {
         return node;
     }
 
-    public List<UserProblemTryDto> getTryProblem(HttpServletRequest request) {
-        // 1. Request Header 에서 access token 빼기
-        String accessToken = tokenProviderUtil.resolveToken(request);
-
-        // 2. access token으로부터 user id 가져오기 (email x)
-        String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
-
-        return problemRepository.findUserTryProblem(
-            Integer.parseInt(userId));
-    }
-
 
     public UserFailedTriedWorkbookResponseDto getTriedProblemForGraph(HttpServletRequest request) {
         // 1. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         // 2. access token으로부터 user id 가져오기 (email x)
-        Integer userId = Integer.parseInt(
+        int userId = Integer.parseInt(
             tokenProviderUtil.getAuthentication(accessToken).getName());
 
         UserInfo user = userInfoRepository.findByUserId(userId);
@@ -284,7 +287,7 @@ public class ProfileService {
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         // 2. access token으로부터 user id 가져오기 (email x)
-        Integer userId = Integer.parseInt(
+        int userId = Integer.parseInt(
             tokenProviderUtil.getAuthentication(accessToken).getName());
 
         UserInfo user = userInfoRepository.findByUserId(userId);
