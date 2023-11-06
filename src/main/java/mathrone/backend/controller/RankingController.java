@@ -29,8 +29,4 @@ public class RankingController {
     public MyRankDto getMyRank(HttpServletRequest request) {
         return rankService.getMyRank(request);
     }
-
-//    @PostMapping("/setdata") // 맞춘 문제에 개수 업데이트하기
-//    public void setRank(@RequestHeader String accessToken){rankService.setRank(accessToken);
-//    }
 }
