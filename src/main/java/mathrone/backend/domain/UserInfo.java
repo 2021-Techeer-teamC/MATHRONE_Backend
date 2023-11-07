@@ -56,6 +56,8 @@ public class UserInfo {
     @Column(name = "register_type")
     private String resType;
 
+    private boolean activate = true;
+
     @OneToMany(
         mappedBy = "user",
         cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -91,6 +93,14 @@ public class UserInfo {
 
     public UserInfo changePassword(PasswordEncoder passwordEncoder, String password) {
         this.password = passwordEncoder.encode(password);
+
+        return this;
+    }
+
+
+    //탈퇴 시 유저 deactivate
+    public UserInfo deactivateUser(){
+        this.activate=false;
 
         return this;
     }
