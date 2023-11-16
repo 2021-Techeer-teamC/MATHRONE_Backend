@@ -1,15 +1,21 @@
 package mathrone.backend.domain;
+
 import com.sun.istack.NotNull;
 import com.vladmihalcea.hibernate.type.array.LongArrayType;
 import com.vladmihalcea.hibernate.type.array.StringArrayType;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Set;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-
-import javax.persistence.*;
 
 @NoArgsConstructor
 @Entity
@@ -19,7 +25,8 @@ import javax.persistence.*;
 @Getter
 public class WorkBookInfo {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) //JPA 사용시 필요
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) //JPA 사용시 필요
     @Column(name = "workbook_id")
     private String workbookId;
 
@@ -42,7 +49,7 @@ public class WorkBookInfo {
 
     private Short month;
 
-    @Column(name="chapter_id")
+    @Column(name = "chapter_id")
     @Type(type = "String-array")
     private String[] chapterId;
 
@@ -51,9 +58,7 @@ public class WorkBookInfo {
 
     private String category;
 
-    @OneToMany(
-        mappedBy = "workbook",
-        cascade = CascadeType.ALL,
-        fetch = FetchType.LAZY)
-    private List<UserWorkbookRelInfo> userWorkbookRelInfo = new LinkedList<>();
+    @OneToMany(mappedBy = "workbook",
+        cascade = CascadeType.ALL)
+    private Set<UserWorkbookRelInfo> userWorkbookRelInfo;
 }
