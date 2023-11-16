@@ -32,8 +32,8 @@ public class AnswerServiceImpl implements AnswerService {
     private final RankService rankService;
 
     public List<ProblemGradeResponseDto> gradeProblem(
-        ProblemGradeRequestDto problemGradeRequestDtoList, HttpServletRequest request){
-            if(problemGradeRequestDtoList.getIsAll()) // 전체 채점일 경우
+        boolean checkAll, ProblemGradeRequestDto problemGradeRequestDtoList, HttpServletRequest request){
+            if(checkAll) // 전체 채점일 경우
                 return gradeProblemAll(problemGradeRequestDtoList, request);
             else
                 return gradeSolvedProblem(problemGradeRequestDtoList, request);
@@ -55,8 +55,8 @@ public class AnswerServiceImpl implements AnswerService {
             tokenProviderUtil.getAuthentication(accessToken).getName());
 
 
-        List<ProblemGradeResponseDto> problemGradeResponseDtoList = new ArrayList<>();
-        List<ProblemGradeRequestDto.problemSolve> list = problemGradeRequestDtoList.getAnswerSubmitList();
+        List<ProblemGradeResponseDto> problemGradeResponseDtoList = new ArrayList<>();  // return할 data
+        List<ProblemGradeRequestDto.problemSolve> list = problemGradeRequestDtoList.getAnswerSubmitList();  // 사용자가 제출한 문제의 답
         UserInfo user = userInfoRepository.findByUserId(userId);
 
         for (ProblemGradeRequestDto.problemSolve problem : list) {
@@ -64,27 +64,21 @@ public class AnswerServiceImpl implements AnswerService {
                 problem.getProblemId());
             Problem registedProblem = problemRepository.findByProblemId(problem.getProblemId());
             boolean isCorrect = false;
-            ProblemTry problemTry;
-            Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
-                    registedProblem,
-                    user);
-            if (registedProblemTry.isPresent()) {
-                problemTry = registedProblemTry.get();
-                problemTry.setIscorrect(isCorrect);
-
-            } else {
-                problemTry = ProblemTry.builder()
-                        .iscorrect(isCorrect)
-                        .user(user)
-                        .problem(registedProblem)
-                        .build();
+            Solution solutionProblem = solutionRepository.findSolutionByProblemId(
+                    problem.getProblemId());    // 실제 문제 답안 조회
+            if(problem.getMyAnswer().equals("a")) {
+                problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
+                        .problemId(problem.getProblemId().substring(8))
+                        .correctAnswer(solutionProblem.getAnswer())
+                        .myAnswer(null).build());
             }
-            try {
-                if (solutionProblem.getAnswer() == Integer.parseInt(problem.getMyAnswer())) {
-                    isCorrect = true;
-                    upScore++;
-                    problemTry.setAnswerSubmitted(Integer.parseInt(problem.getMyAnswer()));
-                }
+            else {
+                isCorrect = grading(problem, solutionProblem);   // 제출한 답의 참, 거짓 여부 판별
+                upScore = saveTry(problem, user, isCorrect, upScore);   // try 기록 저장 및 스코어 계산
+                problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
+                        .problemId(problem.getProblemId().substring(8))
+                        .correctAnswer(solutionProblem.getAnswer())
+                        .myAnswer(Integer.parseInt(problem.getMyAnswer())).build());
             }
             catch(Exception e){
                 problemTry.setAnswerSubmitted(null);
@@ -127,9 +121,10 @@ public class AnswerServiceImpl implements AnswerService {
                     problem.getProblemId());
             Problem registedProblem = problemRepository.findByProblemId(problem.getProblemId());
 
-            boolean isCorrect = false;
-            if (solutionProblem.getAnswer() == Integer.parseInt(problem.getMyAnswer())) {
-                isCorrect = true;
+                problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
+                        .problemId(problem.getProblemId().substring(8))
+                        .correctAnswer(solutionProblem.getAnswer())
+                        .myAnswer(Integer.parseInt(problem.getMyAnswer())).build());
             }
             Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
                     registedProblem,
