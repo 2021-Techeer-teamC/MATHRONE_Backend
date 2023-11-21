@@ -192,4 +192,12 @@ public class UserController {
         @RequestBody @Valid ChangePasswordDto newPassword) {
         authService.changePw(request, newPassword);
     }
+
+
+    @PatchMapping("/deactivate")
+    @ApiOperation(value = "회원 탈퇴", notes = "해당 유저의 activate상태를 비활성")
+    public void deactivateUser(HttpServletRequest request) {
+        authService.deactivateUser(request);
+    }
+
 }

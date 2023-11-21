@@ -272,6 +272,23 @@ public class AuthService {
         }
     }
 
+
+    public void deactivateUser(HttpServletRequest request) {
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
+        }
+        int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
+
+        UserInfo user = userinfoRepository.findByUserId(userId);
+
+        UserInfo updatedUser = user.deactivateUser();
+
+        userinfoRepository.save(updatedUser);
+
+    }
+
     public List<UserInfo> allUser() {
         return userinfoRepository.findAll();
     }
