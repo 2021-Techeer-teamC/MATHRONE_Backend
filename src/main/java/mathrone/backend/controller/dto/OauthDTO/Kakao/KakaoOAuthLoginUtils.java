@@ -29,4 +29,14 @@ public class KakaoOAuthLoginUtils {
 
     @Value("${kakao.auth.grantType}")
     private String grantType;
+
+
+    @Value("${kakao.auth.logout.url}")
+    private String kakaoLogoutUrl;
+
+    @Value("${kakao.redirect.client.url}")
+    private String clientUrl;
+
+
+
 }
