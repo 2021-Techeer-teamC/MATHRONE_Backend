@@ -19,6 +19,8 @@ import mathrone.backend.repository.ProblemTryRepository;
 import mathrone.backend.repository.SolutionRepository;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.util.TokenProviderUtil;
+import org.apache.commons.lang3.ObjectUtils.Null;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -41,7 +43,6 @@ public class AnswerServiceImpl implements AnswerService {
         }
 
 
-    @Transactional
     public List<ProblemGradeResponseDto> gradeProblemAll( // 전체 채점 진행
         ProblemGradeRequestDto problemGradeRequestDtoList, HttpServletRequest request) {
 
@@ -61,48 +62,28 @@ public class AnswerServiceImpl implements AnswerService {
         UserInfo user = userInfoRepository.findByUserId(userId);
 
         for (ProblemGradeRequestDto.problemSolve problem : list) {
-            Solution solutionProblem = solutionRepository.findSolutionByProblemId(
-                problem.getProblemId());
-            Problem registedProblem = problemRepository.findById(problem.getProblemId())
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_PROBLEM));
             boolean isCorrect = false;
-            ProblemTry problemTry;
-            Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
-                    registedProblem,
-                    user);
-            if (registedProblemTry.isPresent()) {
-                problemTry = registedProblemTry.get();
-                problemTry.setIscorrect(isCorrect);
-
-            } else {
-                problemTry = ProblemTry.builder()
-                        .iscorrect(isCorrect)
-                        .user(user)
-                        .problem(registedProblem)
-                        .build();
+            Solution solutionProblem = solutionRepository.findSolutionByProblemId(
+                    problem.getProblemId());    // 실제 문제 답안 조회
+            if(problem.getMyAnswer().equals("a")) {
+                problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
+                        .problemId(problem.getProblemId().substring(8))
+                        .correctAnswer(null)
+                        .myAnswer(solutionProblem.getAnswer()).build());
             }
-            try {
-                if (solutionProblem.getAnswer() == Integer.parseInt(problem.getMyAnswer())) {
-                    isCorrect = true;
-                    upScore++;
-                    problemTry.setAnswerSubmitted(Integer.parseInt(problem.getMyAnswer()));
-                }
+            else {
+                isCorrect = grading(problem, solutionProblem);   // 제출한 답의 참, 거짓 여부 판별
+                upScore = saveTry(problem, user, isCorrect, upScore);   // try 기록 저장 및 스코어 계산
+                problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
+                        .problemId(problem.getProblemId().substring(8))
+                        .correctAnswer(Integer.parseInt(problem.getMyAnswer()))
+                        .myAnswer(solutionProblem.getAnswer()).build());
             }
-            catch(Exception e){
-                problemTry.setAnswerSubmitted(null);
-            }
-            problemTryRepository.save(problemTry);
-
-            problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
-                .problemId(problem.getProblemId())
-                .correctAnswer(problemTry.getAnswerSubmitted())
-                .myAnswer(solutionProblem.getAnswer()).build());
         }
         rankService.setRank(userId, upScore);
         return problemGradeResponseDtoList;
     }
 
-    @Transactional
     public List<ProblemGradeResponseDto> gradeSolvedProblem(
             ProblemGradeRequestDto problemGradeRequestDtoList, HttpServletRequest request) {
 
@@ -122,49 +103,63 @@ public class AnswerServiceImpl implements AnswerService {
         UserInfo user = userInfoRepository.findByUserId(userId);
 
         for (ProblemGradeRequestDto.problemSolve problem : list) {
+            boolean isCorrect = false;
             if (problem.getMyAnswer().equals("a")) { // 답이 'a'인거 -> 풀지 않는 문제로 채점하지 않음
                 continue;
             }
-            Solution solutionProblem = solutionRepository.findSolutionByProblemId(
-                    problem.getProblemId());
-            Problem registedProblem = problemRepository.findById(problem.getProblemId())
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_PROBLEM));
+            else {
+                Solution solutionProblem = solutionRepository.findSolutionByProblemId(
+                        problem.getProblemId());    // 실제 문제 답안 조회
+                isCorrect = grading(problem, solutionProblem);   // 제출한 답의 참, 거짓 여부 판별
+                upScore = saveTry(problem, user, isCorrect, upScore);   // try 기록 저장 및 스코어 계산
 
-            boolean isCorrect = false;
-            if (solutionProblem.getAnswer() == Integer.parseInt(problem.getMyAnswer())) {
-                isCorrect = true;
+                problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
+                        .problemId(problem.getProblemId().substring(8))
+                        .correctAnswer(Integer.parseInt(problem.getMyAnswer()))
+                        .myAnswer(solutionProblem.getAnswer()).build());
             }
-            Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
-                    registedProblem,
-                    user); // 해당 문제를 시도한 적이 있는지 확인
-
-            if (registedProblemTry.isPresent()) {
-                if(!registedProblemTry.get().isIscorrect() && isCorrect)
-                    upScore++; // 이전에 틀렸던 문제를 이번에 맞았을 경우 스코어 업
-                ProblemTry problemTry = registedProblemTry.get();
-                problemTry.setIscorrect(isCorrect);
-                problemTry.setAnswerSubmitted(Integer.parseInt(problem.getMyAnswer()));
-                problemTryRepository.save(problemTry);
-            } else { // 문제를 푼 적이 없을 경우 try레포에 새로 저장
-                ProblemTry problemTry = ProblemTry.builder()
-                        .answerSubmitted(Integer.parseInt(problem.getMyAnswer()))
-                        .iscorrect(isCorrect)
-                        .user(user)
-                        .problem(registedProblem)
-                        .build();
-
-                // user.getProblemTryList().add(problemTry);
-                // registedProblem.getProblemTryList().add(problemTry);
-                problemTryRepository.save(problemTry);
-            }
-
-            problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
-                    .problemId(problem.getProblemId().substring(8))
-                    .correctAnswer(Integer.parseInt(problem.getMyAnswer()))
-                    .myAnswer(solutionProblem.getAnswer()).build());
         }
         rankService.setRank(userId, upScore); // redis 랭킹 점수 업데이트
         return problemGradeResponseDtoList;
+    }
+
+    @Transactional
+    public boolean grading(ProblemGradeRequestDto.problemSolve problem, Solution solutionProblem){
+        if (solutionProblem.getAnswer() == Integer.parseInt(problem.getMyAnswer())) {
+            return true;    // 답이 맞을 경우 참 반환
+        }
+        else
+            return false;   // 답이 틀릴 경우 거짓 반환
+    }
+    @Transactional
+    public int saveTry(ProblemGradeRequestDto.problemSolve problem, UserInfo user, boolean isCorrect, int upScore){
+        Problem registedProblem = problemRepository.findById(problem.getProblemId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_PROBLEM));
+
+        Optional<ProblemTry> registedProblemTry = problemTryRepository.findAllByProblemAndUser(
+                registedProblem,
+                user); // 해당 문제를 시도한 적이 있는지 확인
+
+        if (registedProblemTry.isPresent()) {   // 푼 기록이 있을 경우
+            if(!registedProblemTry.get().isIscorrect() && isCorrect)
+                upScore++; // 이전에 틀렸던 문제를 이번에 맞았을 경우 스코어 업
+            ProblemTry problemTry = registedProblemTry.get();
+            problemTry.setIscorrect(isCorrect);
+            try {problemTry.setAnswerSubmitted(NumberUtils.toInt(problem.getMyAnswer()));}
+            catch (Exception e){problemTry.setAnswerSubmitted(null);}
+            problemTryRepository.save(problemTry);
+        } else { // 문제를 푼 적이 없을 경우 try레포에 새로 저장
+            if(isCorrect)   // 푼 기록이 없고 맞았을 경우 점수 up
+                upScore++;
+            ProblemTry problemTry = ProblemTry.builder()
+                    .answerSubmitted(NumberUtils.toInt(problem.getMyAnswer()))
+                    .iscorrect(isCorrect)
+                    .user(user)
+                    .problem(registedProblem)
+                    .build();
+            problemTryRepository.save(problemTry);
+        }
+        return upScore;
     }
 }
 // 이미 맞은 문제를 다시 한 번 풀 경우,
