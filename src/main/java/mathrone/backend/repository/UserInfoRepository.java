@@ -34,7 +34,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Integer> {
 
     void deleteByAccountIdAndResType(String accountId, String resType);
 
-    UserInfo findByEmailAndResTypeAndActiveTrue(String email, String resType);
+    UserInfo findByEmailAndResTypeAndActivateTrue(String email, String resType);
 
-    UserInfo findByUserIdAndActiveTrue(int userId);
+    UserInfo findByUserIdAndActivateTrue(int userId);
 }
