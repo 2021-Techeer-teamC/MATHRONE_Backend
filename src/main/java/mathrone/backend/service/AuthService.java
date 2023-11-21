@@ -122,7 +122,7 @@ public class AuthService {
         }
 
         //active true인 경우만 로그인 가능
-        UserInfo user = userinfoRepository.findByEmailAndResTypeAndActiveTrue(googleIDToken.getBody().getEmail(),
+        UserInfo user = userinfoRepository.findByEmailAndResTypeAndActivateTrue(googleIDToken.getBody().getEmail(),
             GOOGLE.getTypeName());
 
         //프리미엄
@@ -200,7 +200,7 @@ public class AuthService {
             } while (userinfoRepository.existsByAccountId(tmpId));//존재하지 않는 아이디일 때 까지 반복
             signupWithKakao(kakaoIDToken, tmpId); //카카오계정 으로 회원가입 진행
         }
-        UserInfo user = userinfoRepository.findByEmailAndResTypeAndActiveTrue(kakaoIDToken.getBody().getEmail(),
+        UserInfo user = userinfoRepository.findByEmailAndResTypeAndActivateTrue(kakaoIDToken.getBody().getEmail(),
             KAKAO.getTypeName());
 
         //로그인 시 프리미엄 검사
@@ -290,7 +290,7 @@ public class AuthService {
             userRequestDto.getAccountId());
 
         int userId = Integer.parseInt(tokenDto.getUserInfo().getUserId());
-        UserInfo u = userinfoRepository.findByUserIdAndActiveTrue(userId); //active true인 경우에만 
+        UserInfo u = userinfoRepository.findByUserIdAndActivateTrue(userId); //active true인 경우에만
         if (u.isPremium()) {
             checkPremiumUser(userId);
         }
