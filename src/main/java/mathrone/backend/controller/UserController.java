@@ -2,15 +2,15 @@ package mathrone.backend.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.annotations.ApiOperation;
+
+import java.net.URI;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.ChangeAccountIdDto;
-import mathrone.backend.controller.dto.ChangePasswordDto;
-import mathrone.backend.controller.dto.FindDto;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
+import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoOAuthLoginUtils;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
 import mathrone.backend.controller.dto.OauthDTO.RequestCodeDTO;
 import mathrone.backend.controller.dto.OauthDTO.ResponseTokenDTO;
@@ -21,10 +21,11 @@ import mathrone.backend.controller.dto.UserSignUpDto;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.service.AuthService;
 import mathrone.backend.service.SnsLoginService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,6 +33,11 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PatchMapping;
+import mathrone.backend.controller.dto.ChangePasswordDto;
+import mathrone.backend.controller.dto.FindDto;
+import javax.validation.Valid;
+
 
 @RestController
 @RequestMapping("/user")
@@ -40,6 +46,7 @@ public class UserController {
 
     private final AuthService authService;
     private final SnsLoginService snsLoginService;
+
 
     @GetMapping("/delUser")
     @ApiOperation(value = "사용자 삭제", notes = "DB에 존재하는 사용자를 삭제")
@@ -166,13 +173,49 @@ public class UserController {
     public ResponseEntity<TokenDto> moveKakaoInitUrl(@RequestBody RequestCodeDTO requestCodeDto)
         throws Exception {
 
+
+        System.out.println("call outh/callback/kakao");
+        System.out.println(requestCodeDto.getCode());
         ResponseEntity<KakaoTokenResponseDTO> res = snsLoginService.getKakaoToken(
             requestCodeDto.getCode());
+        System.out.println("done1" + res.getBody().getId_token());
         ResponseEntity<KakaoIDToken> idInfo = snsLoginService.decodeIdToken(
             res.getBody().getId_token());
+        System.out.println("done2");
 
         return ResponseEntity.ok(authService.kakaoLogin(res, idInfo));
     }
+
+
+
+
+    @GetMapping(value = "/kakao/login-request", headers = {"Content-type=application/json"})
+    @ApiOperation(value = "카카오 로그인 1단계 : 로그인 요청", notes = "카카오 로그인 페이지로 리다이렉트")
+    public ResponseEntity requestKakaoLogin(){
+        return snsLoginService.redirectKakaoLoginPage();
+    }
+
+
+
+    @GetMapping(value = "/kakao/logout-request", headers = {"Content-type=application/json"})
+    @ApiOperation(value = "카카오 로그아웃 2단계 : 카카오서비스에서 로그아웃", notes = "카카오 로그아웃 페이지로 리다이렉트")
+    public ResponseEntity requestKakaoLogoutFromKakao(){
+        return snsLoginService.redirectKakaoLogoutPage();
+    }
+
+
+    @GetMapping(value = "/google/login-request", headers = {"Content-type=application/json"})
+    @ApiOperation(value = "구글 로그인 1단계 : 로그인 요청", notes = "구글 로그인 페이지로 리다이렉트")
+    public ResponseEntity requestGoogleLogin(){
+        return snsLoginService.redirectGoogleLoginPage();
+    }
+
+
+//    @GetMapping(value = "/google/logout-request", headers = {"Content-type=application/json"})
+//    @ApiOperation(value = "구글 로그아웃 2단계 : 구글에서 로그아웃", notes = "구글 로그아웃 페이지로 리다이렉트")
+//    public ResponseEntity requestGoogleLogoutFromGoogle(){
+//        return snsLoginService.redirectGoogleLogoutPage();
+//    }
 
     @PostMapping("/find/id")
     @ApiOperation(value = "아이디 찾기", notes = "입력받은 이메일에 대한 아이디를 찾아 이메일 발송")
