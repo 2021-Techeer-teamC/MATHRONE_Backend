@@ -42,6 +42,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         "/oauth/**",
         "/subscribe/**",
         "/profile/**",
+        "/chapter/**"
     };
 
     @Bean // user password 암호화
