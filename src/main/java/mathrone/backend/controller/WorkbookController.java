@@ -8,13 +8,14 @@ import static org.springframework.http.HttpStatus.OK;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import mathrone.backend.controller.dto.BookDetailDto;
 import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
 import mathrone.backend.controller.dto.UserWorkbookDataInterface;
+import mathrone.backend.controller.dto.WorkbookDto;
 import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.domain.bookContent;
-import mathrone.backend.controller.dto.WorkbookDto;
 import mathrone.backend.service.WorkBookService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -69,9 +70,9 @@ public class WorkbookController {
         return ResponseEntity.status(OK).body(workBookService.getWorkbookList());
     }
 
-    @GetMapping("/")
+    @GetMapping("/{id}")
     public ResponseEntity<BookDetailDto> workbookDetail(
-        @RequestParam(value = "id") String bookId) {
+        @PathVariable(value = "id") String bookId) {
         return ResponseEntity.status(OK).body(workBookService.getWorkbookDetail(bookId));
     }
 
@@ -105,13 +106,13 @@ public class WorkbookController {
         return ResponseEntity.status(NO_CONTENT).build();
     }
 
-    @GetMapping({"/track/solved", "/track/solved/{workbookId}"})
+    @GetMapping(value = {"/track/solved", "/track/solved/{workbookId}"})
     @ApiOperation(value = "유저가 푼 문제집의 풀이 tracking", notes = "유저의 token 필요, workbookId 여부에 따라 필터링된 풀이 정보 반환")
-    public ResponseEntity<List<UserSolvedWorkbookResponseDtoInterface>> trackSolvedWorkbook(
+    public ResponseEntity<Set<UserSolvedWorkbookResponseDtoInterface>> trackSolvedWorkbook(
         HttpServletRequest request,
         @PathVariable(value = "workbookId", required = false) Optional<String> workbookId) {
         return ResponseEntity.status(OK)
-            .body(workBookService.trackSolvedWorkbook(request, workbookId));
+            .body(workBookService.trackSolvedWorkbooks(request, workbookId));
     }
 
     @PostMapping("/level")
