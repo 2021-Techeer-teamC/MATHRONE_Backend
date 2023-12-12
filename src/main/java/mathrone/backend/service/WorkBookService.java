@@ -3,19 +3,21 @@ package mathrone.backend.service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.BookDetailDto;
-import mathrone.backend.controller.dto.BookDetailDto.ChapterGroup;
-import mathrone.backend.controller.dto.BookDetailDto.Chapters;
 import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
 import mathrone.backend.controller.dto.UserWorkbookDataInterface;
 import mathrone.backend.controller.dto.WorkbookDto;
+import mathrone.backend.controller.dto.chapter.ChapterDto;
+import mathrone.backend.controller.dto.chapter.ChapterGroup;
 import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.domain.ChapterInfo;
 import mathrone.backend.domain.PubCatPair;
@@ -95,9 +97,9 @@ public class WorkBookService {
 
     // 워크북 상세 페이지에 대한 정보를 불러옴
     public BookDetailDto getWorkbookDetail(String workbookId) {
-        Map<String, List<Chapters>> arrMap = new HashMap<>(); // 그룹 별로 정리하기 위함
-        List<Chapters> list = new ArrayList<>();
-        List<ChapterGroup> chapterGroups = new ArrayList<>();
+        Map<String, Set<ChapterDto>> arrMap = new HashMap<>(); // 그룹 별로 정리하기 위함
+        Set<ChapterDto> list = new HashSet<>();
+        Set<ChapterGroup> chapterGroups = new HashSet<>();
         List<Tag> tags = new ArrayList<>();
 
         WorkBookInfo workBookInfo = workBookRepository.findByWorkbookId(workbookId);
@@ -107,7 +109,7 @@ public class WorkBookService {
             for (String s : workBookInfo.getChapterId()) {
                 ChapterInfo chapterInfo = chapterRepository.findByChapterId(s).
                     orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CHAPTER));
-                Chapters chapters = Chapters.builder()
+                ChapterDto chapters = ChapterDto.builder()
                     .id(chapterInfo.getChapterId())
                     .name(chapterInfo.getName())
                     .build();
@@ -120,6 +122,7 @@ public class WorkBookService {
                 }
                 arrMap.put(chapterInfo.getGroup(), list);
             }
+
             // 그룹별로 정리한 챕터 정보를 ChapterGroup 리스트 형식에 맞게 변환
             for (String key : arrMap.keySet()) {
                 chapterGroups.add(
@@ -138,6 +141,7 @@ public class WorkBookService {
                 }
             }
         }
+
         return BookDetailDto.builder()
             .workbookId(workBookInfo.getWorkbookId())
             .title(workBookInfo.getTitle())
@@ -334,32 +338,32 @@ public class WorkBookService {
      * <p>- workbookId가 없는 경우 : 유저가 푼 모든 문제집에 대한 풀이 정보
      *
      * @param request    Http request
-     * @param workbookId 문제집 Id
+     * @param byWorkbookId 문제집 Id
      * @return List<UserSolvedWorkbookResponseDtoInterface>
      */
-    public List<UserSolvedWorkbookResponseDtoInterface> trackSolvedWorkbook(
-        HttpServletRequest request,
-        Optional<String> workbookId) {
+    public Set<UserSolvedWorkbookResponseDtoInterface> trackSolvedWorkbooks(
+        HttpServletRequest request, Optional<String> byWorkbookId) {
 
         String accessToken = tokenProviderUtil.resolveToken(request);
         if (!tokenProviderUtil.validateToken(accessToken, request)) {
             throw (CustomException) request.getAttribute("Exception");
         }
-        int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
 
-        // 특정 문제집에 대한 유저의 풀이 정보 tracking
-        if (workbookId.isPresent()) {
-            Optional<WorkBookInfo> byWorkbook = workBookRepository.findById(workbookId.get());
-            if (byWorkbook.isEmpty()) {
-                throw new CustomException(ErrorCode.NOT_FOUND_WORKBOOK);
-            }
-            return workBookRepository.findByUserSolvedWorkbook(
-                workbookId.get(), userId);
-        } else {
+        int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
+        if (byWorkbookId.isEmpty()){
             // 유저가 푼 모든 문제집에 대한 풀이 정보 tracking
             return workBookRepository.findByUserSolvedAllWorkbook(userId);
+        } else {
+            // 문제집 Id의 유효성 검증
+            WorkBookInfo workbook = workBookRepository.findById(byWorkbookId.get()).
+                orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_WORKBOOK));
+
+            // 특정 문제집에 대한 유저의 풀이 정보 tracking
+            return workBookRepository.findByUserSolvedWorkbook(
+                workbook.getWorkbookId(), userId);
         }
     }
+
 
     /**
      * user의 Workbook 평가 요청 처리
