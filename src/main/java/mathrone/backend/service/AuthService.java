@@ -122,8 +122,12 @@ public class AuthService {
         }
 
         //active true인 경우만 로그인 가능
-        UserInfo user = userinfoRepository.findByEmailAndResTypeAndActivateTrue(googleIDToken.getBody().getEmail(),
+        UserInfo user = userinfoRepository.findByEmailAndResType(googleIDToken.getBody().getEmail(),
             GOOGLE.getTypeName());
+
+        if(!user.isActivate()){
+            throw new CustomException(ErrorCode.DEACTIVATE_USER);
+        }
 
         //프리미엄
         if (user.isPremium()) {
@@ -200,8 +204,15 @@ public class AuthService {
             } while (userinfoRepository.existsByAccountId(tmpId));//존재하지 않는 아이디일 때 까지 반복
             signupWithKakao(kakaoIDToken, tmpId); //카카오계정 으로 회원가입 진행
         }
-        UserInfo user = userinfoRepository.findByEmailAndResTypeAndActivateTrue(kakaoIDToken.getBody().getEmail(),
+
+        UserInfo user = userinfoRepository.findByEmailAndResType(kakaoIDToken.getBody().getEmail(),
             KAKAO.getTypeName());
+
+
+        if(!user.isActivate()){
+            throw new CustomException(ErrorCode.DEACTIVATE_USER);
+        }
+
 
         //로그인 시 프리미엄 검사
         if (user.isPremium()) {
@@ -273,7 +284,7 @@ public class AuthService {
     }
 
 
-    public void deactivateUser(HttpServletRequest request) {
+    public void updateUserActive(HttpServletRequest request, Boolean activeStatus) { //activate상태 (false : 회원탈퇴)
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         if (!tokenProviderUtil.validateToken(accessToken, request)) {
@@ -283,7 +294,7 @@ public class AuthService {
 
         UserInfo user = userinfoRepository.findByUserId(userId);
 
-        UserInfo updatedUser = user.deactivateUser();
+        UserInfo updatedUser = user.updateActivate(activeStatus);
 
         userinfoRepository.save(updatedUser);
 
@@ -307,7 +318,12 @@ public class AuthService {
             userRequestDto.getAccountId());
 
         int userId = Integer.parseInt(tokenDto.getUserInfo().getUserId());
-        UserInfo u = userinfoRepository.findByUserIdAndActivateTrue(userId); //active true인 경우에만
+        UserInfo u = userinfoRepository.findByUserId(userId); //active true인 경우에만
+
+        if(!u.isActivate()){
+            throw new CustomException(ErrorCode.DEACTIVATE_USER);
+        }
+
         if (u.isPremium()) {
             checkPremiumUser(userId);
         }

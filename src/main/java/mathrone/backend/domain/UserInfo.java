@@ -98,9 +98,9 @@ public class UserInfo {
     }
 
 
-    //탈퇴 시 유저 deactivate
-    public UserInfo deactivateUser(){
-        this.activate=false;
+    //탈퇴/복구 시 유저 deactivate or active again
+    public UserInfo updateActivate(Boolean activate){
+        this.activate=activate;
 
         return this;
     }

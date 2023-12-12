@@ -197,7 +197,13 @@ public class UserController {
     @PatchMapping("/deactivate")
     @ApiOperation(value = "회원 탈퇴", notes = "해당 유저의 activate상태를 비활성")
     public void deactivateUser(HttpServletRequest request) {
-        authService.deactivateUser(request);
+        authService.updateUserActive(request, false);
+    }
+
+    @PatchMapping("/activate")
+    @ApiOperation(value = "회원 복구", notes = "해당 유저의 activate상태를 활성화")
+    public void activateUser(HttpServletRequest request) {
+        authService.updateUserActive(request, true);
     }
 
 }

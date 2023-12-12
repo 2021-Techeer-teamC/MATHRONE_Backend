@@ -25,6 +25,7 @@ public enum ErrorCode {
     ACCOUNT_NOT_EXIST(UNAUTHORIZED, "존재하지 않는 계정입니다.", "U005"),
     PASSWORD_NOT_CORRECT(UNAUTHORIZED, "비밀번호를 다시 확인해주세요.", "U006"),
     EMAIL_NOT_EXIST(UNAUTHORIZED, "존재하지 않는 아매알입니다.", "U007"),
+    DEACTIVATE_USER(UNAUTHORIZED, "탈퇴 회원입니다.", "U008"),
 
     // problem try
     EMPTY_FAILED_PROBLEM(NOT_FOUND, "유저가 시도한 문제 중, 틀린 문제가 존재하지 않습니다", "P001"),
