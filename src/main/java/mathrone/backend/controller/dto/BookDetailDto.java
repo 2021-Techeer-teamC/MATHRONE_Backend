@@ -1,9 +1,11 @@
 package mathrone.backend.controller.dto;
 
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import mathrone.backend.controller.dto.chapter.ChapterGroup;
 import mathrone.backend.domain.Tag;
 
 @Getter
@@ -21,19 +23,6 @@ public class BookDetailDto {
     private String type;
     private Short year;
     private Short month;
-    private List<ChapterGroup> chapterGroup;
+    private Set<ChapterGroup> chapterGroup;
     private List<Tag> tags;
-    @Builder
-    @Getter
-    public static class ChapterGroup{
-        private String group; // chapter table의 subject에서 컬럼명 변경
-        private List<Chapters> chapters;
-
-    }
-    @Builder
-    @Getter
-    public static class Chapters{
-        private String id; //03 or 02
-        private String name;  //수열 or 삼각함수 등 // chapter table chapter에서 컬럼명 변경
-    }
 }
