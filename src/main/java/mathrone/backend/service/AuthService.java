@@ -284,7 +284,7 @@ public class AuthService {
     }
 
 
-    public void updateUserActive(HttpServletRequest request, Boolean activeStatus) { //activate상태 (false : 회원탈퇴)
+    public void deactiveUser(HttpServletRequest request) { //activate상태 (false : 회원탈퇴)
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         if (!tokenProviderUtil.validateToken(accessToken, request)) {
@@ -294,9 +294,54 @@ public class AuthService {
 
         UserInfo user = userinfoRepository.findByUserId(userId);
 
-        UserInfo updatedUser = user.updateActivate(activeStatus);
+        //로그인 해제
+        if (user.getResType().equals(KAKAO.getTypeName())) {
+            logoutWithKakao(request);
+        }else if(user.getResType().equals(GOOGLE.getTypeName())){
+            logoutWithGoogle(request);
+        }else{
+            logout(request);
+        }
+
+        UserInfo updatedUser = user.updateActivate(false);
 
         userinfoRepository.save(updatedUser);
+
+    }
+
+
+
+    public void reactivateUser(UserRequestDto userRequestDto){
+
+        //입력한 아이디 비번을 검증함
+        // Login ID/PW 를 기반으로 AuthenticationToken 생성
+        UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
+
+        // 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
+        //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
+        Authentication authentication = authenticationManagerBuilder.getObject()
+                .authenticate(authenticationToken);
+        // token 생성
+        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
+                userRequestDto.getAccountId());
+
+        int userId = Integer.parseInt(tokenDto.getUserInfo().getUserId());
+
+
+        UserInfo u = userinfoRepository.findByUserId(userId);
+
+
+        //탈퇴 회원 복구 진행
+        if(u.isActivate()){
+            throw new CustomException(ErrorCode.ACTIVE_USER);
+        }
+
+
+        //true로 다시 업데이트
+        UserInfo updatedUser = u.updateActivate(true);
+
+        UserInfo updateUser = userinfoRepository.save(updatedUser);
+
 
     }
 

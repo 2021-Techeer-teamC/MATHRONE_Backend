@@ -23,15 +23,7 @@ import mathrone.backend.service.AuthService;
 import mathrone.backend.service.SnsLoginService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/user")
@@ -195,15 +187,18 @@ public class UserController {
 
 
     @PatchMapping("/deactivate")
-    @ApiOperation(value = "회원 탈퇴", notes = "해당 유저의 activate상태를 비활성")
+    @ApiOperation(value = "회원 탈퇴", notes = "해당 유저의 activate상태를 비활성하고 토큰을 뺐음 ")
     public void deactivateUser(HttpServletRequest request) {
-        authService.updateUserActive(request, false);
+
+        authService.deactiveUser(request);
     }
 
     @PatchMapping("/activate")
-    @ApiOperation(value = "회원 복구", notes = "해당 유저의 activate상태를 활성화")
-    public void activateUser(HttpServletRequest request) {
-        authService.updateUserActive(request, true);
+    @ApiOperation(value = "회원 복구 - 아이디, 비밀번호 필요", notes = "해당 유저의 activate상태를 활성화")
+    public void activateUser(
+            @RequestBody UserRequestDto userRequestDto
+    ) {
+        authService.reactivateUser(userRequestDto);
     }
 
 }
