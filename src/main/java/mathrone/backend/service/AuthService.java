@@ -8,6 +8,7 @@ import static mathrone.backend.error.exception.ErrorCode.INVALID_REFRESH_TOKEN;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
@@ -22,12 +23,10 @@ import mathrone.backend.controller.dto.TokenDto;
 import mathrone.backend.controller.dto.UserRequestDto;
 import mathrone.backend.controller.dto.UserResponseDto;
 import mathrone.backend.controller.dto.UserSignUpDto;
+import mathrone.backend.domain.ReactiveUserDto;
 import mathrone.backend.domain.Subscription;
 import mathrone.backend.domain.UserInfo;
-import mathrone.backend.domain.token.GoogleRefreshTokenRedis;
-import mathrone.backend.domain.token.KakaoRefreshTokenRedis;
-import mathrone.backend.domain.token.LogoutAccessToken;
-import mathrone.backend.domain.token.RefreshToken;
+import mathrone.backend.domain.token.*;
 import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.RefreshTokenRepository;
@@ -35,6 +34,7 @@ import mathrone.backend.repository.SubscriptionRepository;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.redisRepository.KakaoRefreshTokenRedisRepository;
 import mathrone.backend.repository.redisRepository.LogoutAccessTokenRedisRepository;
+import mathrone.backend.repository.redisRepository.ReactivateCodeRedisRepository;
 import mathrone.backend.repository.redisRepository.RefreshTokenRedisRepository;
 import mathrone.backend.repository.tokenRepository.GoogleRefreshTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
@@ -61,6 +61,7 @@ public class AuthService {
     private final GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository;
     private final MailService mailService;
     private final SubscriptionRepository subscriptionRepository;
+    private final ReactivateCodeRedisRepository reactivateCodeRedisRepository;
 
 
     @Transactional
@@ -284,6 +285,7 @@ public class AuthService {
     }
 
 
+    @Transactional
     public void deactiveUser(HttpServletRequest request) { //activate상태 (false : 회원탈퇴)
         String accessToken = tokenProviderUtil.resolveToken(request);
 
@@ -311,7 +313,8 @@ public class AuthService {
 
 
 
-    public void reactivateUser(UserRequestDto userRequestDto){
+    @Transactional
+    public ReactiveUserDto getReactivateCode(UserRequestDto userRequestDto){
 
         //입력한 아이디 비번을 검증함
         // Login ID/PW 를 기반으로 AuthenticationToken 생성
@@ -336,14 +339,54 @@ public class AuthService {
             throw new CustomException(ErrorCode.ACTIVE_USER);
         }
 
+        //복구 코드
+        Random rnd = new Random();
+        int number = rnd.nextInt(999999);
 
-        //true로 다시 업데이트
-        UserInfo updatedUser = u.updateActivate(true);
+        // this will convert any number sequence into 6 character.
+        String code = String.format("%06d", number);
 
-        UserInfo updateUser = userinfoRepository.save(updatedUser);
+        //메일 발송
+        mailService.sendReactivateCode(u,code);
+
+        //레디스에 담아둠
+        reactivateCodeRedisRepository.save(
+                ReactivateCodeRedis.builder()
+                .id(Integer.toString(u.getUserId()))
+                .reactivateCode(code)
+                .expiration(3*60L)
+                .build()
+                );
+
+
+        return ReactiveUserDto.builder()
+                .userId(u.getUserId())
+                .reactivateCode(code)
+                .build();
+
+    }
+
+
+    public void reactiveUser(ReactiveUserDto reactiveUserDto){
+
+
+        String userId = Integer.toString(reactiveUserDto.getUserId());
+        ReactivateCodeRedis r = reactivateCodeRedisRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NONEXISTENT_REACTIVE_TRY));
+
+        // Reactive code 일치 및 만료여부 검사
+        if (!r.getReactivateCode().equals(reactiveUserDto.getReactivateCode())) {
+            throw new CustomException(ErrorCode.INVALID_REACTIVATE_CODE);
+        }
+
+        UserInfo u = userinfoRepository.findByUserId(reactiveUserDto.getUserId());
+
+        userinfoRepository.save(u.updateActivate(true));
 
 
     }
+
+
 
     public List<UserInfo> allUser() {
         return userinfoRepository.findAll();

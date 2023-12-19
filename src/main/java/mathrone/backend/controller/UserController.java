@@ -18,6 +18,7 @@ import mathrone.backend.controller.dto.TokenDto;
 import mathrone.backend.controller.dto.UserRequestDto;
 import mathrone.backend.controller.dto.UserResponseDto;
 import mathrone.backend.controller.dto.UserSignUpDto;
+import mathrone.backend.domain.ReactiveUserDto;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.service.AuthService;
 import mathrone.backend.service.SnsLoginService;
@@ -193,12 +194,22 @@ public class UserController {
         authService.deactiveUser(request);
     }
 
-    @PatchMapping("/activate")
-    @ApiOperation(value = "회원 복구 - 아이디, 비밀번호 필요", notes = "해당 유저의 activate상태를 활성화")
-    public void activateUser(
+    @PostMapping("/activate-code")
+    @ApiOperation(value = "회원 복구코드 발급 - 아이디, 비밀번호 필요", notes = "유저의 복구코드를 발급받음")
+    public ResponseEntity<ReactiveUserDto> activateUser(
             @RequestBody UserRequestDto userRequestDto
     ) {
-        authService.reactivateUser(userRequestDto);
+        return ResponseEntity.ok(authService.getReactivateCode(userRequestDto));
     }
+
+    @PatchMapping("/activate")
+    @ApiOperation(value = "회원 복구코드 발급 - 아이디, 비밀번호 필요", notes = "유저의 복구코드를 발급받음")
+    public void activateUser(
+            @RequestBody ReactiveUserDto reactiveUserDto
+    ) {
+        authService.reactiveUser(reactiveUserDto);
+    }
+
+
 
 }
