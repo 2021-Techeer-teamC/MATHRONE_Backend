@@ -1,11 +1,9 @@
 package mathrone.backend.controller.dto;
 
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @NoArgsConstructor
@@ -15,7 +13,6 @@ public class ChangeProfileDto {
 
     private String accountId;               // 닉네임
     private String profileImg;              // 이미지 링크
-    private MultipartFile profileImgFile;   // 이미지 파일
     private String phoneNum;
 
     public void setProfileImg(String profileImg) {

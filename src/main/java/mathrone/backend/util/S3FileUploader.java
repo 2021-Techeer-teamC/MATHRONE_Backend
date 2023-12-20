@@ -32,7 +32,7 @@ public class S3FileUploader {
 
     private String upload(File uploadFile) {
         String fileName = uploadFile.getName();
-        fileName = UUID.randomUUID() + fileName.substring(fileName.lastIndexOf(".") + 1);
+        fileName = UUID.randomUUID() + fileName.substring(fileName.lastIndexOf("."));
         String uploadImageUrl = putS3(uploadFile, fileName);
 
         removeNewFile(uploadFile);
@@ -59,12 +59,9 @@ public class S3FileUploader {
 
     private Optional<File> convert(MultipartFile file) throws  IOException {
         File convertFile = new File(file.getOriginalFilename()); // 업로드한 파일의 이름
-        if(convertFile.createNewFile()) {
-            try (FileOutputStream fos = new FileOutputStream(convertFile)) {
-                fos.write(file.getBytes());
-            }
-            return Optional.of(convertFile);
+        try (FileOutputStream fos = new FileOutputStream(convertFile)) {
+            fos.write(file.getBytes());
         }
-        return Optional.empty();
+        return Optional.of(convertFile);
     }
 }
