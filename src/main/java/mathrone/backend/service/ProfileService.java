@@ -10,6 +10,7 @@ import static mathrone.backend.error.exception.ErrorCode.NOT_PREMIUM;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -20,7 +21,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
+import mathrone.backend.controller.dto.ChangeProfileDto;
 import mathrone.backend.controller.dto.UserFailedTriedProblemsOfChapterDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto.UserFailedTriedChapterDto;
@@ -44,6 +48,7 @@ import mathrone.backend.repository.SubscriptionRepository;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.WorkBookRepository;
 import mathrone.backend.repository.redisRepository.UserFailedTriedWorkbookRedisRepository;
+import mathrone.backend.util.S3FileUploader;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -60,6 +65,7 @@ public class ProfileService {
     private final ChapterRepository chapterRepository;
     private final UserFailedTriedWorkbookRedisRepository userFailedTriedWorkbookRedisRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final S3FileUploader s3FileUploader;
 
 
     public ProfileService(UserInfoRepository userInfoRepository,
@@ -68,7 +74,7 @@ public class ProfileService {
         ProblemTryRepository problemTryRepository, WorkBookRepository workBookRepository,
         ChapterRepository chapterRepository,
         UserFailedTriedWorkbookRedisRepository userFailedTriedWorkbookRedisRepository,
-        SubscriptionRepository subscriptionRepository) {
+        SubscriptionRepository subscriptionRepository, S3FileUploader s3FileUploader) {
         this.userInfoRepository = userInfoRepository;
         this.zSetOperations = redisTemplate.opsForZSet();
         this.tokenProviderUtil = tokenProviderUtil;
@@ -77,6 +83,7 @@ public class ProfileService {
         this.chapterRepository = chapterRepository;
         this.userFailedTriedWorkbookRedisRepository = userFailedTriedWorkbookRedisRepository;
         this.subscriptionRepository = subscriptionRepository;
+        this.s3FileUploader = s3FileUploader;
     }
 
     //userId를 받아와서 전송
@@ -316,5 +323,29 @@ public class ProfileService {
             .chapterTitle(userFailedTriedChapterR.getChapterTitle())
             .problems(userFailedTriedChapterR.getTriedProblem())
             .build();
+    }
+
+    @Transactional
+    public UserInfo changeProfile(ChangeProfileDto changeProfileDto, HttpServletRequest request)
+            throws IOException {
+        String accessToken = tokenProviderUtil.resolveToken(request);
+        int userId = Integer.parseInt(
+                tokenProviderUtil.getAuthentication(accessToken).getName());
+        UserInfo userInfo = userInfoRepository.findByUserId(userId);
+        //updateProfile(userInfo, changeProfileDto);
+        if(changeProfileDto.getProfileImgFile() != null){
+            changeProfileDto.setProfileImg(s3FileUploader.upload(changeProfileDto.getProfileImgFile()));
+        }    // 파일이 들어왔을 경우 업로드 및 url 저장
+
+        if(!changeProfileDto.getProfileImg().isBlank()){
+            userInfo.setProfileImg(changeProfileDto.getProfileImg());
+        }
+        if(!changeProfileDto.getPhoneNum().isBlank()){
+            userInfo.setPhoneNum(changeProfileDto.getPhoneNum());
+        }
+        if(!changeProfileDto.getAccountId().isBlank()) {
+            userInfo.setAccountId(changeProfileDto.getAccountId());
+        }
+        return userInfo;
     }
 }
