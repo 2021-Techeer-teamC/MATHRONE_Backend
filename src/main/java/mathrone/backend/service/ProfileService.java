@@ -53,6 +53,7 @@ import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class ProfileService {
@@ -326,24 +327,22 @@ public class ProfileService {
     }
 
     @Transactional
-    public UserInfo changeProfile(ChangeProfileDto changeProfileDto, HttpServletRequest request)
+    public UserInfo changeProfile(ChangeProfileDto changeProfileDto, MultipartFile profileImgFile, HttpServletRequest request)
             throws IOException {
         String accessToken = tokenProviderUtil.resolveToken(request);
         int userId = Integer.parseInt(
                 tokenProviderUtil.getAuthentication(accessToken).getName());
         UserInfo userInfo = userInfoRepository.findByUserId(userId);
-        //updateProfile(userInfo, changeProfileDto);
-        if(changeProfileDto.getProfileImgFile() != null){
-            changeProfileDto.setProfileImg(s3FileUploader.upload(changeProfileDto.getProfileImgFile()));
+        if(profileImgFile != null){
+            changeProfileDto.setProfileImg(s3FileUploader.upload(profileImgFile));
         }    // 파일이 들어왔을 경우 업로드 및 url 저장
-
-        if(!changeProfileDto.getProfileImg().isBlank()){
+        if(changeProfileDto.getProfileImg() != null){
             userInfo.setProfileImg(changeProfileDto.getProfileImg());
         }
-        if(!changeProfileDto.getPhoneNum().isBlank()){
+        if(changeProfileDto.getPhoneNum() != null){
             userInfo.setPhoneNum(changeProfileDto.getPhoneNum());
         }
-        if(!changeProfileDto.getAccountId().isBlank()) {
+        if(changeProfileDto.getAccountId() != null) {
             userInfo.setAccountId(changeProfileDto.getAccountId());
         }
         return userInfo;
