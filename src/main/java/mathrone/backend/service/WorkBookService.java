@@ -96,9 +96,10 @@ public class WorkBookService {
     }
 
     // 워크북 상세 페이지에 대한 정보를 불러옴
+    @Transactional
     public BookDetailDto getWorkbookDetail(String workbookId) {
         Map<String, Set<ChapterDto>> arrMap = new HashMap<>(); // 그룹 별로 정리하기 위함
-        Set<ChapterDto> list = new HashSet<>();
+        Set<ChapterDto> list;
         Set<ChapterGroup> chapterGroups = new HashSet<>();
         List<Tag> tags = new ArrayList<>();
 
@@ -117,10 +118,9 @@ public class WorkBookService {
                     list = arrMap.get(chapterInfo.getGroup());
                     list.add(chapters);
                 } else {
-                    list.clear();
-                    list.add(chapters);
+                    list = new HashSet<>(List.of(chapters));
+                    arrMap.put(chapterInfo.getGroup(), list);
                 }
-                arrMap.put(chapterInfo.getGroup(), list);
             }
 
             // 그룹별로 정리한 챕터 정보를 ChapterGroup 리스트 형식에 맞게 변환
