@@ -1,6 +1,7 @@
 package mathrone.backend.repository;
 
 import java.util.List;
+import java.util.Set;
 import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.domain.PubCatPair;
 import mathrone.backend.domain.WorkBookInfo;
@@ -49,7 +50,7 @@ public interface WorkBookRepository extends JpaRepository<WorkBookInfo, String> 
             + "AND LEFT(problem_id, 2) = :workbookId "
             + "AND user_id = :userId "
             + "GROUP BY LEFT(problem_id, 2)) as pt", nativeQuery = true)
-    List<UserSolvedWorkbookResponseDtoInterface> findByUserSolvedWorkbook(String workbookId,
+    Set<UserSolvedWorkbookResponseDtoInterface> findByUserSolvedWorkbook(String workbookId,
         int userId);
 
     // 유저가 푼 모든 문제집에 대해 문제집 Id, 전체 문제 개수, 푼 문제 개수 반환
@@ -65,5 +66,6 @@ public interface WorkBookRepository extends JpaRepository<WorkBookInfo, String> 
             + "GROUP BY LEFT(problem_id, 2)) as pt "
             + "WHERE pm.workbook_id = pt.workbook_id "
             + "ORDER BY pm.workbook_id", nativeQuery = true)
-    List<UserSolvedWorkbookResponseDtoInterface> findByUserSolvedAllWorkbook(int userId);
+    Set<UserSolvedWorkbookResponseDtoInterface> findByUserSolvedAllWorkbook(int userId);
+
 }
