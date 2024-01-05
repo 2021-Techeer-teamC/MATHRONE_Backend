@@ -334,16 +334,16 @@ public class ProfileService {
         int userId = Integer.parseInt(
                 tokenProviderUtil.getAuthentication(accessToken).getName());
         UserInfo userInfo = userInfoRepository.findByUserId(userId);
-        if(profileImgFile != null){
+        if(profileImgFile.getSize() != 0L){
             changeProfileDto.setProfileImg(s3FileUploader.upload(profileImgFile));
         }    // 파일이 들어왔을 경우 업로드 및 url 저장
-        if(changeProfileDto.getProfileImg() != null){
+        if(!changeProfileDto.getProfileImg().isEmpty()){
             userInfo.setProfileImg(changeProfileDto.getProfileImg());
         }
-        if(changeProfileDto.getPhoneNum() != null){
+        if(!changeProfileDto.getPhoneNum().isEmpty()){
             userInfo.setPhoneNum(changeProfileDto.getPhoneNum());
         }
-        if(changeProfileDto.getNickname() != null) {
+        if(!changeProfileDto.getNickname().isEmpty()) {
             userInfo.setNickname(changeProfileDto.getNickname());
         }
         return ResponseEntity.ok().build();
