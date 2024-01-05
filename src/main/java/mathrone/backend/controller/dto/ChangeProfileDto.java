@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ChangeProfileDto {
 
-    private String accountId;               // 닉네임
+    private String nickname;               // 닉네임
     private String profileImg;              // 이미지 링크
     private String phoneNum;
 

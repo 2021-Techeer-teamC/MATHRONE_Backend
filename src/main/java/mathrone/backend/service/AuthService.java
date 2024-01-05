@@ -65,8 +65,8 @@ public class AuthService {
 
     @Transactional
     public UserResponseDto signup(UserSignUpDto userSignUpDto) {
-        // user account ID가 존재하는지 검사
-        validateUserAccountId(userSignUpDto.getAccountId());
+        // user nickname 존재하는지 검사
+        validateUserAccountId(userSignUpDto.getNickname());
 
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder,
             MATHRONE.getTypeName()); //MATHRONE user로 가입시켜주기
@@ -117,7 +117,7 @@ public class AuthService {
             //@로 시작하는 랜덤 아이디를 만들어 제공
             do {
                 tmpId = "@" + RandomStringUtils.random(12, true, true);
-            } while (userinfoRepository.existsByAccountId(tmpId));//존재하지 않는 아이디일 때 까지 반복
+            } while (userinfoRepository.existsByNickname(tmpId));//존재하지 않는 아이디일 때 까지 반복
             signupWithGoogle(googleIDToken, tmpId);
         }
 
@@ -129,7 +129,7 @@ public class AuthService {
             checkPremiumUser(user.getUserId());
         }
 
-        UserRequestDto userRequestDto = new UserRequestDto(user.getAccountId(),
+        UserRequestDto userRequestDto = new UserRequestDto(user.getNickname(),
             "googleLogin");
 
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
@@ -142,7 +142,7 @@ public class AuthService {
 
         // 3. token 생성
         TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication,
-            userRequestDto.getAccountId(), googleResponseToken.getBody().getAccessToken());
+            userRequestDto.getNickname(), googleResponseToken.getBody().getAccessToken());
 
         // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
         RefreshToken refreshToken = RefreshToken.builder()
@@ -196,7 +196,7 @@ public class AuthService {
             //@로 시작하는 랜덤 아이디를 만들어 제공
             do {
                 tmpId = "@" + RandomStringUtils.random(12, true, true);
-            } while (userinfoRepository.existsByAccountId(tmpId));//존재하지 않는 아이디일 때 까지 반복
+            } while (userinfoRepository.existsByNickname(tmpId));//존재하지 않는 아이디일 때 까지 반복
             signupWithKakao(kakaoIDToken, tmpId); //카카오계정 으로 회원가입 진행
         }
         UserInfo user = userinfoRepository.findByEmailAndResType(kakaoIDToken.getBody().getEmail(),
@@ -207,7 +207,7 @@ public class AuthService {
             checkPremiumUser(user.getUserId());
         }
 
-        UserRequestDto userRequestDto = new UserRequestDto(user.getAccountId(),
+        UserRequestDto userRequestDto = new UserRequestDto(user.getNickname(),
             "kakaoLogin");
 
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
@@ -220,7 +220,7 @@ public class AuthService {
 
         // 3. token 생성
         TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication,
-            userRequestDto.getAccountId(), kakaoTokenResponseDto.getBody().getAccess_token());
+            userRequestDto.getNickname(), kakaoTokenResponseDto.getBody().getAccess_token());
 
         // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
         RefreshToken refreshToken = RefreshToken.builder()
@@ -267,7 +267,7 @@ public class AuthService {
         // resType에 대한 구분을 enum class로 다루는 방안에 대해 토의하기
         if (resType.equals(MATHRONE.getTypeName())) {
             // accountId가 존재하지 않는 경우에 대한 예외처리 작성하기
-            userinfoRepository.deleteByAccountIdAndResType(accountId, resType);
+            userinfoRepository.deleteByNicknameAndResType(accountId, resType);
         }
     }
 
@@ -286,7 +286,7 @@ public class AuthService {
             .authenticate(authenticationToken);
         // token 생성
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
-            userRequestDto.getAccountId());
+            userRequestDto.getNickname());
 
         int userId = Integer.parseInt(tokenDto.getUserInfo().getUserId());
         UserInfo u = userinfoRepository.findByUserId(userId);
@@ -403,7 +403,7 @@ public class AuthService {
 
         UserInfo user = findUserFromRequest(request);
         // 새로운 토큰 생성
-        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication, user.getAccountId());
+        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication, user.getNickname());
         // 저장소 정보 업데이트
         RefreshToken newRefreshToken = storedRefreshToken.updateValue(tokenDto.getRefreshToken(),
             tokenProviderUtil.getRefreshTokenExpireTime());
@@ -433,7 +433,7 @@ public class AuthService {
         UserInfo user = findUserFromRequest(request);
         // 5. 새로운 토큰 생성
         TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication,
-            user.getAccountId(), reissue.getBody().getAccess_token());
+            user.getNickname(), reissue.getBody().getAccess_token());
         // 6. 저장소 정보 업데이트
         RefreshToken newRefreshToken = storedRefreshToken.updateValue(tokenDto.getRefreshToken(),
             tokenProviderUtil.getRefreshTokenExpireTime());
@@ -468,7 +468,7 @@ public class AuthService {
 
         // 5. 새로운 토큰 생성
         TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication,
-            user.getAccountId(), reissue.getBody().getAccessToken());
+            user.getNickname(), reissue.getBody().getAccessToken());
 
         // 6. 저장소 정보 업데이트
         RefreshToken newRefreshToken = storedRefreshToken.updateValue(tokenDto.getRefreshToken(),
@@ -493,8 +493,8 @@ public class AuthService {
         return tokenProviderUtil.getAuthentication(accessToken).getName();
     }
 
-    public void validateUserAccountId(String userAccountId) {
-        if (userinfoRepository.existsUserInfoByAccountId(userAccountId)) {
+    public void validateUserAccountId(String nickname) {
+        if (userinfoRepository.existsUserInfoByNickname(nickname)) {
             throw new CustomException(ErrorCode.ACCOUNT_IS_DUPLICATION);
         }
     }
@@ -536,13 +536,13 @@ public class AuthService {
         return userinfoRepository.findByUserId(userId);
     }
 
-    public void updateAccountId(String accountId, UserInfo user) {
+    public void updateAccountId(String nickname, UserInfo user) {
         //정확하게 존재하는 유저가 아니라면 오류
         validateUser(user);
         //존재하는 accountID인 경우 오류
-        validateUserAccountId(accountId);
+        validateUserAccountId(nickname);
         //어카운트 아이디 업데이트 진행
-        UserInfo newUser = user.updateAccountId(accountId);
+        UserInfo newUser = user.updateNickname(nickname);
         userinfoRepository.save(newUser); //p key가 같은 것이 save되면 자동으로 update의 기능이 수행됨
         // return을 void로 했는데 204 + empty() 를 보내도 괜찮다는
         // 204 : No Content 클라이언트의 요청은 정상적이다. 하지만 컨텐츠를 제공하지 않습니다
@@ -565,8 +565,8 @@ public class AuthService {
     @Transactional
     public void findPw(FindDto request) {
         String newPassword = UUID.randomUUID().toString().substring(0, 10);
-        UserInfo user = userinfoRepository.findByEmailAndAccountId(request.getEmail(),
-            request.getId()).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        UserInfo user = userinfoRepository.findByEmailAndNickname(request.getEmail(),
+            request.getNickname()).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         user.changePassword(passwordEncoder, newPassword);
         mailService.sendPw(user, newPassword);
     }

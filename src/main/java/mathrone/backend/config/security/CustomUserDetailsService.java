@@ -22,8 +22,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
 
     @Override
-    public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
-        UserInfo isExist = userRepository.findByAccountId(id).orElseThrow(() ->
+    public UserDetails loadUserByUsername(String nickname) throws UsernameNotFoundException {
+        UserInfo isExist = userRepository.findByNickname(nickname).orElseThrow(() ->
             new CustomException(ErrorCode.ACCOUNT_NOT_FOUND));
         return User.builder()
             .username(String.valueOf(isExist.getUserId()))

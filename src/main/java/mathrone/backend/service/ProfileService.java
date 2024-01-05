@@ -52,6 +52,7 @@ import mathrone.backend.util.S3FileUploader;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -139,7 +140,7 @@ public class ProfileService {
         }
 
         //최종 Profile 생성
-        return new UserProfile(userinfo.getUserId(), userinfo.getAccountId(),
+        return new UserProfile(userinfo.getUserId(), userinfo.getNickname(),
             userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
             userinfo.getEmail(), userinfo.getPhoneNum(),
             userinfo.getUserImg(), userinfo.getRole(), r, userinfo.isPremium(), s);
@@ -327,7 +328,7 @@ public class ProfileService {
     }
 
     @Transactional
-    public UserInfo changeProfile(ChangeProfileDto changeProfileDto, MultipartFile profileImgFile, HttpServletRequest request)
+    public ResponseEntity changeProfile(ChangeProfileDto changeProfileDto, MultipartFile profileImgFile, HttpServletRequest request)
             throws IOException {
         String accessToken = tokenProviderUtil.resolveToken(request);
         int userId = Integer.parseInt(
@@ -342,9 +343,9 @@ public class ProfileService {
         if(changeProfileDto.getPhoneNum() != null){
             userInfo.setPhoneNum(changeProfileDto.getPhoneNum());
         }
-        if(changeProfileDto.getAccountId() != null) {
-            userInfo.setAccountId(changeProfileDto.getAccountId());
+        if(changeProfileDto.getNickname() != null) {
+            userInfo.setNickname(changeProfileDto.getNickname());
         }
-        return userInfo;
+        return ResponseEntity.ok().build();
     }
 }
