@@ -11,5 +11,5 @@ public class FindDto {
     String email;
 
     @NotBlank
-    String id;
+    String nickname;
 }
