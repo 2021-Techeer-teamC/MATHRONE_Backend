@@ -21,9 +21,9 @@ import java.util.Date;
 public class ReactivateCodeRedis {
 
     @Id
-    private String id;
+    private String id; //accountId를 의미 id를 사용하지 않으면 에러
 
-    private String reactivateCode;
+    private String activateCode;
 
     // redis에서 설정한 시간 이후에 자동으로 해당 데이터가 사라지는 휘발성 데이터를 만들어주는 annotation
     @TimeToLive

@@ -352,16 +352,16 @@ public class AuthService {
         //레디스에 담아둠
         reactivateCodeRedisRepository.save(
                 ReactivateCodeRedis.builder()
-                .id(Integer.toString(u.getUserId()))
-                .reactivateCode(code)
+                .id(u.getAccountId())
+                .activateCode(code)
                 .expiration(3*60L)
                 .build()
                 );
 
 
         return ReactiveUserDto.builder()
-                .userId(u.getUserId())
-                .reactivateCode(code)
+                .accountId(u.getAccountId())
+                .activateCode(code)
                 .build();
 
     }
@@ -370,16 +370,17 @@ public class AuthService {
     public void reactiveUser(ReactiveUserDto reactiveUserDto){
 
 
-        String userId = Integer.toString(reactiveUserDto.getUserId());
-        ReactivateCodeRedis r = reactivateCodeRedisRepository.findById(userId)
+        String accountId = reactiveUserDto.getAccountId();
+        ReactivateCodeRedis r = reactivateCodeRedisRepository.findById(accountId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NONEXISTENT_REACTIVE_TRY));
 
         // Reactive code 일치 및 만료여부 검사
-        if (!r.getReactivateCode().equals(reactiveUserDto.getReactivateCode())) {
+        if (!r.getActivateCode().equals(reactiveUserDto.getActivateCode())) {
             throw new CustomException(ErrorCode.INVALID_REACTIVATE_CODE);
         }
 
-        UserInfo u = userinfoRepository.findByUserId(reactiveUserDto.getUserId());
+        UserInfo u = userinfoRepository.findByAccountId(reactiveUserDto.getAccountId())
+                .orElseThrow(()-> new CustomException(ErrorCode.ACCOUNT_NOT_EXIST));
 
         userinfoRepository.save(u.updateActivate(true));
 

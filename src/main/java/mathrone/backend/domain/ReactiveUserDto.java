@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ReactiveUserDto {
 
-    int userId;
+    String accountId;
 
-    String reactivateCode;
+    String activateCode;
 
 }
