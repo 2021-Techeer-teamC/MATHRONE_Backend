@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.ChangeProfileDto;
 import mathrone.backend.controller.dto.UserFailedTriedProblemsOfChapterDto;
 import mathrone.backend.controller.dto.UserFailedTriedWorkbookResponseDto;
-import mathrone.backend.domain.UserInfo;
 import mathrone.backend.domain.UserProfile;
 import mathrone.backend.service.AuthService;
 import mathrone.backend.service.ProfileService;
@@ -15,8 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -59,9 +56,9 @@ public class ProfileController {
     @PostMapping(value =  "/edit",
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
     @ApiOperation(value = "유저 개인정보 변경", notes = "유저 프로필 이미지, 닉네임, 전화번호 변경 가능")
-    public ResponseEntity<UserInfo> changeProfile(@RequestPart MultipartFile profileImgFile,
+    public ResponseEntity changeProfile(@RequestPart MultipartFile profileImgFile,
         @RequestPart ChangeProfileDto changeProfileDto,
         HttpServletRequest request) throws IOException {
-        return ResponseEntity.ok(profileService.changeProfile(changeProfileDto, profileImgFile, request));
+        return profileService.changeProfile(changeProfileDto, profileImgFile, request);
     }
 }
