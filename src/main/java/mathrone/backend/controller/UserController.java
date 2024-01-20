@@ -173,16 +173,10 @@ public class UserController {
     @ApiOperation(value = "카카오 로그인", notes = "카카오 계정으로 회원가입이 되어있지 않은 경우, 회원가입도 같이 진행")
     public ResponseEntity<TokenDto> moveKakaoInitUrl(@RequestBody RequestCodeDTO requestCodeDto)
         throws Exception {
-
-
-        System.out.println("call outh/callback/kakao");
-        System.out.println(requestCodeDto.getCode());
         ResponseEntity<KakaoTokenResponseDTO> res = snsLoginService.getKakaoToken(
             requestCodeDto.getCode());
-        System.out.println("done1" + res.getBody().getId_token());
         ResponseEntity<KakaoIDToken> idInfo = snsLoginService.decodeIdToken(
             res.getBody().getId_token());
-        System.out.println("done2");
 
         return ResponseEntity.ok(authService.kakaoLogin(res, idInfo));
     }
