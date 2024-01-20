@@ -30,16 +30,17 @@ public class MailService {
     }
 
 
-    public void sendReactivateCode(UserInfo user, String code){
+    public String sendCode(String email, String title){
 
         Random rnd = new Random();
-        int number = rnd.nextInt(999999);
+        int code = rnd.nextInt(999999);
 
-        String subject = "Mathrone 계정 복구";
-        String content = "복구 코드 : " + code;
+        String content = "코드 : " + code;
 
 
-        sendMail(user, subject, content);
+        sendMailWithEmail(email, title, content);
+
+        return String.format("%06d", code);
     }
 
     private void sendMail(UserInfo user, String subject, String content) {
@@ -61,5 +62,23 @@ public class MailService {
         }
     }
 
+
+    private void sendMailWithEmail(String email, String subject, String content) {
+
+        try {
+            MimeMessage mail = javaMailSender.createMimeMessage();
+            MimeMessageHelper mailHelper = new MimeMessageHelper(mail, true, "UTF-8");
+
+            // 1. 메일 수신자 설정
+            mailHelper.setTo(email);
+            mailHelper.setSubject(subject);  // 메일 제목 설정
+            mailHelper.setText(content, true);   // 메일 내용 설정
+
+            // 4. 메일 전송
+            javaMailSender.send(mail);
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }
