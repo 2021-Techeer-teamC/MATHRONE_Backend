@@ -7,17 +7,13 @@ import java.net.URI;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import mathrone.backend.controller.dto.ChangeAccountIdDto;
+import mathrone.backend.controller.dto.*;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoOAuthLoginUtils;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
 import mathrone.backend.controller.dto.OauthDTO.RequestCodeDTO;
 import mathrone.backend.controller.dto.OauthDTO.ResponseTokenDTO;
-import mathrone.backend.controller.dto.TokenDto;
-import mathrone.backend.controller.dto.UserRequestDto;
-import mathrone.backend.controller.dto.UserResponseDto;
-import mathrone.backend.controller.dto.UserSignUpDto;
 import mathrone.backend.domain.ReactiveUserDto;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.service.AuthService;
@@ -35,8 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PatchMapping;
-import mathrone.backend.controller.dto.ChangePasswordDto;
-import mathrone.backend.controller.dto.FindDto;
+
 import javax.validation.Valid;
 
 
@@ -66,6 +61,12 @@ public class UserController {
     @ApiOperation(value = "Mathrone 로그인", notes = "id와 password를 받아 로그인 수행")
     public ResponseEntity<TokenDto> login(@RequestBody UserRequestDto userRequestDto) {
         return ResponseEntity.ok(authService.login(userRequestDto));
+    }
+
+    @PostMapping(value = "/email-verify")
+    @ApiOperation(value = "이메일 인증 ", notes = "이메일 인증기능")
+    public ResponseEntity<EmailVerifyDto> emailVerify(@RequestBody EmailVerifyRequest emailVerifyRequest) {
+        return ResponseEntity.ok(authService.emailVerify(emailVerifyRequest));
     }
 
     @PostMapping(value = "/logout", headers = {"Content-type=application/json"})

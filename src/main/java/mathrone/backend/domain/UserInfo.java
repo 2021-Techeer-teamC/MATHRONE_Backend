@@ -27,7 +27,7 @@ public class UserInfo {
     private int userId;
 
     @NotNull
-    @Column(name = "account_id")
+    @Column(name = "nickname")
     private String accountId;
 
     @NotNull

@@ -12,17 +12,13 @@ import java.util.Random;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
-import mathrone.backend.controller.dto.ChangePasswordDto;
-import mathrone.backend.controller.dto.FindDto;
+import mathrone.backend.controller.dto.*;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
 import mathrone.backend.controller.dto.OauthDTO.ResponseTokenDTO;
-import mathrone.backend.controller.dto.TokenDto;
-import mathrone.backend.controller.dto.UserRequestDto;
-import mathrone.backend.controller.dto.UserResponseDto;
-import mathrone.backend.controller.dto.UserSignUpDto;
 import mathrone.backend.domain.ReactiveUserDto;
 import mathrone.backend.domain.Subscription;
 import mathrone.backend.domain.UserInfo;
@@ -32,10 +28,7 @@ import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.RefreshTokenRepository;
 import mathrone.backend.repository.SubscriptionRepository;
 import mathrone.backend.repository.UserInfoRepository;
-import mathrone.backend.repository.redisRepository.KakaoRefreshTokenRedisRepository;
-import mathrone.backend.repository.redisRepository.LogoutAccessTokenRedisRepository;
-import mathrone.backend.repository.redisRepository.ReactivateCodeRedisRepository;
-import mathrone.backend.repository.redisRepository.RefreshTokenRedisRepository;
+import mathrone.backend.repository.redisRepository.*;
 import mathrone.backend.repository.tokenRepository.GoogleRefreshTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -62,6 +55,7 @@ public class AuthService {
     private final MailService mailService;
     private final SubscriptionRepository subscriptionRepository;
     private final ReactivateCodeRedisRepository reactivateCodeRedisRepository;
+    private final EmailVerifyCodeRedisRepository emailVerifyCodeRedisRepository;
 
 
     @Transactional
@@ -69,10 +63,44 @@ public class AuthService {
         // user account ID가 존재하는지 검사
         validateUserAccountId(userSignUpDto.getAccountId());
 
+        EmailVerifyCodeRedis r = emailVerifyCodeRedisRepository.findById(userSignUpDto.getAccountId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NONEXISTENT_SIGNUP_TRY));
+
+        // Reactive code 일치 및 만료여부 검사
+        if (!r.getVerifyCode().equals(userSignUpDto.getEmailVerifyCode())) {
+            throw new CustomException(ErrorCode.INVALID_REACTIVATE_CODE);
+        }
+
+
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder,
-            MATHRONE.getTypeName()); //MATHRONE user로 가입시켜주기
+                MATHRONE.getTypeName()); //MATHRONE user로 가입시켜주기
+
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
+
+
+    public EmailVerifyDto emailVerify(EmailVerifyRequest emailVerifyRequest){
+        // user account ID가 존재하는지 검사
+        validateUserAccountId(emailVerifyRequest.getAccountId());
+
+        String code = mailService.sendCode(emailVerifyRequest.getEmail(),"이메일 인증 코드"); //이메일 인증코드 보내기
+
+        //레디스에 담아둠
+        emailVerifyCodeRedisRepository.save(
+                EmailVerifyCodeRedis.builder()
+                        .id(emailVerifyRequest.getAccountId())
+                        .verifyCode(code)
+                        .expiration(3*60L)
+                        .build()
+        );
+
+        return EmailVerifyDto.builder()
+                .accountId(emailVerifyRequest.getAccountId())
+                .code(code)
+                .build();
+
+    }
+
 
     @Transactional
     public UserResponseDto signupWithGoogle(ResponseEntity<GoogleIDToken> googleIDToken,
@@ -339,15 +367,9 @@ public class AuthService {
             throw new CustomException(ErrorCode.ACTIVE_USER);
         }
 
-        //복구 코드
-        Random rnd = new Random();
-        int number = rnd.nextInt(999999);
-
         // this will convert any number sequence into 6 character.
-        String code = String.format("%06d", number);
-
         //메일 발송
-        mailService.sendReactivateCode(u,code);
+        String code = mailService.sendCode(u.getEmail(),"계정 복구 코드");
 
         //레디스에 담아둠
         reactivateCodeRedisRepository.save(
@@ -392,6 +414,8 @@ public class AuthService {
     public List<UserInfo> allUser() {
         return userinfoRepository.findAll();
     }
+
+
 
     @Transactional
     public TokenDto login(UserRequestDto userRequestDto) {
