@@ -48,9 +48,6 @@ public class UserInfo {
     @Column(name = "phone_num")
     private String phoneNum;
 
-    @Column(name = "user_img")
-    private String userImg;
-
     private String role;
 
     @Column(name = "register_type")
@@ -71,8 +68,8 @@ public class UserInfo {
     }
 
     //업데이트 될만한 거
-    public UserInfo updateImg(String userImg) {
-        this.userImg = userImg;
+    public UserInfo updateImg(String profileImg) {
+        this.profileImg = profileImg;
         return this;
     }
 
