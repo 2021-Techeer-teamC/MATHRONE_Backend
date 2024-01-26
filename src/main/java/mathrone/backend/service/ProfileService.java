@@ -143,7 +143,7 @@ public class ProfileService {
         return new UserProfile(userinfo.getUserId(), userinfo.getNickname(),
             userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
             userinfo.getEmail(), userinfo.getPhoneNum(),
-            userinfo.getUserImg(), userinfo.getRole(), r, userinfo.isPremium(), s);
+            userinfo.getRole(), r, userinfo.isPremium(), s);
     }
 
 
