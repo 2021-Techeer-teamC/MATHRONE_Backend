@@ -26,6 +26,9 @@ public enum ErrorCode {
     PASSWORD_NOT_CORRECT(UNAUTHORIZED, "비밀번호를 다시 확인해주세요.", "U006"),
     EMAIL_NOT_EXIST(UNAUTHORIZED, "존재하지 않는 아매알입니다.", "U007"),
 
+    //user profile error
+    FILE_NOT_SUPPORT(UNAUTHORIZED, "지원하지 않는 파일 형식입니다.", "U008"),
+
     // problem try
     EMPTY_FAILED_PROBLEM(NOT_FOUND, "유저가 시도한 문제 중, 틀린 문제가 존재하지 않습니다", "P001"),
     EMPTY_FAILED_PROBLEM_IN_REDIS(NOT_FOUND, "Redis 에 유저가 시도한 문제 중 틀린 문제 정보가 존재하지 않습니다.", "P002"),
