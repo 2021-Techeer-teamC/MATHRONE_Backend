@@ -16,7 +16,7 @@ public class UserProfile {
     private int userId;
 
     @NotNull
-    private String id;
+    private String nickname;
 
     @NotNull
     private String password;
@@ -44,9 +44,9 @@ public class UserProfile {
     private SubscriptionInfo subscription;
 
 
-    public UserProfile(int userId, String id, String password, String profileImg, int exp, String email, String phoneNum, String role, UserRank rankInfo, boolean premium ,SubscriptionInfo subscription) {
+    public UserProfile(int userId, String nickname, String password, String profileImg, int exp, String email, String phoneNum, String role, UserRank rankInfo, boolean premium ,SubscriptionInfo subscription) {
         this.userId = userId;
-        this.id = id;
+        this.nickname = nickname;
         this.password = password;
         this.profileImg = profileImg;
         this.exp = exp;
