@@ -288,7 +288,7 @@ public class AuthService {
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
             userRequestDto.getNickname());
 
-        int userId = Integer.parseInt(tokenDto.getUserInfo().getUserId());
+        int userId = Integer.parseInt(tokenDto.getUserInfo().getNickname());
         UserInfo u = userinfoRepository.findByUserId(userId);
         if (u.isPremium()) {
             checkPremiumUser(userId);
