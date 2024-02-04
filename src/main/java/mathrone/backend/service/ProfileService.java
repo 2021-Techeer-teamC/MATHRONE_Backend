@@ -71,12 +71,12 @@ public class ProfileService {
 
 
     public ProfileService(UserInfoRepository userInfoRepository,
-        RedisTemplate<String, String> redisTemplate,
-        TokenProviderUtil tokenProviderUtil,
-        ProblemTryRepository problemTryRepository, WorkBookRepository workBookRepository,
-        ChapterRepository chapterRepository,
-        UserFailedTriedWorkbookRedisRepository userFailedTriedWorkbookRedisRepository,
-        SubscriptionRepository subscriptionRepository, S3FileUploader s3FileUploader) {
+            RedisTemplate<String, String> redisTemplate,
+            TokenProviderUtil tokenProviderUtil,
+            ProblemTryRepository problemTryRepository, WorkBookRepository workBookRepository,
+            ChapterRepository chapterRepository,
+            UserFailedTriedWorkbookRedisRepository userFailedTriedWorkbookRedisRepository,
+            SubscriptionRepository subscriptionRepository, S3FileUploader s3FileUploader) {
         this.userInfoRepository = userInfoRepository;
         this.zSetOperations = redisTemplate.opsForZSet();
         this.tokenProviderUtil = tokenProviderUtil;
@@ -90,7 +90,7 @@ public class ProfileService {
 
     //userId를 받아와서 전송
     public UserProfile getProfile(
-        String userId) {//이 부분 수정이 필요! (현재 userId가 pk가 아닌 id로 되어있어서 임시로 이렇게 찾는 방법으로 해둠)
+            String userId) {//이 부분 수정이 필요! (현재 userId가 pk가 아닌 id로 되어있어서 임시로 이렇게 찾는 방법으로 해둠)
 
         //유저 정보 받아오기
         UserInfo userinfo = userInfoRepository.findByUserId(Integer.parseInt(userId));
@@ -116,13 +116,13 @@ public class ProfileService {
         //구독회원인 경우
         if (userinfo.isPremium()) {
             Subscription sub = subscriptionRepository.checkLastSubscription(userinfo.getUserId())
-                .orElseThrow(() -> new CustomException(ErrorCode.SUBSCRIBE_USER_NOT_FOUND));
+                    .orElseThrow(() -> new CustomException(ErrorCode.SUBSCRIBE_USER_NOT_FOUND));
 
             Date subscribedDate = sub.getLastModifiedDate();
 
             LocalDate localDate = subscribedDate.toInstant()   // Date -> Instant
-                .atZone(ZoneId.systemDefault())  // Instant -> ZonedDateTime
-                .toLocalDate();
+                    .atZone(ZoneId.systemDefault())  // Instant -> ZonedDateTime
+                    .toLocalDate();
 
             LocalDate expiredDate = localDate.plusMonths(1);
 
@@ -130,20 +130,20 @@ public class ProfileService {
             Timestamp subscribe = new Timestamp(subscribedDate.getTime());
 
             s = SubscriptionInfo.builder()
-                .expired_data(expire)
-                .subscribed_date(subscribe)
-                .item(sub.getItem())
-                .price(sub.getPrice())
-                .build();
+                    .expired_data(expire)
+                    .subscribed_date(subscribe)
+                    .item(sub.getItem())
+                    .price(sub.getPrice())
+                    .build();
         } else {
             s = null;
         }
 
         //최종 Profile 생성
         return new UserProfile(userinfo.getUserId(), userinfo.getNickname(),
-            userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
-            userinfo.getEmail(), userinfo.getPhoneNum(),
-            userinfo.getRole(), r, userinfo.isPremium(), s);
+                userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
+                userinfo.getEmail(), userinfo.getPhoneNum(),
+                userinfo.getRole(), r, userinfo.isPremium(), s);
     }
 
 
@@ -163,7 +163,7 @@ public class ProfileService {
 
         // 2. access token으로부터 user id 가져오기 (email x)
         int userId = Integer.parseInt(
-            tokenProviderUtil.getAuthentication(accessToken).getName());
+                tokenProviderUtil.getAuthentication(accessToken).getName());
 
         UserInfo user = userInfoRepository.findByUserId(userId);
 
@@ -174,7 +174,7 @@ public class ProfileService {
 
         // 4. user가 푼 문제 중, 틀린 문제가 존재하는지 여부 체크
         List<ProblemTry> userFailedTriedProblemList = problemTryRepository.findProblemTryByUserAndIscorrect(
-            user, false).orElseThrow(() -> new CustomException(EMPTY_FAILED_PROBLEM));
+                user, false).orElseThrow(() -> new CustomException(EMPTY_FAILED_PROBLEM));
 
         // ResonseDto와 UserFailedTriedWorkbookRedis 객체를 만들기 전 유저가 시도한 문제들을 분류하기 위한 변수 선언
         Map<String, Map<String, Integer>> userFailedTriedWorkbooks = new HashMap<>();
@@ -183,7 +183,7 @@ public class ProfileService {
         // 5. 유저가 시도한 문제를 문제집에 맞게 분류
         for (ProblemTry userFailedTriedProblem : userFailedTriedProblemList) {
             String[] problemInfo = userFailedTriedProblem.getProblem().getProblemId()
-                .split("-");
+                    .split("-");
             String workbookNum = problemInfo[0];
             String chapterNum = problemInfo[1];
             String problemNum = userFailedTriedProblem.getProblem().getProblemId();
@@ -206,9 +206,9 @@ public class ProfileService {
                 // 5-2. 해당 workbook이 분류중인 workbook list에 존재할 때
             } else {
                 Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(
-                    workbookNum);
+                        workbookNum);
                 Map<String, List<String>> userFailedTriedChaptersForRedis = userFailedTriedWorkbooksForRedis.get(
-                    workbookNum);
+                        workbookNum);
 
                 // 5-2-1 해당 chapter가 분류중인 chapter list에 없는 경우
                 if (!userFailedTriedChapters.containsKey(chapterNum)) {
@@ -228,7 +228,7 @@ public class ProfileService {
 
                     // responseDTO를 위한 chapter update
                     userFailedTriedChapters.put(chapterNum,
-                        userFailedTriedChapters.get(chapterNum) + 1);
+                            userFailedTriedChapters.get(chapterNum) + 1);
                 }
             }
 
@@ -242,12 +242,12 @@ public class ProfileService {
         for (String workbookId : userFailedTriedWorkbooks.keySet()) {
 
             WorkBookInfo workbook = workBookRepository.findById(workbookId).
-                orElseThrow(() -> new CustomException(NOT_FOUND_WORKBOOK));
+                    orElseThrow(() -> new CustomException(NOT_FOUND_WORKBOOK));
 
             Map<String, Integer> userFailedTriedChapters = userFailedTriedWorkbooks.get(
-                workbookId);
+                    workbookId);
             Map<String, List<String>> userFailedTriedChaptersForRedis = userFailedTriedWorkbooksForRedis.get(
-                workbookId);
+                    workbookId);
 
             // responseDTO와 UserFailedTriedWorkbookRedis에 적용하기 위한 chapter 선언
             List<UserFailedTriedChapterDto> triedChapterList = new LinkedList<>();
@@ -256,34 +256,34 @@ public class ProfileService {
             // workbook의 chapter별 problem들을 responseDTO와 UserFailedTriedWorkbookRedis에 적용
             for (String chapterId : userFailedTriedChapters.keySet()) {
                 triedChapterList.add(new UserFailedTriedChapterDto(chapterId,
-                    userFailedTriedChapters.get(chapterId)));
+                        userFailedTriedChapters.get(chapterId)));
 
                 // chapter의 chapterTitle을 위해 chapterId에 해당하는 객체 가져옴
                 ChapterInfo chapter = chapterRepository.findByChapterId(chapterId).
-                    orElseThrow(() -> new CustomException(NOT_FOUND_CHAPTER));
+                        orElseThrow(() -> new CustomException(NOT_FOUND_CHAPTER));
 
                 userFailedTriedChapterRList.put(chapterId,
-                    new UserFailedTriedChapterR(chapter.getName(),
-                        userFailedTriedChaptersForRedis.get(chapterId)));
+                        new UserFailedTriedChapterR(chapter.getName(),
+                                userFailedTriedChaptersForRedis.get(chapterId)));
             }
 
             userFailedTriedWorkbookResponseDto.getFailedTriedWorkbookList().add(
-                new UserFailedTriedWorkbookDto(workbookId, workbook.getTitle(),
-                    triedChapterList));
+                    new UserFailedTriedWorkbookDto(workbookId, workbook.getTitle(),
+                            triedChapterList));
 
             userFailedTriedWorkbookListForRedis.put(workbookId,
-                new UserFailedTriedWorkbookR(workbook.getTitle(),
-                    userFailedTriedChapterRList));
+                    new UserFailedTriedWorkbookR(workbook.getTitle(),
+                            userFailedTriedChapterRList));
         }
 
         // 6. Redis에 userFailedTriedWorkbookRedis 객체 저장
         userFailedTriedWorkbookRedisRepository.save(
-            UserFailedTriedWorkbookRedis.builder()
-                .userId(userId)
-                // 10분
-                .expiration(600L)
-                .userFailedTriedWorkbookList(userFailedTriedWorkbookListForRedis)
-                .build()
+                UserFailedTriedWorkbookRedis.builder()
+                        .userId(userId)
+                        // 10분
+                        .expiration(600L)
+                        .userFailedTriedWorkbookList(userFailedTriedWorkbookListForRedis)
+                        .build()
         );
 
         return userFailedTriedWorkbookResponseDto;
@@ -291,13 +291,13 @@ public class ProfileService {
     }
 
     public UserFailedTriedProblemsOfChapterDto getUserFailedProblemsOfChapterOfWorkbook(
-        HttpServletRequest request, String workbookId, String chapterId) {
+            HttpServletRequest request, String workbookId, String chapterId) {
         // 1. Request Header 에서 access token 빼기
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         // 2. access token으로부터 user id 가져오기 (email x)
         int userId = Integer.parseInt(
-            tokenProviderUtil.getAuthentication(accessToken).getName());
+                tokenProviderUtil.getAuthentication(accessToken).getName());
 
         UserInfo user = userInfoRepository.findByUserId(userId);
 
@@ -308,44 +308,51 @@ public class ProfileService {
 
         // 4. Redis에 유저가 틀린 문제에 대한 데이터가 존재하는지 여부 체크
         UserFailedTriedWorkbookRedis userFailedTriedWorkbook = userFailedTriedWorkbookRedisRepository.findById(
-            userId).orElseThrow(() -> new CustomException(EMPTY_FAILED_PROBLEM_IN_REDIS));
+                userId).orElseThrow(() -> new CustomException(EMPTY_FAILED_PROBLEM_IN_REDIS));
 
         // 5. 유저가 틀린 문제 중 특정 문제집의 데이터 존재 여부 체크
         UserFailedTriedWorkbookR userFailedTriedWorkbookR = Optional.ofNullable(
-            userFailedTriedWorkbook.getUserFailedTriedWorkbookList().get(workbookId)).orElseThrow(
-            () -> new CustomException(NONEXISTENT_FAILED_WORKBOOK));
+                        userFailedTriedWorkbook.getUserFailedTriedWorkbookList().get(workbookId))
+                .orElseThrow(
+                        () -> new CustomException(NONEXISTENT_FAILED_WORKBOOK));
 
         // 6. 유저가 틀린 문제 중 특정 챕터의 데이터 존재 여부 체크
         UserFailedTriedChapterR userFailedTriedChapterR = Optional.ofNullable(
-            userFailedTriedWorkbookR.getUserFailedTriedChapterList().get(chapterId)).orElseThrow(
-            () -> new CustomException(NONEXISTENT_FAILED_CHAPTER));
+                        userFailedTriedWorkbookR.getUserFailedTriedChapterList().get(chapterId))
+                .orElseThrow(
+                        () -> new CustomException(NONEXISTENT_FAILED_CHAPTER));
 
         return UserFailedTriedProblemsOfChapterDto.builder()
-            .workbookTitle(userFailedTriedWorkbookR.getWorkbookTitle())
-            .chapterTitle(userFailedTriedChapterR.getChapterTitle())
-            .problems(userFailedTriedChapterR.getTriedProblem())
-            .build();
+                .workbookTitle(userFailedTriedWorkbookR.getWorkbookTitle())
+                .chapterTitle(userFailedTriedChapterR.getChapterTitle())
+                .problems(userFailedTriedChapterR.getTriedProblem())
+                .build();
     }
 
     @Transactional
-    public ResponseEntity changeProfile(ChangeProfileDto changeProfileDto, MultipartFile profileImgFile, HttpServletRequest request)
+    public ResponseEntity changeProfile(ChangeProfileDto changeProfileDto,
+            HttpServletRequest request){
+        String accessToken = tokenProviderUtil.resolveToken(request);
+        int userId = Integer.parseInt(
+                tokenProviderUtil.getAuthentication(accessToken).getName());
+        UserInfo userInfo = userInfoRepository.findByUserId(userId);
+        if (!changeProfileDto.getPhoneNum().isEmpty()) {
+            userInfo.setPhoneNum(changeProfileDto.getPhoneNum());
+        }
+        if (!changeProfileDto.getNickname().isEmpty()) {
+            userInfo.setNickname(changeProfileDto.getNickname());
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    @Transactional
+    public ResponseEntity changeImg(MultipartFile profileImg, HttpServletRequest request)
             throws IOException {
         String accessToken = tokenProviderUtil.resolveToken(request);
         int userId = Integer.parseInt(
                 tokenProviderUtil.getAuthentication(accessToken).getName());
         UserInfo userInfo = userInfoRepository.findByUserId(userId);
-        if(profileImgFile.getSize() != 0L){
-            changeProfileDto.setProfileImg(s3FileUploader.upload(profileImgFile));
-        }    // 파일이 들어왔을 경우 업로드 및 url 저장
-        if(!changeProfileDto.getProfileImg().isEmpty()){
-            userInfo.setProfileImg(changeProfileDto.getProfileImg());
-        }
-        if(!changeProfileDto.getPhoneNum().isEmpty()){
-            userInfo.setPhoneNum(changeProfileDto.getPhoneNum());
-        }
-        if(!changeProfileDto.getNickname().isEmpty()) {
-            userInfo.setNickname(changeProfileDto.getNickname());
-        }
+        userInfo.setProfileImg(s3FileUploader.upload(profileImg));
         return ResponseEntity.ok().build();
     }
 }
