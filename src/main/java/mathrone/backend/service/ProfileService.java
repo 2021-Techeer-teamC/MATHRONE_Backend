@@ -134,7 +134,7 @@ public class ProfileService {
         return new UserProfile(userinfo.getUserId(), userinfo.getAccountId(),
             userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
             userinfo.getEmail(), userinfo.getPhoneNum(),
-            userinfo.getUserImg(), userinfo.getRole(), r, userinfo.isPremium(), s);
+            userinfo.getProfileImg(), userinfo.getRole(), r, userinfo.isPremium(), s);
     }
 
 

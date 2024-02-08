@@ -27,7 +27,7 @@ public class UserInfo {
     private int userId;
 
     @NotNull
-    @Column(name = "account_id")
+    @Column(name = "nickname")
     private String accountId;
 
     @NotNull
@@ -48,8 +48,6 @@ public class UserInfo {
     @Column(name = "phone_num")
     private String phoneNum;
 
-    @Column(name = "user_img")
-    private String userImg;
 
     private String role;
 
@@ -68,12 +66,6 @@ public class UserInfo {
         this.role = role;
         this.accountId = accountId;
         this.resType = resType;
-    }
-
-    //업데이트 될만한 거
-    public UserInfo updateImg(String userImg) {
-        this.userImg = userImg;
-        return this;
     }
 
     public UserInfo updatePremium(boolean premium){
