@@ -56,7 +56,7 @@ public class ProfileController {
 
     @PostMapping( "/edit")
     @ApiOperation(value = "유저 개인정보 변경", notes = "유저 프로필 이미지, 닉네임, 전화번호 변경 가능")
-    public ResponseEntity changeProfile(@RequestPart ChangeProfileDto changeProfileDto,
+    public ResponseEntity changeProfile(@RequestBody ChangeProfileDto changeProfileDto,
         HttpServletRequest request) {
         return profileService.changeProfile(changeProfileDto, request);
     }
