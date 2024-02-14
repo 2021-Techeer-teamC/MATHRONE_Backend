@@ -10,10 +10,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 @NoArgsConstructor
 public class UserRequestDto {
 
-    private String accountId;
+    private String nickname;
     private String password;
 
     public UsernamePasswordAuthenticationToken of() {
-        return new UsernamePasswordAuthenticationToken(accountId, password);
+        return new UsernamePasswordAuthenticationToken(nickname, password);
     }
 }
