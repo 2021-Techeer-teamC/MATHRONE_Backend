@@ -28,7 +28,7 @@ public class UserInfo {
 
     @NotNull
     @Column(name = "nickname")
-    private String accountId;
+    private String nickname;
 
     @NotNull
     private String password;
@@ -48,7 +48,6 @@ public class UserInfo {
     @Column(name = "phone_num")
     private String phoneNum;
 
-
     private String role;
 
     @Column(name = "register_type")
@@ -60,13 +59,19 @@ public class UserInfo {
     private List<UserWorkbookRelInfo> userWorkbookRelInfo = new LinkedList<>();
 
     @Builder
-    public UserInfo(String email, String password, String role, String accountId, String resType) {
+    public UserInfo(String email, String password, String role, String nickname, String resType) {
         this.email = email;
         this.password = password;
         this.role = role;
-        this.accountId = accountId;
+        this.nickname = nickname;
         this.resType = resType;
     }
+
+    public UserInfo updateImg(String profileImg) {
+        this.profileImg = profileImg;
+        return this;
+    }
+
 
     public UserInfo updatePremium(boolean premium){
         this.premium = premium;
@@ -75,8 +80,8 @@ public class UserInfo {
 
 
     //accountID변경
-    public UserInfo updateAccountId(String accountId){
-        this.accountId = accountId;
+    public UserInfo updateNickname(String nickname){
+        this.nickname = nickname;
 
         return this;
     }

@@ -87,7 +87,7 @@ public class TokenProviderUtil {
             .refreshToken(refreshToken)
             .userInfo(
                 UserResponseDto.builder()
-                    .userId(authentication.getName())
+                    .nickname(authentication.getName())
                     .accountId(accountId)
                     .build()
             )
@@ -128,7 +128,7 @@ public class TokenProviderUtil {
                 .refreshToken(refreshToken)
                 .userInfo(
                         UserResponseDto.builder()
-                                .userId(authentication.getName())
+                                .nickname(authentication.getName())
                                 .accountId(accountId)
                                 .build()
                 )
