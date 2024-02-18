@@ -31,6 +31,7 @@ public enum ErrorCode {
     NONEXISTENT_REACTIVE_TRY(UNAUTHORIZED, "활성화 시도가 존재하지 않는 유저입니다.", "U011"),
     NONEXISTENT_SIGNUP_TRY(UNAUTHORIZED, "이메일 인증 코드가 발송된 기록이 없는 유저입니다.", "U012"),
 
+    EMAIL_ACCOUNT_IS_DUPLICATION(UNAUTHORIZED, "이미 해당 이메일 계정으로 가입이 진행되었습니다.", "K001"),
 
     //user profile error
     FILE_NOT_SUPPORT(UNAUTHORIZED, "지원하지 않는 파일 형식입니다.", "U008"),
