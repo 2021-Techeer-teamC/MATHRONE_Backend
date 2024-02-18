@@ -19,7 +19,7 @@ public class MailService {
 
     public void sendId(UserInfo user) {
         String subject = "Mathrone 아이디 찾기";
-        String content = "당신의 아이디는? " + user.getAccountId();
+        String content = "당신의 아이디는? " + user.getNickname();
         sendMail(user, subject, content);
     }
 
