@@ -49,7 +49,7 @@ public class RankService {
         for (ZSetOperations.TypedTuple<String> str : rankSet) {
             int temp = Integer.parseInt(str.getValue());
             result.add(AllRankDto.builder()
-                        .user_name(userInfoRepository.findByUserId(temp).getAccountId())
+                        .user_name(userInfoRepository.findByUserId(temp).getNickname())
                         .correct_count(Objects.requireNonNull(str.getScore()).longValue())
                         .try_count(userInfoRepository.getTryByUserID(temp))
                         .build());
@@ -80,7 +80,7 @@ public class RankService {
         if (rankList.isPresent()) { // redis에 data가 존재하는 경우
              return MyRankDto.builder()
                             .rank(rankList.get() + 1)
-                            .user_name(userInfoRepository.findByUserId(userId).getAccountId())
+                            .user_name(userInfoRepository.findByUserId(userId).getNickname())
                             .correct_count(Objects.requireNonNull(
                                     zSetOperations.score("test", Integer.toString(userId))).longValue()) // 형 변환 오류 찾음
                             .try_count(userInfoRepository.getTryByUserID(userId))
