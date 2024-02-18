@@ -326,9 +326,9 @@ public class AuthService {
                 .authenticate(authenticationToken);
         // token 생성
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
-                userRequestDto.getAccountId());
+                userRequestDto.getNickname());
 
-        int userId = Integer.parseInt(tokenDto.getUserInfo().getUserId());
+        int userId = Integer.parseInt(tokenDto.getUserInfo().getNickname());
 
 
         UserInfo u = userinfoRepository.findByUserId(userId);
@@ -352,7 +352,7 @@ public class AuthService {
         //레디스에 담아둠
         reactivateCodeRedisRepository.save(
                 ReactivateCodeRedis.builder()
-                .id(u.getAccountId())
+                .id(u.getNickname())
                 .activateCode(code)
                 .expiration(3*60L)
                 .build()
@@ -360,7 +360,7 @@ public class AuthService {
 
 
         return ReactiveUserDto.builder()
-                .accountId(u.getAccountId())
+                .accountId(u.getNickname())
                 .activateCode(code)
                 .build();
 
@@ -379,7 +379,7 @@ public class AuthService {
             throw new CustomException(ErrorCode.INVALID_REACTIVATE_CODE);
         }
 
-        UserInfo u = userinfoRepository.findByAccountId(reactiveUserDto.getAccountId())
+        UserInfo u = userinfoRepository.findByNickname(reactiveUserDto.getAccountId())
                 .orElseThrow(()-> new CustomException(ErrorCode.ACCOUNT_NOT_EXIST));
 
         userinfoRepository.save(u.updateActivate(true));
