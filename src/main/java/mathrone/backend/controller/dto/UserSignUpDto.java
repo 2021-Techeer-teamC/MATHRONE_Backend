@@ -10,20 +10,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @NoArgsConstructor
 public class UserSignUpDto {
 
-    private String accountId;
+    private String nickname;
     private String password;
     private String email;   // email에서 id로 바뀜에 따라, 필요한지 여부 토의하기
     private String emailVerifyCode; //이메일 인증코드 함께 전송
 
-    public UserSignUpDto(String email, String password, String accountId) {
+    public UserSignUpDto(String email, String password, String nickname) {
         this.email = email;
         this.password = password;
-        this.accountId = accountId;
+        this.nickname = nickname;
     }
 
     public UserInfo toUser(PasswordEncoder passwordEncoder, String resType) {
         return UserInfo.builder()
-            .accountId(accountId)
+            .nickname(nickname)
             .email(email)
             .password(passwordEncoder.encode(password))
             .role("ROLE_USER")

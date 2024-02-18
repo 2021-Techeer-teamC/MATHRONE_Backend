@@ -32,6 +32,9 @@ public enum ErrorCode {
     NONEXISTENT_SIGNUP_TRY(UNAUTHORIZED, "이메일 인증 코드가 발송된 기록이 없는 유저입니다.", "U012"),
 
 
+    //user profile error
+    FILE_NOT_SUPPORT(UNAUTHORIZED, "지원하지 않는 파일 형식입니다.", "U008"),
+
     // problem try
     EMPTY_FAILED_PROBLEM(NOT_FOUND, "유저가 시도한 문제 중, 틀린 문제가 존재하지 않습니다", "P001"),
     EMPTY_FAILED_PROBLEM_IN_REDIS(NOT_FOUND, "Redis 에 유저가 시도한 문제 중 틀린 문제 정보가 존재하지 않습니다.", "P002"),
