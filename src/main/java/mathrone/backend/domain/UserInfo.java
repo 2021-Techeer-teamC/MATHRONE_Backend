@@ -27,8 +27,8 @@ public class UserInfo {
     private int userId;
 
     @NotNull
-    @Column(name = "account_id")
-    private String accountId;
+    @Column(name = "nickname")
+    private String nickname;
 
     @NotNull
     private String password;
@@ -48,13 +48,12 @@ public class UserInfo {
     @Column(name = "phone_num")
     private String phoneNum;
 
-    @Column(name = "user_img")
-    private String userImg;
-
     private String role;
 
     @Column(name = "register_type")
     private String resType;
+
+    private boolean activate = true;
 
     @OneToMany(
         mappedBy = "user",
@@ -62,17 +61,17 @@ public class UserInfo {
     private List<UserWorkbookRelInfo> userWorkbookRelInfo = new LinkedList<>();
 
     @Builder
-    public UserInfo(String email, String password, String role, String accountId, String resType) {
+    public UserInfo(String email, String password, String role, String nickname, String resType) {
         this.email = email;
         this.password = password;
         this.role = role;
-        this.accountId = accountId;
+        this.nickname = nickname;
         this.resType = resType;
     }
 
     //업데이트 될만한 거
-    public UserInfo updateImg(String userImg) {
-        this.userImg = userImg;
+    public UserInfo updateImg(String profileImg) {
+        this.profileImg = profileImg;
         return this;
     }
 
@@ -83,14 +82,23 @@ public class UserInfo {
 
 
     //accountID변경
-    public UserInfo updateAccountId(String accountId){
-        this.accountId = accountId;
+    public UserInfo updateNickname(String nickname){
+        this.nickname = nickname;
 
         return this;
     }
 
     public UserInfo changePassword(PasswordEncoder passwordEncoder, String password) {
         this.password = passwordEncoder.encode(password);
+
+        return this;
+    }
+
+
+
+    //탈퇴/복구 시 유저 deactivate or active again
+    public UserInfo updateActivate(Boolean activate){
+        this.activate=activate;
 
         return this;
     }
