@@ -8,6 +8,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.util.Random;
+
 @Service
 
 @RequiredArgsConstructor
@@ -24,6 +26,19 @@ public class MailService {
     public void sendPw(UserInfo user, String password) {
         String subject = "Mathrone 임시 비밀번호 안내";
         String content = "당신의 임시 비밀번호는? " + password;
+        sendMail(user, subject, content);
+    }
+
+
+    public void sendReactivateCode(UserInfo user, String code){
+
+        Random rnd = new Random();
+        int number = rnd.nextInt(999999);
+
+        String subject = "Mathrone 계정 복구";
+        String content = "복구 코드 : " + code;
+
+
         sendMail(user, subject, content);
     }
 
