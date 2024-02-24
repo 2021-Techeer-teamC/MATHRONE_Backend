@@ -8,6 +8,7 @@ import static mathrone.backend.error.exception.ErrorCode.INVALID_REFRESH_TOKEN;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
@@ -22,12 +23,10 @@ import mathrone.backend.controller.dto.TokenDto;
 import mathrone.backend.controller.dto.UserRequestDto;
 import mathrone.backend.controller.dto.UserResponseDto;
 import mathrone.backend.controller.dto.UserSignUpDto;
+import mathrone.backend.domain.ReactiveUserDto;
 import mathrone.backend.domain.Subscription;
 import mathrone.backend.domain.UserInfo;
-import mathrone.backend.domain.token.GoogleRefreshTokenRedis;
-import mathrone.backend.domain.token.KakaoRefreshTokenRedis;
-import mathrone.backend.domain.token.LogoutAccessToken;
-import mathrone.backend.domain.token.RefreshToken;
+import mathrone.backend.domain.token.*;
 import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.RefreshTokenRepository;
@@ -35,6 +34,7 @@ import mathrone.backend.repository.SubscriptionRepository;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.redisRepository.KakaoRefreshTokenRedisRepository;
 import mathrone.backend.repository.redisRepository.LogoutAccessTokenRedisRepository;
+import mathrone.backend.repository.redisRepository.ReactivateCodeRedisRepository;
 import mathrone.backend.repository.redisRepository.RefreshTokenRedisRepository;
 import mathrone.backend.repository.tokenRepository.GoogleRefreshTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
@@ -61,12 +61,13 @@ public class AuthService {
     private final GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository;
     private final MailService mailService;
     private final SubscriptionRepository subscriptionRepository;
+    private final ReactivateCodeRedisRepository reactivateCodeRedisRepository;
 
 
     @Transactional
     public UserResponseDto signup(UserSignUpDto userSignUpDto) {
-        // user account ID가 존재하는지 검사
-        validateUserAccountId(userSignUpDto.getAccountId());
+        // user nickname 존재하는지 검사
+        validateUserAccountId(userSignUpDto.getNickname());
 
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder,
             MATHRONE.getTypeName()); //MATHRONE user로 가입시켜주기
@@ -117,19 +118,24 @@ public class AuthService {
             //@로 시작하는 랜덤 아이디를 만들어 제공
             do {
                 tmpId = "@" + RandomStringUtils.random(12, true, true);
-            } while (userinfoRepository.existsByAccountId(tmpId));//존재하지 않는 아이디일 때 까지 반복
+            } while (userinfoRepository.existsByNickname(tmpId));//존재하지 않는 아이디일 때 까지 반복
             signupWithGoogle(googleIDToken, tmpId);
         }
 
+        //active true인 경우만 로그인 가능
         UserInfo user = userinfoRepository.findByEmailAndResType(googleIDToken.getBody().getEmail(),
             GOOGLE.getTypeName());
+
+        if(!user.isActivate()){
+            throw new CustomException(ErrorCode.DEACTIVATE_USER);
+        }
 
         //프리미엄
         if (user.isPremium()) {
             checkPremiumUser(user.getUserId());
         }
 
-        UserRequestDto userRequestDto = new UserRequestDto(user.getAccountId(),
+        UserRequestDto userRequestDto = new UserRequestDto(user.getNickname(),
             "googleLogin");
 
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
@@ -142,7 +148,7 @@ public class AuthService {
 
         // 3. token 생성
         TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication,
-            userRequestDto.getAccountId(), googleResponseToken.getBody().getAccessToken());
+            userRequestDto.getNickname(), googleResponseToken.getBody().getAccessToken());
 
         // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
         RefreshToken refreshToken = RefreshToken.builder()
@@ -196,18 +202,25 @@ public class AuthService {
             //@로 시작하는 랜덤 아이디를 만들어 제공
             do {
                 tmpId = "@" + RandomStringUtils.random(12, true, true);
-            } while (userinfoRepository.existsByAccountId(tmpId));//존재하지 않는 아이디일 때 까지 반복
+            } while (userinfoRepository.existsByNickname(tmpId));//존재하지 않는 아이디일 때 까지 반복
             signupWithKakao(kakaoIDToken, tmpId); //카카오계정 으로 회원가입 진행
         }
+
         UserInfo user = userinfoRepository.findByEmailAndResType(kakaoIDToken.getBody().getEmail(),
             KAKAO.getTypeName());
+
+
+        if(!user.isActivate()){
+            throw new CustomException(ErrorCode.DEACTIVATE_USER);
+        }
+
 
         //로그인 시 프리미엄 검사
         if (user.isPremium()) {
             checkPremiumUser(user.getUserId());
         }
 
-        UserRequestDto userRequestDto = new UserRequestDto(user.getAccountId(),
+        UserRequestDto userRequestDto = new UserRequestDto(user.getNickname(),
             "kakaoLogin");
 
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
@@ -220,7 +233,7 @@ public class AuthService {
 
         // 3. token 생성
         TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication,
-            userRequestDto.getAccountId(), kakaoTokenResponseDto.getBody().getAccess_token());
+            userRequestDto.getNickname(), kakaoTokenResponseDto.getBody().getAccess_token());
 
         // 4. refresh token 생성 ( database 및 redis 저장을 위한 refresh token )
         RefreshToken refreshToken = RefreshToken.builder()
@@ -267,9 +280,114 @@ public class AuthService {
         // resType에 대한 구분을 enum class로 다루는 방안에 대해 토의하기
         if (resType.equals(MATHRONE.getTypeName())) {
             // accountId가 존재하지 않는 경우에 대한 예외처리 작성하기
-            userinfoRepository.deleteByAccountIdAndResType(accountId, resType);
+            userinfoRepository.deleteByNicknameAndResType(accountId, resType);
         }
     }
+
+
+    @Transactional
+    public void deactiveUser(HttpServletRequest request) { //activate상태 (false : 회원탈퇴)
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
+        }
+        int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
+
+        UserInfo user = userinfoRepository.findByUserId(userId);
+
+        //로그인 해제
+        if (user.getResType().equals(KAKAO.getTypeName())) {
+            logoutWithKakao(request);
+        }else if(user.getResType().equals(GOOGLE.getTypeName())){
+            logoutWithGoogle(request);
+        }else{
+            logout(request);
+        }
+
+        UserInfo updatedUser = user.updateActivate(false);
+
+        userinfoRepository.save(updatedUser);
+
+    }
+
+
+
+    @Transactional
+    public ReactiveUserDto getReactivateCode(UserRequestDto userRequestDto){
+
+        //입력한 아이디 비번을 검증함
+        // Login ID/PW 를 기반으로 AuthenticationToken 생성
+        UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
+
+        // 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
+        //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
+        Authentication authentication = authenticationManagerBuilder.getObject()
+                .authenticate(authenticationToken);
+        // token 생성
+        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
+                userRequestDto.getNickname());
+
+        int userId = Integer.parseInt(tokenDto.getUserInfo().getNickname());
+
+
+        UserInfo u = userinfoRepository.findByUserId(userId);
+
+
+        //탈퇴 회원 복구 진행
+        if(u.isActivate()){
+            throw new CustomException(ErrorCode.ACTIVE_USER);
+        }
+
+        //복구 코드
+        Random rnd = new Random();
+        int number = rnd.nextInt(999999);
+
+        // this will convert any number sequence into 6 character.
+        String code = String.format("%06d", number);
+
+        //메일 발송
+        mailService.sendReactivateCode(u,code);
+
+        //레디스에 담아둠
+        reactivateCodeRedisRepository.save(
+                ReactivateCodeRedis.builder()
+                .id(u.getNickname())
+                .activateCode(code)
+                .expiration(3*60L)
+                .build()
+                );
+
+
+        return ReactiveUserDto.builder()
+                .accountId(u.getNickname())
+                .activateCode(code)
+                .build();
+
+    }
+
+
+    public void reactiveUser(ReactiveUserDto reactiveUserDto){
+
+
+        String accountId = reactiveUserDto.getAccountId();
+        ReactivateCodeRedis r = reactivateCodeRedisRepository.findById(accountId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NONEXISTENT_REACTIVE_TRY));
+
+        // Reactive code 일치 및 만료여부 검사
+        if (!r.getActivateCode().equals(reactiveUserDto.getActivateCode())) {
+            throw new CustomException(ErrorCode.INVALID_REACTIVATE_CODE);
+        }
+
+        UserInfo u = userinfoRepository.findByNickname(reactiveUserDto.getAccountId())
+                .orElseThrow(()-> new CustomException(ErrorCode.ACCOUNT_NOT_EXIST));
+
+        userinfoRepository.save(u.updateActivate(true));
+
+
+    }
+
+
 
     public List<UserInfo> allUser() {
         return userinfoRepository.findAll();
@@ -286,10 +404,16 @@ public class AuthService {
             .authenticate(authenticationToken);
         // token 생성
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
-            userRequestDto.getAccountId());
+            userRequestDto.getNickname());
 
-        int userId = Integer.parseInt(tokenDto.getUserInfo().getUserId());
+
+        int userId = Integer.parseInt(tokenDto.getUserInfo().getNickname());
         UserInfo u = userinfoRepository.findByUserId(userId);
+
+        if(!u.isActivate()){
+            throw new CustomException(ErrorCode.DEACTIVATE_USER);
+        }
+
         if (u.isPremium()) {
             checkPremiumUser(userId);
         }
@@ -403,7 +527,7 @@ public class AuthService {
 
         UserInfo user = findUserFromRequest(request);
         // 새로운 토큰 생성
-        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication, user.getAccountId());
+        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication, user.getNickname());
         // 저장소 정보 업데이트
         RefreshToken newRefreshToken = storedRefreshToken.updateValue(tokenDto.getRefreshToken(),
             tokenProviderUtil.getRefreshTokenExpireTime());
@@ -433,7 +557,7 @@ public class AuthService {
         UserInfo user = findUserFromRequest(request);
         // 5. 새로운 토큰 생성
         TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication,
-            user.getAccountId(), reissue.getBody().getAccess_token());
+            user.getNickname(), reissue.getBody().getAccess_token());
         // 6. 저장소 정보 업데이트
         RefreshToken newRefreshToken = storedRefreshToken.updateValue(tokenDto.getRefreshToken(),
             tokenProviderUtil.getRefreshTokenExpireTime());
@@ -468,7 +592,7 @@ public class AuthService {
 
         // 5. 새로운 토큰 생성
         TokenDto tokenDto = tokenProviderUtil.generateTokenWithSns(authentication,
-            user.getAccountId(), reissue.getBody().getAccessToken());
+            user.getNickname(), reissue.getBody().getAccessToken());
 
         // 6. 저장소 정보 업데이트
         RefreshToken newRefreshToken = storedRefreshToken.updateValue(tokenDto.getRefreshToken(),
@@ -493,8 +617,8 @@ public class AuthService {
         return tokenProviderUtil.getAuthentication(accessToken).getName();
     }
 
-    public void validateUserAccountId(String userAccountId) {
-        if (userinfoRepository.existsUserInfoByAccountId(userAccountId)) {
+    public void validateUserAccountId(String nickname) {
+        if (userinfoRepository.existsUserInfoByNickname(nickname)) {
             throw new CustomException(ErrorCode.ACCOUNT_IS_DUPLICATION);
         }
     }
@@ -536,13 +660,13 @@ public class AuthService {
         return userinfoRepository.findByUserId(userId);
     }
 
-    public void updateAccountId(String accountId, UserInfo user) {
+    public void updateAccountId(String nickname, UserInfo user) {
         //정확하게 존재하는 유저가 아니라면 오류
         validateUser(user);
         //존재하는 accountID인 경우 오류
-        validateUserAccountId(accountId);
+        validateUserAccountId(nickname);
         //어카운트 아이디 업데이트 진행
-        UserInfo newUser = user.updateAccountId(accountId);
+        UserInfo newUser = user.updateNickname(nickname);
         userinfoRepository.save(newUser); //p key가 같은 것이 save되면 자동으로 update의 기능이 수행됨
         // return을 void로 했는데 204 + empty() 를 보내도 괜찮다는
         // 204 : No Content 클라이언트의 요청은 정상적이다. 하지만 컨텐츠를 제공하지 않습니다
@@ -565,8 +689,8 @@ public class AuthService {
     @Transactional
     public void findPw(FindDto request) {
         String newPassword = UUID.randomUUID().toString().substring(0, 10);
-        UserInfo user = userinfoRepository.findByEmailAndAccountId(request.getEmail(),
-            request.getId()).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        UserInfo user = userinfoRepository.findByEmailAndNickname(request.getEmail(),
+            request.getNickname()).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         user.changePassword(passwordEncoder, newPassword);
         mailService.sendPw(user, newPassword);
     }
