@@ -25,6 +25,11 @@ public enum ErrorCode {
     ACCOUNT_NOT_EXIST(UNAUTHORIZED, "존재하지 않는 계정입니다.", "U005"),
     PASSWORD_NOT_CORRECT(UNAUTHORIZED, "비밀번호를 다시 확인해주세요.", "U006"),
     EMAIL_NOT_EXIST(UNAUTHORIZED, "존재하지 않는 아매알입니다.", "U007"),
+    DEACTIVATE_USER(UNAUTHORIZED, "탈퇴 회원입니다.", "U008"),
+    ACTIVE_USER(BAD_REQUEST, "탈퇴 기록이 없는 회원입니다. 로그인을 진행해주세요.", "U009"),
+    INVALID_REACTIVATE_CODE(UNAUTHORIZED, "활성화 코드가 일치하지 않거나, 만료되었습니다. 다시 진행해주세요.", "U010"),
+    NONEXISTENT_REACTIVE_TRY(UNAUTHORIZED, "활성화 시도가 존재하지 않는 유저입니다.", "U011"),
+
 
     //user profile error
     FILE_NOT_SUPPORT(UNAUTHORIZED, "지원하지 않는 파일 형식입니다.", "U008"),
