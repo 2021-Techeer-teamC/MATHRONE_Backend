@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
-import mathrone.backend.controller.dto.AllRankDto;
 import mathrone.backend.controller.dto.RankDto;
 import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.repository.UserInfoRepository;
@@ -51,7 +50,7 @@ public class RankService {
             int temp = Integer.parseInt(str.getValue());
             result.add(RankDto.builder()
                         .rank(ranking)
-                        .user_name(userInfoRepository.findByUserId(temp).getNickname())
+                        .nickname(userInfoRepository.findByUserId(temp).getNickname())
                         .correct_count(Objects.requireNonNull(str.getScore()).longValue())
                         .try_count(userInfoRepository.getTryByUserID(temp))
                         .build());
@@ -82,7 +81,7 @@ public class RankService {
         if (rankList.isPresent()) { // redis에 data가 존재하는 경우
              return RankDto.builder()
                             .rank(rankList.get() + 1)
-                            .user_name(userInfoRepository.findByUserId(userId).getNickname())
+                            .nickname(userInfoRepository.findByUserId(userId).getNickname())
                             .correct_count(Objects.requireNonNull(
                                     zSetOperations.score("test", Integer.toString(userId))).longValue())
                             .try_count(userInfoRepository.getTryByUserID(userId))
@@ -91,7 +90,7 @@ public class RankService {
         else{ // redis에 data가 없을 경우
             return  RankDto.builder()
                     .rank(0L)
-                    .user_name(userInfoRepository.findByUserId(userId).getNickname())
+                    .nickname(userInfoRepository.findByUserId(userId).getNickname())
                     .correct_count(0L)
                     .try_count(0L)
                     .build();

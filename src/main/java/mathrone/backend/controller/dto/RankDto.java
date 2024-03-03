@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class RankDto {
     Long rank;
     Long correct_count;
-    String user_name;
+    String nickname;
     Long try_count;
 }
