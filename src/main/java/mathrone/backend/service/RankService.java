@@ -87,7 +87,12 @@ public class RankService {
                                     .build();
         }
         else{ // redis에 data가 없을 경우
-            throw new CustomException(ErrorCode.SERVER_ERROR);
+            return  RankDto.builder()
+                    .rank(0L)
+                    .user_name(userInfoRepository.findByUserId(userId).getNickname())
+                    .correct_count(0L)
+                    .try_count(0L)
+                    .build();
         }
     }
 
