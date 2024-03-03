@@ -8,10 +8,9 @@ import java.util.Optional;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
-import mathrone.backend.controller.dto.MyRankDto;
 import mathrone.backend.controller.dto.AllRankDto;
+import mathrone.backend.controller.dto.RankDto;
 import mathrone.backend.error.exception.CustomException;
-import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -39,16 +38,19 @@ public class RankService {
      *
      * @return ArrayNode
      */
-    public List<AllRankDto> getAllRank() { // 리더보드에 필요한 rank 데이터 조회
+    public List<RankDto> getAllRank() { // 리더보드에 필요한 rank 데이터 조회
         Set<ZSetOperations.TypedTuple<String>> rankSet =
-            Optional.ofNullable(zSetOperations.reverseRangeWithScores("test", 0, -1))
+            Optional.ofNullable(zSetOperations.reverseRangeWithScores("test", 0, 9))
                 .orElse(new HashSet<>());
 
         //LinkedHashMap으로 리턴함
-        List<AllRankDto> result = new ArrayList<>();
+        List<RankDto> result = new ArrayList<>();
+        Long ranking = 0L;
         for (ZSetOperations.TypedTuple<String> str : rankSet) {
+            ranking++;
             int temp = Integer.parseInt(str.getValue());
-            result.add(AllRankDto.builder()
+            result.add(RankDto.builder()
+                        .rank(ranking)
                         .user_name(userInfoRepository.findByUserId(temp).getNickname())
                         .correct_count(Objects.requireNonNull(str.getScore()).longValue())
                         .try_count(userInfoRepository.getTryByUserID(temp))
@@ -63,7 +65,7 @@ public class RankService {
      * @param request access token 정보를 추출하기 위한 매개변수
      * @return ObjectNode
      */
-    public MyRankDto getMyRank(HttpServletRequest request) {
+    public RankDto getMyRank(HttpServletRequest request) {
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         if (!tokenProviderUtil.validateToken(accessToken, request)) {
@@ -78,11 +80,11 @@ public class RankService {
 
 
         if (rankList.isPresent()) { // redis에 data가 존재하는 경우
-             return MyRankDto.builder()
+             return RankDto.builder()
                             .rank(rankList.get() + 1)
                             .user_name(userInfoRepository.findByUserId(userId).getNickname())
                             .correct_count(Objects.requireNonNull(
-                                    zSetOperations.score("test", Integer.toString(userId))).longValue()) // 형 변환 오류 찾음
+                                    zSetOperations.score("test", Integer.toString(userId))).longValue())
                             .try_count(userInfoRepository.getTryByUserID(userId))
                                     .build();
         }

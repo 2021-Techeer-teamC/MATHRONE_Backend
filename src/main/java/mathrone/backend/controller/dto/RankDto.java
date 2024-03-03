@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-public class MyRankDto {
+public class RankDto {
     Long rank;
     Long correct_count;
     String user_name;
