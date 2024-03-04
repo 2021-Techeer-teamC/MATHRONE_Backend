@@ -19,6 +19,7 @@ import mathrone.backend.controller.dto.UserRequestDto;
 import mathrone.backend.controller.dto.UserResponseDto;
 import mathrone.backend.controller.dto.UserSignUpDto;
 import mathrone.backend.domain.UserInfo;
+import mathrone.backend.domain.UserProfile;
 import mathrone.backend.service.AuthService;
 import mathrone.backend.service.SnsLoginService;
 import org.springframework.http.HttpHeaders;
@@ -57,8 +58,7 @@ public class UserController {
 
     @GetMapping("/allUser")
     @ApiOperation(value = "모든 사용자 조회", notes = "DB에 존재하는 모든 사용자를 리스트로 반환")
-    public ResponseEntity<List<UserInfo>> allUser() {
-
+    public ResponseEntity<List<UserProfile>> allUser() {
         return ResponseEntity.ok(authService.allUser());
     }
 
