@@ -56,7 +56,7 @@ public class UserInfo {
     @OneToMany(
         mappedBy = "user",
         cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
+//    @JsonIgnore
     private List<UserWorkbookRelInfo> userWorkbookRelInfo = new LinkedList<>();
 
     @Builder
