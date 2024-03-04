@@ -33,6 +33,7 @@ public enum ErrorCode {
 
     EMAIL_ACCOUNT_IS_DUPLICATION(UNAUTHORIZED, "이미 해당 이메일 계정으로 가입이 진행되었습니다.", "K001"),
 
+
     //user profile error
     FILE_NOT_SUPPORT(UNAUTHORIZED, "지원하지 않는 파일 형식입니다.", "U008"),
 

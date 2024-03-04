@@ -19,6 +19,10 @@ import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
 import mathrone.backend.controller.dto.OauthDTO.ResponseTokenDTO;
+import mathrone.backend.controller.dto.TokenDto;
+import mathrone.backend.controller.dto.UserRequestDto;
+import mathrone.backend.controller.dto.UserResponseDto;
+import mathrone.backend.controller.dto.UserSignUpDto;
 import mathrone.backend.domain.ReactiveUserDto;
 import mathrone.backend.domain.Subscription;
 import mathrone.backend.domain.UserInfo;
@@ -28,6 +32,7 @@ import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.RefreshTokenRepository;
 import mathrone.backend.repository.SubscriptionRepository;
 import mathrone.backend.repository.UserInfoRepository;
+
 import mathrone.backend.repository.redisRepository.*;
 import mathrone.backend.repository.tokenRepository.GoogleRefreshTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
@@ -372,7 +377,7 @@ public class AuthService {
             throw new CustomException(ErrorCode.ACTIVE_USER);
         }
 
-        // this will convert any number sequence into 6 character.
+
         //메일 발송
         String code = mailService.sendCode(u.getEmail(),"계정 복구 코드");
 
