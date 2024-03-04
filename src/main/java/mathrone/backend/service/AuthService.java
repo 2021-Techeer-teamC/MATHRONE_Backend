@@ -295,12 +295,12 @@ public class AuthService {
 
         List<UserProfile> results = new ArrayList<UserProfile>();
 
-        for (UserInfo u :users) {
+        for (UserInfo u : users) {
             results.add(profileService.getProfile(Integer.toString(u.getUserId())));
         }
 
         return results;
-
+    }
 
     @Transactional
     public void deactiveUser(HttpServletRequest request) { //activate상태 (false : 회원탈퇴)
@@ -405,9 +405,6 @@ public class AuthService {
     }
 
 
-
-
-    }
 
     @Transactional
     public TokenDto login(UserRequestDto userRequestDto) {
