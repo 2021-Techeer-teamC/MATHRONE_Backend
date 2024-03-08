@@ -57,7 +57,7 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/allUser")
+    @GetMapping("/list")
     @ApiOperation(value = "모든 사용자 조회", notes = "DB에 존재하는 모든 사용자를 리스트로 반환")
     public ResponseEntity<List<UserProfile>> allUser() {
         return ResponseEntity.ok(authService.allUser());
