@@ -6,6 +6,7 @@ import static mathrone.backend.domain.enums.UserResType.MATHRONE;
 import static mathrone.backend.error.exception.ErrorCode.AlREADY_LOGOUT;
 import static mathrone.backend.error.exception.ErrorCode.INVALID_REFRESH_TOKEN;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -26,6 +27,7 @@ import mathrone.backend.controller.dto.UserSignUpDto;
 import mathrone.backend.domain.ReactiveUserDto;
 import mathrone.backend.domain.Subscription;
 import mathrone.backend.domain.UserInfo;
+import mathrone.backend.domain.UserProfile;
 import mathrone.backend.domain.token.*;
 import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.error.exception.ErrorCode;
@@ -61,7 +63,9 @@ public class AuthService {
     private final GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository;
     private final MailService mailService;
     private final SubscriptionRepository subscriptionRepository;
+    private final ProfileService profileService;
     private final ReactivateCodeRedisRepository reactivateCodeRedisRepository;
+
 
 
     @Transactional
@@ -285,6 +289,19 @@ public class AuthService {
     }
 
 
+    public List<UserProfile> allUser() {
+
+        List<UserInfo> users = userinfoRepository.findAll();
+
+        List<UserProfile> results = new ArrayList<UserProfile>();
+
+        for (UserInfo u : users) {
+            results.add(profileService.getProfile(Integer.toString(u.getUserId())));
+        }
+
+        return results;
+    }
+
     @Transactional
     public void deactiveUser(HttpServletRequest request) { //activate상태 (false : 회원탈퇴)
         String accessToken = tokenProviderUtil.resolveToken(request);
@@ -388,10 +405,6 @@ public class AuthService {
     }
 
 
-
-    public List<UserInfo> allUser() {
-        return userinfoRepository.findAll();
-    }
 
     @Transactional
     public TokenDto login(UserRequestDto userRequestDto) {

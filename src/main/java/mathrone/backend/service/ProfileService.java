@@ -104,9 +104,15 @@ public class ProfileService {
             //랭크 정보 받아오기
             ObjectNode node = getMyRank(userinfo.getUserId());
 
-            r.setRank(node.findValue("rank").toString());
-            r.setScore(node.findValue("score").toString());
-            r.setTrycnt(node.findValue("try").toString());
+            if(node == null){
+                r.setRank("null");
+                r.setScore("null");
+                r.setTrycnt("null");
+            }else{
+                r.setRank(node.findValue("rank").toString());
+                r.setScore(node.findValue("score").toString());
+                r.setTrycnt(node.findValue("try").toString());
+            }
 
         }
 
@@ -143,17 +149,26 @@ public class ProfileService {
         return new UserProfile(userinfo.getUserId(), userinfo.getNickname(),
                 userinfo.getPassword(), userinfo.getProfileImg(), userinfo.getExp(),
                 userinfo.getEmail(), userinfo.getPhoneNum(),
-                userinfo.getRole(), r, userinfo.isPremium(), s);
+                r, userinfo.isPremium(), s);
     }
 
 
     public ObjectNode getMyRank(Integer user_id) { // 리더보드에 필요한 나의 rank 조회
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
-        node.put("rank", zSetOperations.reverseRank("test", user_id.toString()) + 1);
-        node.put("score", zSetOperations.score("test", user_id.toString()));
-        node.put("try", userInfoRepository.getTryByUserID(user_id));
-        return node;
+
+        Long rank = zSetOperations.reverseRank("test", user_id.toString());
+        if(rank == null){
+
+            return null;
+
+        }else{
+            node.put("rank", zSetOperations.reverseRank("test", user_id.toString()) + 1);
+            node.put("score", zSetOperations.score("test", user_id.toString()));
+            node.put("try", userInfoRepository.getTryByUserID(user_id));
+            return node;
+        }
+
     }
 
 
