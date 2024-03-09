@@ -97,13 +97,26 @@ public class WorkBookService {
 
     // 워크북 상세 페이지에 대한 정보를 불러옴
     @Transactional
-    public BookDetailDto getWorkbookDetail(String workbookId) {
+    public BookDetailDto getWorkbookDetail(String workbookId, HttpServletRequest request) {
         Map<String, Set<ChapterDto>> arrMap = new HashMap<>(); // 그룹 별로 정리하기 위함
         Set<ChapterDto> list;
         Set<ChapterGroup> chapterGroups = new HashSet<>();
         List<Tag> tags = new ArrayList<>();
+        boolean star = false;
 
         WorkBookInfo workBookInfo = workBookRepository.findByWorkbookId(workbookId);
+
+        String accessToken = tokenProviderUtil.resolveToken(request);
+        if(accessToken != null){    // 토큰이 존재할 경우 star값 가져오기
+            UserInfo user = userInfoRepository.findById(
+                    Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName())
+            ).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+            Optional<UserWorkbookRelInfo> relInfo = userWorkbookRelRepository.findByUserAndWorkbook(user, workBookInfo);
+            if(relInfo.isPresent()){
+                star = relInfo.get().getWorkbookStar();
+            }
+        }
 
         // 각 그룹별로 챕터 정리
         if (workBookInfo.getChapterId() != null) {
@@ -153,6 +166,7 @@ public class WorkBookService {
             .type(workBookInfo.getType())
             .year(workBookInfo.getYear())
             .month(workBookInfo.getMonth())
+            .star(star)
             .chapterGroup(chapterGroups)
             .tags(tags)
             .build();

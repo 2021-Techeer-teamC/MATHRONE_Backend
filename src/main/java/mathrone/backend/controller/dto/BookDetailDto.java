@@ -23,6 +23,7 @@ public class BookDetailDto {
     private String type;
     private Short year;
     private Short month;
+    private Boolean star;
     private Set<ChapterGroup> chapterGroup;
     private List<Tag> tags;
 }
