@@ -1,7 +1,7 @@
 package mathrone.backend.service;
 
 import java.util.List;
-import mathrone.backend.controller.dto.ProblemDto;
+import mathrone.backend.controller.dto.problem.ProblemDto;
 
 interface ProblemService {
 

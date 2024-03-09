@@ -1,4 +1,4 @@
-package mathrone.backend.controller.dto;
+package mathrone.backend.controller.dto.problem;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,13 +23,16 @@ public class ProblemDto {
         this.problemImg = problem.getProblemImg();
         this.level = problem.getLevel();
         this.multiple = problem.isMultiple();
-        this.workbook = new Workbook(problem.getWorkbook().getWorkbookId(), problem.getWorkbook().getTitle());
-        this.chapter = new Chapter(problem.getChapter().getChapterId(), problem.getChapter().getName());
+        this.workbook = new Workbook(problem.getWorkbook().getWorkbookId(),
+            problem.getWorkbook().getTitle());
+        this.chapter = new Chapter(problem.getChapter().getChapterId(),
+            problem.getChapter().getName());
     }
 
     @Getter
     @AllArgsConstructor
     private static class Workbook {
+
         private String id;
         private String title;
     }
@@ -37,6 +40,7 @@ public class ProblemDto {
     @Getter
     @AllArgsConstructor
     private static class Chapter {
+
         private String id;
         private String title;
     }
