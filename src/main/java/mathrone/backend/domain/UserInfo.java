@@ -1,5 +1,6 @@
 package mathrone.backend.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sun.istack.NotNull;
 import com.vladmihalcea.hibernate.type.array.IntArrayType;
 import java.util.LinkedList;
@@ -48,7 +49,6 @@ public class UserInfo {
     @Column(name = "phone_num")
     private String phoneNum;
 
-    private String role;
 
     @Column(name = "register_type")
     private String resType;
@@ -58,13 +58,13 @@ public class UserInfo {
     @OneToMany(
         mappedBy = "user",
         cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    @JsonIgnore
     private List<UserWorkbookRelInfo> userWorkbookRelInfo = new LinkedList<>();
 
     @Builder
-    public UserInfo(String email, String password, String role, String nickname, String resType) {
+    public UserInfo(String email, String password, String nickname, String resType) {
         this.email = email;
         this.password = password;
-        this.role = role;
         this.nickname = nickname;
         this.resType = resType;
     }
