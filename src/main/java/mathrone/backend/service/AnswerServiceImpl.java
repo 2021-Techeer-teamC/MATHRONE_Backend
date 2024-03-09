@@ -68,16 +68,16 @@ public class AnswerServiceImpl implements AnswerService {
             if(problem.getMyAnswer().equals("a")) {
                 problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
                         .problemId(problem.getProblemId().substring(8))
-                        .correctAnswer(solutionProblem.getAnswer())
-                        .myAnswer(null).build());
+                        .correctAnswer(null)
+                        .myAnswer(solutionProblem.getAnswer()).build());
             }
             else {
                 isCorrect = grading(problem, solutionProblem);   // 제출한 답의 참, 거짓 여부 판별
                 upScore = saveTry(problem, user, isCorrect, upScore);   // try 기록 저장 및 스코어 계산
                 problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
                         .problemId(problem.getProblemId().substring(8))
-                        .correctAnswer(solutionProblem.getAnswer())
-                        .myAnswer(Integer.parseInt(problem.getMyAnswer())).build());
+                        .correctAnswer(Integer.parseInt(problem.getMyAnswer()))
+                        .myAnswer(solutionProblem.getAnswer()).build());
             }
         }
         rankService.setRank(userId, upScore);
@@ -115,8 +115,8 @@ public class AnswerServiceImpl implements AnswerService {
 
                 problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
                         .problemId(problem.getProblemId().substring(8))
-                        .correctAnswer(solutionProblem.getAnswer())
-                        .myAnswer(Integer.parseInt(problem.getMyAnswer())).build());
+                        .correctAnswer(Integer.parseInt(problem.getMyAnswer()))
+                        .myAnswer(solutionProblem.getAnswer()).build());
             }
         }
         rankService.setRank(userId, upScore); // redis 랭킹 점수 업데이트
