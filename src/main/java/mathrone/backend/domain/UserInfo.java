@@ -49,7 +49,6 @@ public class UserInfo {
     @Column(name = "phone_num")
     private String phoneNum;
 
-
     @Column(name = "register_type")
     private String resType;
 
@@ -75,6 +74,7 @@ public class UserInfo {
         return this;
     }
 
+
     public UserInfo updatePremium(boolean premium){
         this.premium = premium;
         return this;
@@ -94,16 +94,12 @@ public class UserInfo {
         return this;
     }
 
-
-
     //탈퇴/복구 시 유저 deactivate or active again
     public UserInfo updateActivate(Boolean activate){
         this.activate=activate;
 
         return this;
     }
-
-
     public UserInfo updateExp(int upScore){
         this.exp = this.exp + upScore;
         return this;

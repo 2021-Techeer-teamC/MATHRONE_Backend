@@ -168,9 +168,7 @@ public class ProfileService {
             node.put("try", userInfoRepository.getTryByUserID(user_id));
             return node;
         }
-
     }
-
 
     public UserFailedTriedWorkbookResponseDto getTriedProblemForGraph(HttpServletRequest request) {
         // 1. Request Header 에서 access token 빼기

@@ -54,5 +54,4 @@ public class UserProfile {
         this.premium=premium;
         this.subscription = subscription;
     }
-
 }
