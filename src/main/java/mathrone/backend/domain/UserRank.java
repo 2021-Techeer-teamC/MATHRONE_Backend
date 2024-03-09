@@ -2,6 +2,7 @@ package mathrone.backend.domain;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import reactor.util.annotation.Nullable;
 
 
 import javax.persistence.GeneratedValue;
@@ -11,6 +12,7 @@ import javax.persistence.Id;
 @NoArgsConstructor
 @Getter
 public class UserRank {
+
 
     private String rank;
     private String score;

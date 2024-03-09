@@ -38,10 +38,6 @@ public class UserWorkbookRelInfo {
     private WorkBookInfo workbook;
 
     @NotNull
-    @Builder.Default()
-    Boolean hide = false;
-
-    @NotNull
     @Column(name = "is_vote")
     @Builder.Default()
     Integer voteLevel = 0;

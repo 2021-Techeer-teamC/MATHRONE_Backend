@@ -6,8 +6,10 @@ import static mathrone.backend.domain.enums.UserResType.MATHRONE;
 import static mathrone.backend.error.exception.ErrorCode.AlREADY_LOGOUT;
 import static mathrone.backend.error.exception.ErrorCode.INVALID_REFRESH_TOKEN;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
@@ -22,12 +24,11 @@ import mathrone.backend.controller.dto.TokenDto;
 import mathrone.backend.controller.dto.UserRequestDto;
 import mathrone.backend.controller.dto.UserResponseDto;
 import mathrone.backend.controller.dto.UserSignUpDto;
+import mathrone.backend.domain.ReactiveUserDto;
 import mathrone.backend.domain.Subscription;
 import mathrone.backend.domain.UserInfo;
-import mathrone.backend.domain.token.GoogleRefreshTokenRedis;
-import mathrone.backend.domain.token.KakaoRefreshTokenRedis;
-import mathrone.backend.domain.token.LogoutAccessToken;
-import mathrone.backend.domain.token.RefreshToken;
+import mathrone.backend.domain.UserProfile;
+import mathrone.backend.domain.token.*;
 import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.RefreshTokenRepository;
@@ -35,6 +36,7 @@ import mathrone.backend.repository.SubscriptionRepository;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.repository.redisRepository.KakaoRefreshTokenRedisRepository;
 import mathrone.backend.repository.redisRepository.LogoutAccessTokenRedisRepository;
+import mathrone.backend.repository.redisRepository.ReactivateCodeRedisRepository;
 import mathrone.backend.repository.redisRepository.RefreshTokenRedisRepository;
 import mathrone.backend.repository.tokenRepository.GoogleRefreshTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
@@ -61,6 +63,9 @@ public class AuthService {
     private final GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository;
     private final MailService mailService;
     private final SubscriptionRepository subscriptionRepository;
+    private final ProfileService profileService;
+    private final ReactivateCodeRedisRepository reactivateCodeRedisRepository;
+
 
 
     @Transactional
@@ -121,8 +126,13 @@ public class AuthService {
             signupWithGoogle(googleIDToken, tmpId);
         }
 
+        //active true인 경우만 로그인 가능
         UserInfo user = userinfoRepository.findByEmailAndResType(googleIDToken.getBody().getEmail(),
             GOOGLE.getTypeName());
+
+        if(!user.isActivate()){
+            throw new CustomException(ErrorCode.DEACTIVATE_USER);
+        }
 
         //프리미엄
         if (user.isPremium()) {
@@ -199,8 +209,15 @@ public class AuthService {
             } while (userinfoRepository.existsByNickname(tmpId));//존재하지 않는 아이디일 때 까지 반복
             signupWithKakao(kakaoIDToken, tmpId); //카카오계정 으로 회원가입 진행
         }
+
         UserInfo user = userinfoRepository.findByEmailAndResType(kakaoIDToken.getBody().getEmail(),
             KAKAO.getTypeName());
+
+
+        if(!user.isActivate()){
+            throw new CustomException(ErrorCode.DEACTIVATE_USER);
+        }
+
 
         //로그인 시 프리미엄 검사
         if (user.isPremium()) {
@@ -271,9 +288,123 @@ public class AuthService {
         }
     }
 
-    public List<UserInfo> allUser() {
-        return userinfoRepository.findAll();
+
+    public List<UserProfile> allUser() {
+
+        List<UserInfo> users = userinfoRepository.findAll();
+
+        List<UserProfile> results = new ArrayList<UserProfile>();
+
+        for (UserInfo u : users) {
+            results.add(profileService.getProfile(Integer.toString(u.getUserId())));
+        }
+
+        return results;
     }
+
+    @Transactional
+    public void deactiveUser(HttpServletRequest request) { //activate상태 (false : 회원탈퇴)
+        String accessToken = tokenProviderUtil.resolveToken(request);
+
+        if (!tokenProviderUtil.validateToken(accessToken, request)) {
+            throw (CustomException) request.getAttribute("Exception");
+        }
+        int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
+
+        UserInfo user = userinfoRepository.findByUserId(userId);
+
+        //로그인 해제
+        if (user.getResType().equals(KAKAO.getTypeName())) {
+            logoutWithKakao(request);
+        }else if(user.getResType().equals(GOOGLE.getTypeName())){
+            logoutWithGoogle(request);
+        }else{
+            logout(request);
+        }
+
+        UserInfo updatedUser = user.updateActivate(false);
+
+        userinfoRepository.save(updatedUser);
+
+    }
+
+
+
+    @Transactional
+    public ReactiveUserDto getReactivateCode(UserRequestDto userRequestDto){
+
+        //입력한 아이디 비번을 검증함
+        // Login ID/PW 를 기반으로 AuthenticationToken 생성
+        UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
+
+        // 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
+        //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
+        Authentication authentication = authenticationManagerBuilder.getObject()
+                .authenticate(authenticationToken);
+        // token 생성
+        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
+                userRequestDto.getNickname());
+
+        int userId = Integer.parseInt(tokenDto.getUserInfo().getNickname());
+
+
+        UserInfo u = userinfoRepository.findByUserId(userId);
+
+
+        //탈퇴 회원 복구 진행
+        if(u.isActivate()){
+            throw new CustomException(ErrorCode.ACTIVE_USER);
+        }
+
+        //복구 코드
+        Random rnd = new Random();
+        int number = rnd.nextInt(999999);
+
+        // this will convert any number sequence into 6 character.
+        String code = String.format("%06d", number);
+
+        //메일 발송
+        mailService.sendReactivateCode(u,code);
+
+        //레디스에 담아둠
+        reactivateCodeRedisRepository.save(
+                ReactivateCodeRedis.builder()
+                .id(u.getNickname())
+                .activateCode(code)
+                .expiration(3*60L)
+                .build()
+                );
+
+
+        return ReactiveUserDto.builder()
+                .accountId(u.getNickname())
+                .activateCode(code)
+                .build();
+
+    }
+
+
+    public void reactiveUser(ReactiveUserDto reactiveUserDto){
+
+
+        String accountId = reactiveUserDto.getAccountId();
+        ReactivateCodeRedis r = reactivateCodeRedisRepository.findById(accountId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NONEXISTENT_REACTIVE_TRY));
+
+        // Reactive code 일치 및 만료여부 검사
+        if (!r.getActivateCode().equals(reactiveUserDto.getActivateCode())) {
+            throw new CustomException(ErrorCode.INVALID_REACTIVATE_CODE);
+        }
+
+        UserInfo u = userinfoRepository.findByNickname(reactiveUserDto.getAccountId())
+                .orElseThrow(()-> new CustomException(ErrorCode.ACCOUNT_NOT_EXIST));
+
+        userinfoRepository.save(u.updateActivate(true));
+
+
+    }
+
+
 
     @Transactional
     public TokenDto login(UserRequestDto userRequestDto) {
@@ -288,8 +419,14 @@ public class AuthService {
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
             userRequestDto.getNickname());
 
+
         int userId = Integer.parseInt(tokenDto.getUserInfo().getNickname());
         UserInfo u = userinfoRepository.findByUserId(userId);
+
+        if(!u.isActivate()){
+            throw new CustomException(ErrorCode.DEACTIVATE_USER);
+        }
+
         if (u.isPremium()) {
             checkPremiumUser(userId);
         }

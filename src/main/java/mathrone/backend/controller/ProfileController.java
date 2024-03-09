@@ -63,7 +63,7 @@ public class ProfileController {
 
     @PostMapping("/img")
     @ApiOperation(value = "프로필 이미지 등록")
-    public ResponseEntity changeImg(@RequestPart MultipartFile profileImg,
+    public ResponseEntity changeImg(@RequestBody MultipartFile profileImg,
             HttpServletRequest request) throws IOException {
         return profileService.changeImg(profileImg, request);
     }
