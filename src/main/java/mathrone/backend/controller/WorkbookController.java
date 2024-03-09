@@ -72,8 +72,8 @@ public class WorkbookController {
 
     @GetMapping("/{id}")
     public ResponseEntity<BookDetailDto> workbookDetail(
-        @PathVariable(value = "id") String bookId) {
-        return ResponseEntity.status(OK).body(workBookService.getWorkbookDetail(bookId));
+        @PathVariable(value = "id") String bookId, HttpServletRequest request) {
+        return ResponseEntity.status(OK).body(workBookService.getWorkbookDetail(bookId, request));
     }
 
     @GetMapping("/try")

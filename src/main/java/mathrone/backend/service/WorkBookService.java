@@ -97,13 +97,26 @@ public class WorkBookService {
 
     // 워크북 상세 페이지에 대한 정보를 불러옴
     @Transactional
-    public BookDetailDto getWorkbookDetail(String workbookId) {
+    public BookDetailDto getWorkbookDetail(String workbookId, HttpServletRequest request) {
         Map<String, Set<ChapterDto>> arrMap = new HashMap<>(); // 그룹 별로 정리하기 위함
         Set<ChapterDto> list;
         Set<ChapterGroup> chapterGroups = new HashSet<>();
         List<Tag> tags = new ArrayList<>();
+        boolean star = false;
 
         WorkBookInfo workBookInfo = workBookRepository.findByWorkbookId(workbookId);
+
+        String accessToken = tokenProviderUtil.resolveToken(request);
+        if(accessToken != null){    // 토큰이 존재할 경우 star값 가져오기
+            UserInfo user = userInfoRepository.findById(
+                    Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName())
+            ).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+            Optional<UserWorkbookRelInfo> relInfo = userWorkbookRelRepository.findByUserAndWorkbook(user, workBookInfo);
+            if(relInfo.isPresent()){
+                star = relInfo.get().getWorkbookStar();
+            }
+        }
 
         // 각 그룹별로 챕터 정리
         if (workBookInfo.getChapterId() != null) {
@@ -153,6 +166,7 @@ public class WorkBookService {
             .type(workBookInfo.getType())
             .year(workBookInfo.getYear())
             .month(workBookInfo.getMonth())
+            .star(star)
             .chapterGroup(chapterGroups)
             .tags(tags)
             .build();
@@ -379,30 +393,60 @@ public class WorkBookService {
         if (!tokenProviderUtil.validateToken(accessToken, request)) {
             throw (CustomException) request.getAttribute("Exception");
         }
+        int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
+        UserInfo user = userInfoRepository.getById(userId);
 
         Optional<WorkbookLevelInfo> isWorkbookLevelInfo = workbookLevelRepository.findByWorkbookId(
             userEvaluateLevelRequestDto.getWorkbookId());
 
-        if (isWorkbookLevelInfo.isEmpty()) {
+        Optional<WorkBookInfo> workBookInfo = workBookRepository.findById(userEvaluateLevelRequestDto.getWorkbookId());
+
+        if (workBookInfo.isEmpty() || isWorkbookLevelInfo.isEmpty()) {
             throw new CustomException(ErrorCode.NOT_FOUND_WORKBOOK);
         }
 
-        WorkbookLevelInfo workbookLevelInfo = isWorkbookLevelInfo.get();
-        int level = userEvaluateLevelRequestDto.getLevel();
+        Optional<UserWorkbookRelInfo> userWorkbookRelInfo = userWorkbookRelRepository.findByUserAndWorkbook(
+                user, workBookInfo.get());  // 유저가 문제집에 대해 평가
 
-        switch (level) {
+        WorkbookLevelInfo workbookLevelInfo = isWorkbookLevelInfo.get();
+
+        if(userWorkbookRelInfo.isPresent()){
+            UserWorkbookRelInfo userWorkbookRel = userWorkbookRelInfo.get();
+            int level = userEvaluateLevelRequestDto.getLevel(); // 사용자가 투표한 레벨
+            if(userWorkbookRel.getVoteLevel() != 0){    // 이미 투표가 되어있다면
+                if(userWorkbookRel.getVoteLevel() == level)
+                    return; // 같은 값으로 변경 요청 들어오면 return
+                updateLevelCount(userWorkbookRel.getVoteLevel(), true, workbookLevelInfo);
+                // 기존 투표 취소
+            }
+            updateLevelCount(level, false, workbookLevelInfo);  // 새롭게 투표한 결과 저장
+            userWorkbookRel.updateVote(level);  // 사용자가 어떤 레벨에 투표했는지
+        }
+    }
+
+    /**
+     * user의 Workbook 평가 요청 처리
+     *
+     * @param level  저장 혹은 취소할 레벨
+     * @param isExist 기투표 여부 (true면 취소 메서드)
+     * @param workbookLevelInfo 워크북 총 투표 결과 인스턴스
+     */
+    private void updateLevelCount(int level, boolean isExist, WorkbookLevelInfo workbookLevelInfo){
+        int temp = 1;
+        if(isExist) // 취소 매서드일 경우 -1
+            temp *= -1;
+        switch (level) { //  투표 저장 메서드
             case 1:
-                workbookLevelInfo.updateLowCount(workbookLevelInfo.getLowCnt() + 1);
+                workbookLevelInfo.updateLowCount(workbookLevelInfo.getLowCnt() + temp);
                 break;
             case 2:
-                workbookLevelInfo.updateMidCount(workbookLevelInfo.getMidCnt() + 1);
+                workbookLevelInfo.updateMidCount(workbookLevelInfo.getMidCnt() + temp);
                 break;
             case 3:
-                workbookLevelInfo.updateHighCount(workbookLevelInfo.getHighCnt() + 1);
+                workbookLevelInfo.updateHighCount(workbookLevelInfo.getHighCnt() + temp);
                 break;
             default:
                 throw new CustomException(ErrorCode.INVALID_LEVEL_VALUE);
-
         }
     }
 

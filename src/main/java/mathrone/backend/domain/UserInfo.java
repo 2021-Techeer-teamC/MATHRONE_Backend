@@ -69,11 +69,11 @@ public class UserInfo {
         this.resType = resType;
     }
 
-    //업데이트 될만한 거
     public UserInfo updateImg(String profileImg) {
         this.profileImg = profileImg;
         return this;
     }
+
 
     public UserInfo updatePremium(boolean premium){
         this.premium = premium;

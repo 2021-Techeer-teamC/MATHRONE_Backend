@@ -40,7 +40,7 @@ public class UserWorkbookRelInfo {
     @NotNull
     @Column(name = "is_vote")
     @Builder.Default()
-    Boolean isVote = false;
+    Integer voteLevel = 0;
 
     @NotNull
     @Column(name = "workbook_star")
@@ -54,6 +54,10 @@ public class UserWorkbookRelInfo {
 
     public void updateStar(boolean star) {
         this.workbookStar = star;
+    }
+
+    public void updateVote(int level){
+        this.voteLevel = level;
     }
 
 }
