@@ -26,7 +26,6 @@ public class UserSignUpDto {
             .nickname(nickname)
             .email(email)
             .password(passwordEncoder.encode(password))
-            .role("ROLE_USER")
             .resType(resType)
             .build();
     }

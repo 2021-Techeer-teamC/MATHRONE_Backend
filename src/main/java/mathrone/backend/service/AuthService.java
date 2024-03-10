@@ -6,6 +6,7 @@ import static mathrone.backend.domain.enums.UserResType.MATHRONE;
 import static mathrone.backend.error.exception.ErrorCode.AlREADY_LOGOUT;
 import static mathrone.backend.error.exception.ErrorCode.INVALID_REFRESH_TOKEN;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -26,14 +27,19 @@ import mathrone.backend.controller.dto.UserSignUpDto;
 import mathrone.backend.domain.ReactiveUserDto;
 import mathrone.backend.domain.Subscription;
 import mathrone.backend.domain.UserInfo;
+import mathrone.backend.domain.UserProfile;
+
 import mathrone.backend.domain.token.*;
 import mathrone.backend.error.exception.CustomException;
 import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.RefreshTokenRepository;
 import mathrone.backend.repository.SubscriptionRepository;
 import mathrone.backend.repository.UserInfoRepository;
-
 import mathrone.backend.repository.redisRepository.*;
+import mathrone.backend.repository.redisRepository.KakaoRefreshTokenRedisRepository;
+import mathrone.backend.repository.redisRepository.LogoutAccessTokenRedisRepository;
+import mathrone.backend.repository.redisRepository.ReactivateCodeRedisRepository;
+import mathrone.backend.repository.redisRepository.RefreshTokenRedisRepository;
 import mathrone.backend.repository.tokenRepository.GoogleRefreshTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -59,8 +65,9 @@ public class AuthService {
     private final GoogleRefreshTokenRedisRepository googleRefreshTokenRedisRepository;
     private final MailService mailService;
     private final SubscriptionRepository subscriptionRepository;
-    private final ReactivateCodeRedisRepository reactivateCodeRedisRepository;
     private final EmailVerifyCodeRedisRepository emailVerifyCodeRedisRepository;
+    private final ProfileService profileService;
+    private final ReactivateCodeRedisRepository reactivateCodeRedisRepository;
 
 
     @Transactional
@@ -323,6 +330,20 @@ public class AuthService {
     }
 
 
+    public List<UserProfile> allUser() {
+
+        List<UserInfo> users = userinfoRepository.findAll();
+
+        List<UserProfile> results = new ArrayList<UserProfile>();
+
+        for (UserInfo u : users) {
+            results.add(profileService.getProfile(Integer.toString(u.getUserId())));
+        }
+
+        return results;
+    }
+
+
     @Transactional
     public void deactiveUser(HttpServletRequest request) { //activate상태 (false : 회원탈퇴)
         String accessToken = tokenProviderUtil.resolveToken(request);
@@ -399,6 +420,70 @@ public class AuthService {
     }
 
 
+        }
+
+        UserInfo updatedUser = user.updateActivate(false);
+
+        userinfoRepository.save(updatedUser);
+
+    }
+
+
+
+    @Transactional
+    public ReactiveUserDto getReactivateCode(UserRequestDto userRequestDto){
+
+        //입력한 아이디 비번을 검증함
+        // Login ID/PW 를 기반으로 AuthenticationToken 생성
+        UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
+
+        // 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
+        //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
+        Authentication authentication = authenticationManagerBuilder.getObject()
+                .authenticate(authenticationToken);
+        // token 생성
+        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
+                userRequestDto.getNickname());
+
+        int userId = Integer.parseInt(tokenDto.getUserInfo().getNickname());
+
+
+        UserInfo u = userinfoRepository.findByUserId(userId);
+
+
+        //탈퇴 회원 복구 진행
+        if(u.isActivate()){
+            throw new CustomException(ErrorCode.ACTIVE_USER);
+        }
+
+        //복구 코드
+        Random rnd = new Random();
+        int number = rnd.nextInt(999999);
+
+        // this will convert any number sequence into 6 character.
+        String code = String.format("%06d", number);
+
+        //메일 발송
+        mailService.sendReactivateCode(u,code);
+
+        //레디스에 담아둠
+        reactivateCodeRedisRepository.save(
+                ReactivateCodeRedis.builder()
+                .id(u.getNickname())
+                .activateCode(code)
+                .expiration(3*60L)
+                .build()
+                );
+
+
+        return ReactiveUserDto.builder()
+                .accountId(u.getNickname())
+                .activateCode(code)
+                .build();
+
+    }
+
+
     public void reactiveUser(ReactiveUserDto reactiveUserDto){
 
 
@@ -421,8 +506,6 @@ public class AuthService {
 
 
 
-    public List<UserInfo> allUser() {
-        return userinfoRepository.findAll();
     }
 
 

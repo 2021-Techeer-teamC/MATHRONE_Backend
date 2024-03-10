@@ -30,6 +30,7 @@ public class MailService {
     }
 
 
+
     public String sendCode(String email, String title){
 
         Random rnd = new Random();
@@ -43,6 +44,7 @@ public class MailService {
         return String.format("%06d", code);
     }
 
+  
     private void sendMail(UserInfo user, String subject, String content) {
         String to = user.getEmail();
 

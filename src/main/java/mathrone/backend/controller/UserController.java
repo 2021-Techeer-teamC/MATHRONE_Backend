@@ -7,6 +7,7 @@ import java.net.URI;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+
 import mathrone.backend.controller.dto.*;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
@@ -20,6 +21,7 @@ import mathrone.backend.controller.dto.UserResponseDto;
 import mathrone.backend.controller.dto.UserSignUpDto;
 import mathrone.backend.domain.ReactiveUserDto;
 import mathrone.backend.domain.UserInfo;
+import mathrone.backend.domain.UserProfile;
 import mathrone.backend.service.AuthService;
 import mathrone.backend.service.SnsLoginService;
 import org.springframework.http.HttpHeaders;
@@ -35,6 +37,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PatchMapping;
+import mathrone.backend.controller.dto.ChangePasswordDto;
+import mathrone.backend.controller.dto.FindDto;
 
 import javax.validation.Valid;
 
@@ -55,9 +59,9 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/allUser")
+    @GetMapping("/list")
     @ApiOperation(value = "모든 사용자 조회", notes = "DB에 존재하는 모든 사용자를 리스트로 반환")
-    public ResponseEntity<List<UserInfo>> allUser() {
+    public ResponseEntity<List<UserProfile>> allUser() {
         return ResponseEntity.ok(authService.allUser());
     }
 
@@ -180,8 +184,10 @@ public class UserController {
         throws Exception {
         ResponseEntity<KakaoTokenResponseDTO> res = snsLoginService.getKakaoToken(
             requestCodeDto.getCode());
+        System.out.println("done1" + res.getBody().getId_token());
         ResponseEntity<KakaoIDToken> idInfo = snsLoginService.decodeIdToken(
             res.getBody().getId_token());
+        System.out.println("done2");
 
         return ResponseEntity.ok(authService.kakaoLogin(res, idInfo));
     }
