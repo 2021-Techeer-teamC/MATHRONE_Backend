@@ -38,7 +38,7 @@ public class UserWorkbookRelInfo {
     private WorkBookInfo workbook;
 
     @NotNull
-    @Column(name = "is_vote")
+    @Column(name = "voteLevel")
     @Builder.Default()
     Integer voteLevel = 0;
 
