@@ -6,6 +6,7 @@ import static mathrone.backend.domain.enums.UserResType.MATHRONE;
 import static mathrone.backend.error.exception.ErrorCode.AlREADY_LOGOUT;
 import static mathrone.backend.error.exception.ErrorCode.INVALID_REFRESH_TOKEN;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -72,6 +73,7 @@ public class AuthService {
 
     @Transactional
     public UserResponseDto signup(UserSignUpDto userSignUpDto) {
+
         // user nickname 존재하는지 검사
         validateUserAccountId(userSignUpDto.getNickname());
 
@@ -83,6 +85,9 @@ public class AuthService {
             throw new CustomException(ErrorCode.INVALID_REACTIVATE_CODE);
         }
 
+        if(userinfoRepository.existsByEmail(userSignUpDto.getEmail())){
+            throw new CustomException(ErrorCode.EMAIL_ACCOUNT_IS_DUPLICATION);
+        }
 
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder,
                 MATHRONE.getTypeName()); //MATHRONE user로 가입시켜주기
@@ -373,7 +378,7 @@ public class AuthService {
 
 
     @Transactional
-    public ReactiveUserDto getReactivateCode(UserRequestDto userRequestDto){
+    public ReactiveUserDto getReactivateCode(UserRequestDto userRequestDto) {
 
         //입력한 아이디 비번을 검증함
         // Login ID/PW 를 기반으로 AuthenticationToken 생성
@@ -394,22 +399,22 @@ public class AuthService {
 
 
         //탈퇴 회원 복구 진행
-        if(u.isActivate()){
+        if (u.isActivate()) {
             throw new CustomException(ErrorCode.ACTIVE_USER);
         }
 
 
         //메일 발송
-        String code = mailService.sendCode(u.getEmail(),"계정 복구 코드");
+        String code = mailService.sendCode(u.getEmail(), "계정 복구 코드");
 
         //레디스에 담아둠
         reactivateCodeRedisRepository.save(
                 ReactivateCodeRedis.builder()
-                .id(u.getNickname())
-                .activateCode(code)
-                .expiration(3*60L)
-                .build()
-                );
+                        .id(u.getNickname())
+                        .activateCode(code)
+                        .expiration(3 * 60L)
+                        .build()
+        );
 
 
         return ReactiveUserDto.builder()
@@ -417,71 +422,70 @@ public class AuthService {
                 .activateCode(code)
                 .build();
 
-    }
-
-
         }
-
-        UserInfo updatedUser = user.updateActivate(false);
-
-        userinfoRepository.save(updatedUser);
-
-    }
-
-
-
-    @Transactional
-    public ReactiveUserDto getReactivateCode(UserRequestDto userRequestDto){
-
-        //입력한 아이디 비번을 검증함
-        // Login ID/PW 를 기반으로 AuthenticationToken 생성
-        UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
-
-        // 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
-        //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
-        Authentication authentication = authenticationManagerBuilder.getObject()
-                .authenticate(authenticationToken);
-        // token 생성
-        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
-                userRequestDto.getNickname());
-
-        int userId = Integer.parseInt(tokenDto.getUserInfo().getNickname());
+//
+//        }
+//
+//        UserInfo updatedUser = user.updateActivate(false);
+//
+//        userinfoRepository.save(updatedUser);
+//
+//    }
 
 
-        UserInfo u = userinfoRepository.findByUserId(userId);
 
-
-        //탈퇴 회원 복구 진행
-        if(u.isActivate()){
-            throw new CustomException(ErrorCode.ACTIVE_USER);
-        }
-
-        //복구 코드
-        Random rnd = new Random();
-        int number = rnd.nextInt(999999);
-
-        // this will convert any number sequence into 6 character.
-        String code = String.format("%06d", number);
-
-        //메일 발송
-        mailService.sendReactivateCode(u,code);
-
-        //레디스에 담아둠
-        reactivateCodeRedisRepository.save(
-                ReactivateCodeRedis.builder()
-                .id(u.getNickname())
-                .activateCode(code)
-                .expiration(3*60L)
-                .build()
-                );
-
-
-        return ReactiveUserDto.builder()
-                .accountId(u.getNickname())
-                .activateCode(code)
-                .build();
-
-    }
+//    @Transactional
+//    public ReactiveUserDto getReactivateCode(UserRequestDto userRequestDto){
+//
+//        //입력한 아이디 비번을 검증함
+//        // Login ID/PW 를 기반으로 AuthenticationToken 생성
+//        UsernamePasswordAuthenticationToken authenticationToken = userRequestDto.of();
+//
+//        // 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
+//        //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
+//        Authentication authentication = authenticationManagerBuilder.getObject()
+//                .authenticate(authenticationToken);
+//        // token 생성
+//        TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
+//                userRequestDto.getNickname());
+//
+//        int userId = Integer.parseInt(tokenDto.getUserInfo().getNickname());
+//
+//
+//        UserInfo u = userinfoRepository.findByUserId(userId);
+//
+//
+//        //탈퇴 회원 복구 진행
+//        if(u.isActivate()){
+//            throw new CustomException(ErrorCode.ACTIVE_USER);
+//        }
+//
+//        //복구 코드
+//        Random rnd = new Random();
+//        int number = rnd.nextInt(999999);
+//
+//        // this will convert any number sequence into 6 character.
+//        String code = String.format("%06d", number);
+//
+//        //메일 발송
+//        mailService.sendCode(u.getEmail(),code);
+//
+//        //레디스에 담아둠
+//        reactivateCodeRedisRepository.save(
+//                ReactivateCodeRedis.builder()
+//                .id(u.getNickname())
+//                .activateCode(code)
+//                .expiration(3*60L)
+//                .build()
+//                );
+//
+//
+//        return ReactiveUserDto.builder()
+//                .accountId(u.getNickname())
+//                .activateCode(code)
+//                .build();
+//
+//    }
 
 
     public void reactiveUser(ReactiveUserDto reactiveUserDto){
@@ -500,9 +504,6 @@ public class AuthService {
                 .orElseThrow(()-> new CustomException(ErrorCode.ACCOUNT_NOT_EXIST));
 
         userinfoRepository.save(u.updateActivate(true));
-
-
-    }
 
 
 
@@ -852,4 +853,7 @@ public class AuthService {
         }
 
     }
+
+
+
 }
