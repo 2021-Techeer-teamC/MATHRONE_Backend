@@ -28,6 +28,8 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Integer> {
 
     boolean existsByEmailAndResType(String email, String resType);
 
+    boolean existsByEmail(String email);
+
     boolean existsByUserId(int userId);
 
     boolean existsByNickname(String nickname);

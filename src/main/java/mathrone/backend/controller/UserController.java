@@ -7,7 +7,8 @@ import java.net.URI;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import mathrone.backend.controller.dto.ChangeAccountIdDto;
+
+import mathrone.backend.controller.dto.*;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoOAuthLoginUtils;
@@ -38,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PatchMapping;
 import mathrone.backend.controller.dto.ChangePasswordDto;
 import mathrone.backend.controller.dto.FindDto;
+
 import javax.validation.Valid;
 
 
@@ -67,6 +69,12 @@ public class UserController {
     @ApiOperation(value = "Mathrone 로그인", notes = "id와 password를 받아 로그인 수행")
     public ResponseEntity<TokenDto> login(@RequestBody UserRequestDto userRequestDto) {
         return ResponseEntity.ok(authService.login(userRequestDto));
+    }
+
+    @PostMapping(value = "/email-verify")
+    @ApiOperation(value = "이메일 인증 ", notes = "이메일 인증기능")
+    public ResponseEntity<EmailVerifyDto> emailVerify(@RequestBody EmailVerifyRequest emailVerifyRequest) {
+        return ResponseEntity.ok(authService.emailVerify(emailVerifyRequest));
     }
 
     @PostMapping(value = "/logout", headers = {"Content-type=application/json"})
@@ -174,10 +182,6 @@ public class UserController {
     @ApiOperation(value = "카카오 로그인", notes = "카카오 계정으로 회원가입이 되어있지 않은 경우, 회원가입도 같이 진행")
     public ResponseEntity<TokenDto> moveKakaoInitUrl(@RequestBody RequestCodeDTO requestCodeDto)
         throws Exception {
-
-
-        System.out.println("call outh/callback/kakao");
-        System.out.println(requestCodeDto.getCode());
         ResponseEntity<KakaoTokenResponseDTO> res = snsLoginService.getKakaoToken(
             requestCodeDto.getCode());
         System.out.println("done1" + res.getBody().getId_token());

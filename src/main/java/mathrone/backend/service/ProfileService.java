@@ -157,6 +157,7 @@ public class ProfileService {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
 
+
         Long rank = zSetOperations.reverseRank("test", user_id.toString());
         if(rank == null){
 
@@ -170,6 +171,7 @@ public class ProfileService {
         }
 
     }
+
 
 
     public UserFailedTriedWorkbookResponseDto getTriedProblemForGraph(HttpServletRequest request) {
