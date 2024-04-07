@@ -15,7 +15,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.ChangePasswordDto;
-import mathrone.backend.controller.dto.FindDto;
+import mathrone.backend.controller.dto.FindNicknameDto;
+import mathrone.backend.controller.dto.FindPwDto;
 import mathrone.backend.controller.dto.OauthDTO.GoogleIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoIDToken;
 import mathrone.backend.controller.dto.OauthDTO.Kakao.KakaoTokenResponseDTO;
@@ -692,7 +693,7 @@ public class AuthService {
     }
 
     // 아이디 찾기, 아이디 찾아서 이메일 발송
-    public void findId(FindDto request) {
+    public void findId(FindNicknameDto request) {
         UserInfo user = userinfoRepository.findByEmail(request.getEmail())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         mailService.sendId(user);
@@ -700,7 +701,7 @@ public class AuthService {
 
     // 비밀번호 찾기, 임시 비밀번호 발급 후 이메일 발송
     @Transactional
-    public void findPw(FindDto request) {
+    public void findPw(FindPwDto request) {
         String newPassword = UUID.randomUUID().toString().substring(0, 10);
         UserInfo user = userinfoRepository.findByEmailAndNickname(request.getEmail(),
             request.getNickname()).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));

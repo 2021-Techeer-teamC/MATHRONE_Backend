@@ -5,7 +5,7 @@ import javax.validation.constraints.NotBlank;
 import lombok.Getter;
 
 @Getter
-public class FindDto {
+public class FindPwDto {
 
     @Email @NotBlank
     String email;
