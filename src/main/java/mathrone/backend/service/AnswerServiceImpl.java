@@ -35,8 +35,8 @@ public class AnswerServiceImpl implements AnswerService {
     private final RankService rankService;
 
     public List<ProblemGradeResponseDto> gradeProblem(
-        ProblemGradeRequestDto problemGradeRequestDtoList, HttpServletRequest request){
-            if(problemGradeRequestDtoList.getIsAll()) // 전체 채점일 경우
+        boolean checkAll, ProblemGradeRequestDto problemGradeRequestDtoList, HttpServletRequest request){
+            if(checkAll) // 전체 채점일 경우
                 return gradeProblemAll(problemGradeRequestDtoList, request);
             else
                 return gradeSolvedProblem(problemGradeRequestDtoList, request);
@@ -57,8 +57,8 @@ public class AnswerServiceImpl implements AnswerService {
             tokenProviderUtil.getAuthentication(accessToken).getName());
 
 
-        List<ProblemGradeResponseDto> problemGradeResponseDtoList = new ArrayList<>();
-        List<ProblemGradeRequestDto.problemSolve> list = problemGradeRequestDtoList.getAnswerSubmitList();
+        List<ProblemGradeResponseDto> problemGradeResponseDtoList = new ArrayList<>();  // return할 data
+        List<ProblemGradeRequestDto.problemSolve> list = problemGradeRequestDtoList.getAnswerSubmitList();  // 사용자가 제출한 문제의 답
         UserInfo user = userInfoRepository.findByUserId(userId);
 
         for (ProblemGradeRequestDto.problemSolve problem : list) {
@@ -115,8 +115,8 @@ public class AnswerServiceImpl implements AnswerService {
 
                 problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
                         .problemId(problem.getProblemId().substring(8))
-                        .correctAnswer(Integer.parseInt(problem.getMyAnswer()))
-                        .myAnswer(solutionProblem.getAnswer()).build());
+                        .correctAnswer(solutionProblem.getAnswer())
+                        .myAnswer(Integer.parseInt(problem.getMyAnswer())).build());
             }
         }
         rankService.setRank(userId, upScore); // redis 랭킹 점수 업데이트

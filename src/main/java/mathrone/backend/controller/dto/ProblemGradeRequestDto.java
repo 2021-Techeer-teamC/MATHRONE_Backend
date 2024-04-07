@@ -9,10 +9,8 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Setter
 public class ProblemGradeRequestDto {
     private List<problemSolve> answerSubmitList;
-    private Boolean isAll;
 
     @Getter
     public static class problemSolve{
