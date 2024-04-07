@@ -92,10 +92,10 @@ public class UserController {
     }
 
 
-    @GetMapping(value = "/check/accountId", headers = {"Content-type=application/json"})
+    @GetMapping(value = "/check/nickname", headers = {"Content-type=application/json"})
     @ApiOperation(value = "유저의 id 검증", notes = "회원가입 시 아이디 중복 확인")
-    public ResponseEntity<Void> validateUserAccountId(@RequestParam String userAccountId) {
-        authService.validateUserAccountId(userAccountId);
+    public ResponseEntity<Void> validateUserAccountId(@RequestParam String nickname) {
+        authService.validateUserAccountId(nickname);
         return ResponseEntity.ok().build();
     }
 
