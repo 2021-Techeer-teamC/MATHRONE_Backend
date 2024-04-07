@@ -115,8 +115,8 @@ public class AnswerServiceImpl implements AnswerService {
 
                 problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
                         .problemId(problem.getProblemId().substring(8))
-                        .correctAnswer(Integer.parseInt(problem.getMyAnswer()))
-                        .myAnswer(solutionProblem.getAnswer()).build());
+                        .correctAnswer(solutionProblem.getAnswer())
+                        .myAnswer(Integer.parseInt(problem.getMyAnswer())).build());
             }
         }
         rankService.setRank(userId, upScore); // redis 랭킹 점수 업데이트
