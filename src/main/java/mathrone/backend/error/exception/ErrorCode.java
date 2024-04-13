@@ -34,8 +34,6 @@ public enum ErrorCode {
     //user profile error
     FILE_NOT_SUPPORT(UNAUTHORIZED, "지원하지 않는 파일 형식입니다.", "U008"),
 
-    //user profile error
-    FILE_NOT_SUPPORT(UNAUTHORIZED, "지원하지 않는 파일 형식입니다.", "U008"),
 
     // problem try
     EMPTY_FAILED_PROBLEM(NOT_FOUND, "유저가 시도한 문제 중, 틀린 문제가 존재하지 않습니다", "P001"),

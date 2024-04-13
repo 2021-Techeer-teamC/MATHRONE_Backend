@@ -44,7 +44,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         "/profile/**",
         "/actuator/**",
         "/metrics/**",
-        "/chapter/**"
+        "/chapter/**",
         "/chapter/**"
     };
 
