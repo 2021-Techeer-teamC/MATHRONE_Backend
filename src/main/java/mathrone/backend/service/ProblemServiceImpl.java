@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import mathrone.backend.controller.dto.ProblemDto;
+import mathrone.backend.controller.dto.problem.ProblemDto;
 import mathrone.backend.domain.ChapterInfo;
 import mathrone.backend.domain.Problem;
 import mathrone.backend.domain.UserInfo;
@@ -64,24 +64,38 @@ public class ProblemServiceImpl implements ProblemService {
             Collectors.toList());
     }
 
+    /**
+     * 요청에 따라 유저가 시도한 문제 or 모든 유저 중 많이 시도한 문제 반환
+     *
+     * @param request
+     * @param onlyIncorrect true => 유저가 시도한 문제 중, 정답인 문제 반환 /  false => 유저가 시도한 모든 문제 반환
+     * @return List<ProblemDto>
+     */
     public List<ProblemDto> getTryProblem(HttpServletRequest request, Boolean onlyIncorrect) {
         String accessToken = tokenProviderUtil.resolveToken(request);
 
         if (accessToken == null) {
-            throw new CustomException(ErrorCode.AUTHENTICATION_ERROR);
-        }
-
-        UserInfo user = userInfoRepository.findById(
-            Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName())
-        ).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        if (!onlyIncorrect) {
-            return problemTryRepository.findAllByUserOrderByProblem(user).stream().map(
-                a -> new ProblemDto(a.getProblem())).collect(Collectors.toList());
+            if (onlyIncorrect) {
+                return problemRepository.findAllByProblemByUserTriedCorrect(onlyIncorrect).stream()
+                    .map(
+                        ProblemDto::new).collect(Collectors.toList());
+            } else {
+                return problemRepository.findAllByProblemByUserTried().stream().map(
+                    ProblemDto::new).collect(Collectors.toList());
+            }
         } else {
-            return problemTryRepository.findAllByUserAndIscorrectOrderByProblem(user, false)
-                .stream().map(
+            UserInfo user = userInfoRepository.findById(
+                Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName())
+            ).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+            if (!onlyIncorrect) {
+                return problemTryRepository.findAllByUserOrderByProblem(user).stream().map(
                     a -> new ProblemDto(a.getProblem())).collect(Collectors.toList());
+            } else {
+                return problemTryRepository.findAllByUserAndIscorrectOrderByProblem(user, false)
+                    .stream().map(
+                        a -> new ProblemDto(a.getProblem())).collect(Collectors.toList());
+            }
         }
     }
 }

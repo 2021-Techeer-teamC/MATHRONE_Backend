@@ -1,4 +1,4 @@
-package mathrone.backend.controller.dto;
+package mathrone.backend.controller.dto.problem;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
