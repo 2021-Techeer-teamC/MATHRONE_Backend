@@ -42,6 +42,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         "/oauth/**",
         "/subscribe/**",
         "/profile/**",
+        "/actuator/**",
+        "/metrics/**",
+        "/chapter/**"
         "/chapter/**"
     };
 

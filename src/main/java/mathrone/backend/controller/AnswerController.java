@@ -10,6 +10,7 @@ import mathrone.backend.service.AnswerServiceImpl;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -22,9 +23,10 @@ public class AnswerController {
     @PostMapping("")
     @ApiOperation(value = "문제 체점 api", notes = "사용자가 푼 문제 리스트를 받아 채점 및 정답여부를 반환")
     public List<ProblemGradeResponseDto> problemGrade(
+        @RequestParam boolean checkAll,
         @RequestBody ProblemGradeRequestDto problemGradeRequestDtoList,
         HttpServletRequest request) {
-        return answerService.gradeProblem(problemGradeRequestDtoList, request);
+        return answerService.gradeProblem(checkAll, problemGradeRequestDtoList, request);
     }
 
 }

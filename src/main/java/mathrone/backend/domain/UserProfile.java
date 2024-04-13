@@ -35,8 +35,6 @@ public class UserProfile {
 
     private String phoneNum;
 
-    private String role;
-
     private UserRank rankInfo;
 
     private boolean Premium;
@@ -44,7 +42,7 @@ public class UserProfile {
     private SubscriptionInfo subscription;
 
 
-    public UserProfile(int userId, String nickname, String password, String profileImg, int exp, String email, String phoneNum, String role, UserRank rankInfo, boolean premium ,SubscriptionInfo subscription) {
+    public UserProfile(int userId, String nickname, String password, String profileImg, int exp, String email, String phoneNum, UserRank rankInfo, boolean premium ,SubscriptionInfo subscription) {
         this.userId = userId;
         this.nickname = nickname;
         this.password = password;
@@ -52,10 +50,8 @@ public class UserProfile {
         this.exp = exp;
         this.email = email;
         this.phoneNum = phoneNum;
-        this.role = role;
         this.rankInfo = rankInfo;
         this.premium=premium;
         this.subscription = subscription;
     }
-
 }

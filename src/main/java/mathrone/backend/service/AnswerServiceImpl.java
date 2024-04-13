@@ -34,14 +34,12 @@ public class AnswerServiceImpl implements AnswerService {
     private final RankService rankService;
 
     public List<ProblemGradeResponseDto> gradeProblem(
-        ProblemGradeRequestDto problemGradeRequestDtoList, HttpServletRequest request) {
-        if (problemGradeRequestDtoList.getIsAll()) // 전체 채점일 경우
-        {
-            return gradeProblemAll(problemGradeRequestDtoList, request);
-        } else {
-            return gradeSolvedProblem(problemGradeRequestDtoList, request);
+        boolean checkAll, ProblemGradeRequestDto problemGradeRequestDtoList, HttpServletRequest request){
+            if(checkAll) // 전체 채점일 경우
+                return gradeProblemAll(problemGradeRequestDtoList, request);
+            else
+                return gradeSolvedProblem(problemGradeRequestDtoList, request);
         }
-    }
 
 
     public List<ProblemGradeResponseDto> gradeProblemAll( // 전체 채점 진행
@@ -57,8 +55,9 @@ public class AnswerServiceImpl implements AnswerService {
         Integer userId = Integer.parseInt(
             tokenProviderUtil.getAuthentication(accessToken).getName());
 
-        List<ProblemGradeResponseDto> problemGradeResponseDtoList = new ArrayList<>();
-        List<ProblemGradeRequestDto.problemSolve> list = problemGradeRequestDtoList.getAnswerSubmitList();
+
+        List<ProblemGradeResponseDto> problemGradeResponseDtoList = new ArrayList<>();  // return할 data
+        List<ProblemGradeRequestDto.problemSolve> list = problemGradeRequestDtoList.getAnswerSubmitList();  // 사용자가 제출한 문제의 답
         UserInfo user = userInfoRepository.findByUserId(userId);
 
         for (ProblemGradeRequestDto.problemSolve problem : list) {
@@ -105,16 +104,17 @@ public class AnswerServiceImpl implements AnswerService {
             boolean isCorrect = false;
             if (problem.getMyAnswer().equals("a")) { // 답이 'a'인거 -> 풀지 않는 문제로 채점하지 않음
                 continue;
-            } else {
+            }
+            else {
                 Solution solutionProblem = solutionRepository.findSolutionByProblemId(
-                    problem.getProblemId());    // 실제 문제 답안 조회
+                        problem.getProblemId());    // 실제 문제 답안 조회
                 isCorrect = grading(problem, solutionProblem);   // 제출한 답의 참, 거짓 여부 판별
                 upScore = saveTry(problem, user, isCorrect, upScore);   // try 기록 저장 및 스코어 계산
 
                 problemGradeResponseDtoList.add(ProblemGradeResponseDto.builder()
-                    .problemId(problem.getProblemId().substring(8))
-                    .correctAnswer(Integer.parseInt(problem.getMyAnswer()))
-                    .myAnswer(solutionProblem.getAnswer()).build());
+                        .problemId(problem.getProblemId().substring(8))
+                        .correctAnswer(solutionProblem.getAnswer())
+                        .myAnswer(Integer.parseInt(problem.getMyAnswer())).build());
             }
         }
         rankService.setRank(userId, upScore); // redis 랭킹 점수 업데이트
@@ -122,12 +122,12 @@ public class AnswerServiceImpl implements AnswerService {
     }
 
     @Transactional
-    public boolean grading(ProblemGradeRequestDto.problemSolve problem, Solution solutionProblem) {
+    public boolean grading(ProblemGradeRequestDto.problemSolve problem, Solution solutionProblem){
         if (solutionProblem.getAnswer() == Integer.parseInt(problem.getMyAnswer())) {
             return true;    // 답이 맞을 경우 참 반환
-        } else {
-            return false;   // 답이 틀릴 경우 거짓 반환
         }
+        else
+            return false;   // 답이 틀릴 경우 거짓 반환
     }
 
     @Transactional

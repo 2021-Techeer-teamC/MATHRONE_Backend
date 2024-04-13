@@ -1,5 +1,6 @@
 package mathrone.backend.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sun.istack.NotNull;
 import com.vladmihalcea.hibernate.type.array.IntArrayType;
 import java.util.LinkedList;
@@ -48,21 +49,21 @@ public class UserInfo {
     @Column(name = "phone_num")
     private String phoneNum;
 
-    private String role;
-
     @Column(name = "register_type")
     private String resType;
+
+    private boolean activate = true;
 
     @OneToMany(
         mappedBy = "user",
         cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    @JsonIgnore
     private List<UserWorkbookRelInfo> userWorkbookRelInfo = new LinkedList<>();
 
     @Builder
-    public UserInfo(String email, String password, String role, String nickname, String resType) {
+    public UserInfo(String email, String password, String nickname, String resType) {
         this.email = email;
         this.password = password;
-        this.role = role;
         this.nickname = nickname;
         this.resType = resType;
     }
@@ -72,6 +73,7 @@ public class UserInfo {
         this.profileImg = profileImg;
         return this;
     }
+
 
     public UserInfo updatePremium(boolean premium){
         this.premium = premium;
@@ -92,7 +94,12 @@ public class UserInfo {
         return this;
     }
 
+    //탈퇴/복구 시 유저 deactivate or active again
+    public UserInfo updateActivate(Boolean activate){
+        this.activate=activate;
 
+        return this;
+    }
     public UserInfo updateExp(int upScore){
         this.exp = this.exp + upScore;
         return this;
