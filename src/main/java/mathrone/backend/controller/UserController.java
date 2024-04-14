@@ -73,8 +73,9 @@ public class UserController {
 
     @PostMapping(value = "/email-verify")
     @ApiOperation(value = "이메일 인증 ", notes = "이메일 인증기능")
-    public ResponseEntity<EmailVerifyDto> emailVerify(@RequestBody EmailVerifyRequest emailVerifyRequest) {
-        return ResponseEntity.ok(authService.emailVerify(emailVerifyRequest));
+    public ResponseEntity emailVerify(@RequestBody EmailVerifyRequest emailVerifyRequest) {
+        authService.emailVerify(emailVerifyRequest);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/logout", headers = {"Content-type=application/json"})
@@ -184,10 +185,10 @@ public class UserController {
         throws Exception {
         ResponseEntity<KakaoTokenResponseDTO> res = snsLoginService.getKakaoToken(
             requestCodeDto.getCode());
-        System.out.println("done1" + res.getBody().getId_token());
+        //System.out.println("done1" + res.getBody().getId_token());
         ResponseEntity<KakaoIDToken> idInfo = snsLoginService.decodeIdToken(
             res.getBody().getId_token());
-        System.out.println("done2");
+        //System.out.println("done2");
 
         return ResponseEntity.ok(authService.kakaoLogin(res, idInfo));
     }
