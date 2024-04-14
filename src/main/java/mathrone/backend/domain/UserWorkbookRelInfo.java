@@ -38,7 +38,6 @@ public class UserWorkbookRelInfo {
     private WorkBookInfo workbook;
 
     @NotNull
-    @Column(name = "voteLevel")
     @Builder.Default()
     Boolean hide = false;
 

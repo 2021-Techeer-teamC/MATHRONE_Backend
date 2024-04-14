@@ -157,7 +157,6 @@ public class WorkBookService {
         }
 
         LevelInfoDto levelInfo;
-        String accessToken = tokenProviderUtil.resolveToken(request);
         Optional <WorkbookLevelInfo> workbookLevelInfo = workbookLevelRepository.findByWorkbookId(workbookId);
 
         if(accessToken != null) {   // access 토큰이 있다면 사용자 투표 결과도 return
@@ -165,7 +164,11 @@ public class WorkBookService {
             UserInfo user = userInfoRepository.findByUserId(Integer.parseInt(userId));
             Optional<UserWorkbookRelInfo> userWorkbookRelInfo =
                     userWorkbookRelRepository.findByUserAndWorkbook(user, workBookInfo);
-            levelInfo = new LevelInfoDto(workbookLevelInfo.get().mostVotedLevel(), userWorkbookRelInfo.get().getVoteLevel()); // 사용자가 투표한 레벨
+            if(userWorkbookRelInfo.isPresent()) // 평가를 진행했을 경우
+                levelInfo = new LevelInfoDto(workbookLevelInfo.get().mostVotedLevel(), userWorkbookRelInfo.get().getVoteLevel()); // 사용자가 투표한 레벨
+            else    // 사용자가 평가한 기록이 없을 경우
+                levelInfo = new LevelInfoDto(workbookLevelInfo.get().mostVotedLevel(), 0);
+
         }
         else    // access 토큰이 없는 경우 최다 투표만 return
             levelInfo = new LevelInfoDto(workbookLevelInfo.get().mostVotedLevel());
