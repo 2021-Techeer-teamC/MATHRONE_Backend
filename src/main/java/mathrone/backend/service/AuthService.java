@@ -96,7 +96,7 @@ public class AuthService {
     }
 
 
-    public EmailVerifyDto emailVerify(EmailVerifyRequest emailVerifyRequest){
+    public void emailVerify(EmailVerifyRequest emailVerifyRequest){
         // user account ID가 존재하는지 검사
         validateUserAccountId(emailVerifyRequest.getAccountId());
 
@@ -115,11 +115,6 @@ public class AuthService {
                         .expiration(3*60L)
                         .build()
         );
-
-        return EmailVerifyDto.builder()
-                .accountId(emailVerifyRequest.getAccountId())
-                .code(code)
-                .build();
 
     }
 
