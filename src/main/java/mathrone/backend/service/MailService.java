@@ -35,16 +35,16 @@ public class MailService {
 
         Random rnd = new Random();
         int code = rnd.nextInt(999999);
-
-        String content = "코드 : " + code;
+        String sCode = String.format("%06d", code);
+        String content = "코드 : " + sCode;
 
 
         sendMailWithEmail(email, title, content);
 
-        return String.format("%06d", code);
+        return sCode;
     }
 
-  
+
     private void sendMail(UserInfo user, String subject, String content) {
         String to = user.getEmail();
 
