@@ -4,7 +4,7 @@ import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import mathrone.backend.controller.dto.ProblemDto;
+import mathrone.backend.controller.dto.problem.ProblemDto;
 import mathrone.backend.service.ProblemServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

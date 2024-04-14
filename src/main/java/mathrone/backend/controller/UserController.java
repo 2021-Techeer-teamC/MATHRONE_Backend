@@ -243,7 +243,6 @@ public class UserController {
         authService.changePw(request, newPassword);
     }
 
-
     @PatchMapping("/deactivate")
     @ApiOperation(value = "회원 탈퇴", notes = "해당 유저의 activate상태를 비활성하고 토큰을 뺐음 ")
     public void deactivateUser(HttpServletRequest request) {
@@ -266,7 +265,4 @@ public class UserController {
     ) {
         authService.reactiveUser(reactiveUserDto);
     }
-
-
-
 }

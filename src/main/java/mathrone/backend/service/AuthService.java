@@ -518,8 +518,7 @@ public class AuthService {
         // token 생성
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
             userRequestDto.getNickname());
-
-
+      
         int userId = Integer.parseInt(tokenDto.getUserInfo().getNickname());
         UserInfo u = userinfoRepository.findByUserId(userId);
 

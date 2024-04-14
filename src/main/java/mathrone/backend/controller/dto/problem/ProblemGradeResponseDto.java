@@ -1,6 +1,5 @@
-package mathrone.backend.controller.dto;
+package mathrone.backend.controller.dto.problem;
 
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,6 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ProblemGradeResponseDto {
+
     private String problemId;
     private Integer correctAnswer;
     private Integer myAnswer;
