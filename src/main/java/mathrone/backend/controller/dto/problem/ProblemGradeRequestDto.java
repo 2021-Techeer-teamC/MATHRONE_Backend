@@ -1,4 +1,4 @@
-package mathrone.backend.controller.dto;
+package mathrone.backend.controller.dto.problem;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -9,13 +9,13 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Setter
 public class ProblemGradeRequestDto {
+
     private List<problemSolve> answerSubmitList;
-    private Boolean isAll;
 
     @Getter
-    public static class problemSolve{
+    public static class problemSolve {
+
         private String problemId;
         private String myAnswer;
     }

@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import mathrone.backend.controller.dto.RankDto;
 import mathrone.backend.error.exception.CustomException;
+import mathrone.backend.error.exception.ErrorCode;
 import mathrone.backend.repository.UserInfoRepository;
 import mathrone.backend.util.TokenProviderUtil;
 import org.springframework.data.redis.core.RedisTemplate;
