@@ -98,12 +98,12 @@ public class AuthService {
 
     public void emailVerify(EmailVerifyRequest emailVerifyRequest){
         // user account ID가 존재하는지 검사
-        validateUserAccountId(emailVerifyRequest.getAccountId());
+        //validateUserAccountId(emailVerifyRequest.getAccountId());
 
         //해당 이메일로 가입 기록이 있는지 확인
-        if(userinfoRepository.existsByEmailAndResType(emailVerifyRequest.getEmail(), MATHRONE.getTypeName())){
-            throw new CustomException(ErrorCode.EMAIL_ACCOUNT_IS_DUPLICATION);
-        }
+//        if(userinfoRepository.existsByEmailAndResType(emailVerifyRequest.getEmail(), MATHRONE.getTypeName())){
+//            throw new CustomException(ErrorCode.EMAIL_ACCOUNT_IS_DUPLICATION);
+//        }
 
         String code = mailService.sendCode(emailVerifyRequest.getEmail(),"이메일 인증 코드"); //이메일 인증코드 보내기
 
@@ -518,7 +518,7 @@ public class AuthService {
         // token 생성
         TokenDto tokenDto = tokenProviderUtil.generateToken(authentication,
             userRequestDto.getNickname());
-      
+
         int userId = Integer.parseInt(tokenDto.getUserInfo().getNickname());
         UserInfo u = userinfoRepository.findByUserId(userId);
 
