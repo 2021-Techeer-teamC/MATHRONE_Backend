@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import mathrone.backend.controller.dto.BookDetailDto;
+import mathrone.backend.controller.dto.LevelInfoDto;
 import mathrone.backend.controller.dto.UserEvaluateLevelRequestDto;
 import mathrone.backend.controller.dto.UserWorkbookDataInterface;
 import mathrone.backend.controller.dto.WorkbookDto;
@@ -155,6 +156,20 @@ public class WorkBookService {
             }
         }
 
+        LevelInfoDto levelInfo;
+        String accessToken = tokenProviderUtil.resolveToken(request);
+        Optional <WorkbookLevelInfo> workbookLevelInfo = workbookLevelRepository.findByWorkbookId(workbookId);
+
+        if(accessToken != null) {   // access 토큰이 있다면 사용자 투표 결과도 return
+            String userId = tokenProviderUtil.getAuthentication(accessToken).getName();
+            UserInfo user = userInfoRepository.findByUserId(Integer.parseInt(userId));
+            Optional<UserWorkbookRelInfo> userWorkbookRelInfo =
+                    userWorkbookRelRepository.findByUserAndWorkbook(user, workBookInfo);
+            levelInfo = new LevelInfoDto(workbookLevelInfo.get().mostVotedLevel(), userWorkbookRelInfo.get().getVoteLevel()); // 사용자가 투표한 레벨
+        }
+        else    // access 토큰이 없는 경우 최다 투표만 return
+            levelInfo = new LevelInfoDto(workbookLevelInfo.get().mostVotedLevel());
+
         return BookDetailDto.builder()
             .workbookId(workBookInfo.getWorkbookId())
             .title(workBookInfo.getTitle())
@@ -169,6 +184,7 @@ public class WorkBookService {
             .star(star)
             .chapterGroup(chapterGroups)
             .tags(tags)
+            .level(levelInfo)
             .build();
     }
 
@@ -404,24 +420,30 @@ public class WorkBookService {
         if (workBookInfo.isEmpty() || isWorkbookLevelInfo.isEmpty()) {
             throw new CustomException(ErrorCode.NOT_FOUND_WORKBOOK);
         }
-
+        UserWorkbookRelInfo userWorkbookRel;
         Optional<UserWorkbookRelInfo> userWorkbookRelInfo = userWorkbookRelRepository.findByUserAndWorkbook(
                 user, workBookInfo.get());  // 유저가 문제집에 대해 평가
 
-        WorkbookLevelInfo workbookLevelInfo = isWorkbookLevelInfo.get();
-
-        if(userWorkbookRelInfo.isPresent()){
-            UserWorkbookRelInfo userWorkbookRel = userWorkbookRelInfo.get();
-            int level = userEvaluateLevelRequestDto.getLevel(); // 사용자가 투표한 레벨
-            if(userWorkbookRel.getVoteLevel() != 0){    // 이미 투표가 되어있다면
-                if(userWorkbookRel.getVoteLevel() == level)
-                    return; // 같은 값으로 변경 요청 들어오면 return
-                updateLevelCount(userWorkbookRel.getVoteLevel(), true, workbookLevelInfo);
-                // 기존 투표 취소
-            }
-            updateLevelCount(level, false, workbookLevelInfo);  // 새롭게 투표한 결과 저장
-            userWorkbookRel.updateVote(level);  // 사용자가 어떤 레벨에 투표했는지
+        if(userWorkbookRelInfo.isEmpty()){  // 없을 경우 새로 생성
+            userWorkbookRel = userWorkbookRelRepository.save(UserWorkbookRelInfo.builder()
+                    .user(user)
+                    .workbook(workBookInfo.get())
+                    .build());
         }
+        else    // 있다면 기존것 사용
+            userWorkbookRel = userWorkbookRelInfo.get();
+
+        WorkbookLevelInfo workbookLevelInfo = isWorkbookLevelInfo.get();
+        int level = userEvaluateLevelRequestDto.getLevel(); // 사용자가 투표한 레벨
+
+        if(userWorkbookRel.getVoteLevel() != 0){    // 이미 투표가 되어있다면
+            if(userWorkbookRel.getVoteLevel() == level)
+                return; // 같은 값으로 변경 요청 들어오면 return
+            updateLevelCount(userWorkbookRel.getVoteLevel(), true, workbookLevelInfo);
+            // 기존 투표 취소
+        }
+        updateLevelCount(level, false, workbookLevelInfo);  // 새롭게 투표한 결과 저장
+        userWorkbookRel.updateVote(level);  // 사용자가 어떤 레벨에 투표했는지
     }
 
     /**
@@ -463,7 +485,6 @@ public class WorkBookService {
         if (!tokenProviderUtil.validateToken(accessToken, request)) {
             throw (CustomException) request.getAttribute("Exception");
         }
-
         int userId = Integer.parseInt(tokenProviderUtil.getAuthentication(accessToken).getName());
 
         UserInfo user = userInfoRepository.getById(userId);

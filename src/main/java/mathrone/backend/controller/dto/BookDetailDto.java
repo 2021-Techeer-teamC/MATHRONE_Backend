@@ -26,4 +26,6 @@ public class BookDetailDto {
     private Boolean star;
     private Set<ChapterGroup> chapterGroup;
     private List<Tag> tags;
+    private LevelInfoDto level;
+
 }
