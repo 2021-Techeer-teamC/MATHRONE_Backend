@@ -25,6 +25,7 @@ import mathrone.backend.service.AuthService;
 import mathrone.backend.service.SnsLoginService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -47,10 +48,10 @@ public class UserController {
     private final SnsLoginService snsLoginService;
 
 
-    @GetMapping("/delUser")
+    @DeleteMapping("/delUser")
     @ApiOperation(value = "사용자 삭제", notes = "DB에 존재하는 사용자를 삭제")
-    public ResponseEntity<Void> deleteUser(@RequestParam String accountId, String resType) {
-        authService.deleteUser(accountId, resType);
+    public ResponseEntity<Void> deleteUser(@RequestParam String nickname, String resType) {
+        authService.deleteUser(nickname, resType);
         return ResponseEntity.ok().build();
     }
 

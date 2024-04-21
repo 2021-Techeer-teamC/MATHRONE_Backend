@@ -32,7 +32,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Integer> {
 
     boolean existsByNickname(String nickname);
 
-    void deleteByNicknameAndResType(String accountId, String resType);
+    void deleteByNicknameAndResType(String nickname, String resType);
 
     UserInfo findByEmailAndResTypeAndActivateTrue(String email, String resType);
 

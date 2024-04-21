@@ -281,11 +281,11 @@ public class AuthService {
 
 
     @Transactional
-    public void deleteUser(String accountId, String resType) {
+    public void deleteUser(String nickname, String resType) {
         // resType에 대한 구분을 enum class로 다루는 방안에 대해 토의하기
         if (resType.equals(MATHRONE.getTypeName())) {
             // accountId가 존재하지 않는 경우에 대한 예외처리 작성하기
-            userinfoRepository.deleteByNicknameAndResType(accountId, resType);
+            userinfoRepository.deleteByNicknameAndResType(nickname, resType);
         }
     }
 
