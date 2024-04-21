@@ -157,6 +157,7 @@ public class ProfileService {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
 
+
         Long rank = zSetOperations.reverseRank("test", user_id.toString());
         if(rank == null){
 
@@ -169,6 +170,7 @@ public class ProfileService {
             return node;
         }
     }
+
 
     public UserFailedTriedWorkbookResponseDto getTriedProblemForGraph(HttpServletRequest request) {
         // 1. Request Header 에서 access token 빼기
