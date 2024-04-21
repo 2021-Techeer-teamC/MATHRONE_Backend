@@ -74,7 +74,7 @@ public class AuthService {
         // user nickname 존재하는지 검사
         //validateUserAccountId(userSignUpDto.getNickname());
 
-        EmailVerifyCodeRedis r = emailVerifyCodeRedisRepository.findById(userSignUpDto.getNickname())
+        EmailVerifyCodeRedis r = emailVerifyCodeRedisRepository.findById(userSignUpDto.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.NONEXISTENT_SIGNUP_TRY));
 
         // Reactive code 일치 및 만료여부 검사
@@ -111,7 +111,7 @@ public class AuthService {
         //레디스에 담아둠
         emailVerifyCodeRedisRepository.save(
                 EmailVerifyCodeRedis.builder()
-                        .id(emailVerifyRequest.getAccountId())
+                        .id(emailVerifyRequest.getEmail())
                         .verifyCode(code)
                         .expiration(3*60L)
                         .build()

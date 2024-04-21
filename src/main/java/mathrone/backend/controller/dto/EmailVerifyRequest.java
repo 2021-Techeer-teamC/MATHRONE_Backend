@@ -11,15 +11,19 @@ public class EmailVerifyRequest {
 
     private String email;
 
-    private String accountId;
+    //private String accountId;
 
     public EmailVerifyRequest(){
 
     }
 
-    public EmailVerifyRequest(String email, String accountId){
+    public EmailVerifyRequest(String email){
         this.email = email;
-        this.accountId = accountId;
     }
+
+//    public EmailVerifyRequest(String email, String accountId){
+//        this.email = email;
+//        this.accountId = accountId;
+//    }
 
 }
