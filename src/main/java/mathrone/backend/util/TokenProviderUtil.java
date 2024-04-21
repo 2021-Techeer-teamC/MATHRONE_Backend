@@ -88,7 +88,7 @@ public class TokenProviderUtil {
             .userInfo(
                 UserResponseDto.builder()
                     .nickname(authentication.getName())
-                    .accountId(accountId)
+                    .userId(accountId)
                     .build()
             )
             .build();
@@ -129,7 +129,7 @@ public class TokenProviderUtil {
                 .userInfo(
                         UserResponseDto.builder()
                                 .nickname(authentication.getName())
-                                .accountId(accountId)
+                                .userId(accountId)
                                 .build()
                 )
                 .snsInfo(
