@@ -18,5 +18,4 @@ public interface ProblemTryRepository extends JpaRepository<ProblemTry, Long> {
 
     Optional<List<ProblemTry>> findProblemTryByUserAndIscorrect(UserInfo userInfo,
         Boolean iscorrect);
-
 }

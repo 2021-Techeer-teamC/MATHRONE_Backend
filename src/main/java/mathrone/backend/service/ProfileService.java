@@ -160,9 +160,7 @@ public class ProfileService {
 
         Long rank = zSetOperations.reverseRank("test", user_id.toString());
         if(rank == null){
-
             return null;
-
         }else{
             node.put("rank", zSetOperations.reverseRank("test", user_id.toString()) + 1);
             node.put("score", zSetOperations.score("test", user_id.toString()));

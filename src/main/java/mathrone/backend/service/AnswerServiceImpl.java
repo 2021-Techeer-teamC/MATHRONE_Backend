@@ -129,7 +129,6 @@ public class AnswerServiceImpl implements AnswerService {
         else
             return false;   // 답이 틀릴 경우 거짓 반환
     }
-
     @Transactional
     public int saveTry(ProblemGradeRequestDto.problemSolve problem, UserInfo user,
         boolean isCorrect, int upScore) {
