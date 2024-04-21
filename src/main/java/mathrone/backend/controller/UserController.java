@@ -20,6 +20,7 @@ import mathrone.backend.controller.dto.UserRequestDto;
 import mathrone.backend.controller.dto.UserResponseDto;
 import mathrone.backend.controller.dto.UserSignUpDto;
 import mathrone.backend.domain.ReactiveUserDto;
+import mathrone.backend.domain.SignupResponse;
 import mathrone.backend.domain.UserInfo;
 import mathrone.backend.domain.UserProfile;
 import mathrone.backend.service.AuthService;
@@ -113,7 +114,7 @@ public class UserController {
 
     @PostMapping(value = "/signup", headers = {"Content-type=application/json"})
     @ApiOperation(value = "Mathrone 회원 가입")
-    public ResponseEntity<UserResponseDto> signUp(@RequestBody UserSignUpDto userSignUpDto) {
+    public ResponseEntity<SignupResponse> signUp(@RequestBody UserSignUpDto userSignUpDto) {
         return ResponseEntity.ok(authService.signup(userSignUpDto));
     }
 

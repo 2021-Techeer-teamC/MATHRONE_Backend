@@ -25,10 +25,7 @@ import mathrone.backend.controller.dto.TokenDto;
 import mathrone.backend.controller.dto.UserRequestDto;
 import mathrone.backend.controller.dto.UserResponseDto;
 import mathrone.backend.controller.dto.UserSignUpDto;
-import mathrone.backend.domain.ReactiveUserDto;
-import mathrone.backend.domain.Subscription;
-import mathrone.backend.domain.UserInfo;
-import mathrone.backend.domain.UserProfile;
+import mathrone.backend.domain.*;
 
 import mathrone.backend.domain.token.*;
 import mathrone.backend.error.exception.CustomException;
@@ -72,10 +69,10 @@ public class AuthService {
 
 
     @Transactional
-    public UserResponseDto signup(UserSignUpDto userSignUpDto) {
+    public SignupResponse signup(UserSignUpDto userSignUpDto) {
 
         // user nickname 존재하는지 검사
-        validateUserAccountId(userSignUpDto.getNickname());
+        //validateUserAccountId(userSignUpDto.getNickname());
 
         EmailVerifyCodeRedis r = emailVerifyCodeRedisRepository.findById(userSignUpDto.getNickname())
                 .orElseThrow(() -> new CustomException(ErrorCode.NONEXISTENT_SIGNUP_TRY));
@@ -85,14 +82,18 @@ public class AuthService {
             throw new CustomException(ErrorCode.INVALID_REACTIVATE_CODE);
         }
 
-        if(userinfoRepository.existsByEmail(userSignUpDto.getEmail())){
-            throw new CustomException(ErrorCode.EMAIL_ACCOUNT_IS_DUPLICATION);
-        }
+//        if(userinfoRepository.existsByEmail(userSignUpDto.getEmail())){
+//            throw new CustomException(ErrorCode.EMAIL_ACCOUNT_IS_DUPLICATION);
+//        }
 
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder,
                 MATHRONE.getTypeName()); //MATHRONE user로 가입시켜주기
 
-        return UserResponseDto.of(userinfoRepository.save(newUser));
+        UserInfo u = userinfoRepository.save(newUser);
+
+        return SignupResponse.builder()
+                .nickname(u.getNickname())
+                .build();
     }
 
 
@@ -123,9 +124,9 @@ public class AuthService {
     public UserResponseDto signupWithGoogle(ResponseEntity<GoogleIDToken> googleIDToken,
         String accountId) {
         //이미 가입된 구글계정인지 확인
-        validateGoogleAccount(googleIDToken);//이미 가입기록이 있으면 여기서 에러
+        //validateGoogleAccount(googleIDToken);//이미 가입기록이 있으면 여기서 에러
         //유효한 accountID인지 확인(이미 존재하는 아이디인지)
-        validateUserAccountId(accountId); //이미 존재하는 아이디면 여기서 에러
+        //validateUserAccountId(accountId); //이미 존재하는 아이디면 여기서 에러
         //아니면 회원가입 진행
         //입력받아온 accountID를 이용하여 회원가입
         UserSignUpDto userSignUpDto = new UserSignUpDto(googleIDToken.getBody().getEmail(),
@@ -140,10 +141,10 @@ public class AuthService {
         String accountID) {
 
         //이미 가입된 카카오 계정인지 확인
-        validateKakaoAccount(kakaoIDToken);
+        //validateKakaoAccount(kakaoIDToken);
 
         //유효한 accountID인지 확인
-        validateUserAccountId(accountID);
+        //validateUserAccountId(accountID);
 
         UserSignUpDto userSignUpDto = new UserSignUpDto(kakaoIDToken.getBody().getEmail(),
             "kakaoLogin", accountID); //id와 email을 email로 채워서 만들기
