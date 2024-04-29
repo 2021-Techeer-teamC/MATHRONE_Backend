@@ -1,6 +1,7 @@
 package mathrone.backend.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import mathrone.backend.controller.dto.interfaces.UserSolvedWorkbookResponseDtoInterface;
 import mathrone.backend.domain.PubCatPair;
@@ -35,7 +36,7 @@ public interface WorkBookRepository extends JpaRepository<WorkBookInfo, String> 
     // workbookId로 해당 workbook 조회
     WorkBookInfo findByWorkbookId(WorkBookInfo workBookInfo);
 
-    WorkBookInfo findByWorkbookId(String workbookId);
+    Optional<WorkBookInfo> findByWorkbookId(String workbookId);
 
     // 유저가 푼 문제집에 대해 문제집 Id, 전체 문제 개수, 푼 문제 개수 반환
     @Query(value =

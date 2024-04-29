@@ -103,7 +103,8 @@ public class WorkBookService {
         Set<ChapterGroup> chapterGroups = new HashSet<>();
         List<Tag> tags = new ArrayList<>();
 
-        WorkBookInfo workBookInfo = workBookRepository.findByWorkbookId(workbookId);
+        WorkBookInfo workBookInfo = workBookRepository.findByWorkbookId(workbookId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_WORKBOOK));
 
         // 각 그룹별로 챕터 정리
         if (workBookInfo.getChapterId() != null) {
