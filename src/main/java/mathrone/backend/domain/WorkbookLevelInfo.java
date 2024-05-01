@@ -44,4 +44,17 @@ public class WorkbookLevelInfo {
         this.highCnt = count;
     }
 
+    public int mostVotedLevel(){
+        if(this.lowCnt <= this.midCnt){
+            if(this.midCnt <= this.highCnt)
+                return 3;
+            else
+                return 2;
+        }
+        else {
+            if(this.lowCnt <= this.highCnt)
+                return 3;
+        }
+        return 1;
+    }
 }
