@@ -16,4 +16,8 @@ public enum UserResType {
     public String getTypeName() {
         return typeName;
     }
+    @Override
+    public String toString() {
+        return this.typeName;
+    }
 }

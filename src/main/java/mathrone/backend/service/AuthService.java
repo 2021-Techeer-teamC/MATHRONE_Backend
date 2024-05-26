@@ -3,6 +3,7 @@ package mathrone.backend.service;
 import static mathrone.backend.domain.enums.UserResType.GOOGLE;
 import static mathrone.backend.domain.enums.UserResType.KAKAO;
 import static mathrone.backend.domain.enums.UserResType.MATHRONE;
+import mathrone.backend.domain.enums.UserResType;
 import static mathrone.backend.error.exception.ErrorCode.AlREADY_LOGOUT;
 import static mathrone.backend.error.exception.ErrorCode.INVALID_REFRESH_TOKEN;
 
@@ -41,6 +42,7 @@ import mathrone.backend.repository.redisRepository.ReactivateCodeRedisRepository
 import mathrone.backend.repository.redisRepository.RefreshTokenRedisRepository;
 import mathrone.backend.repository.tokenRepository.GoogleRefreshTokenRedisRepository;
 import mathrone.backend.util.TokenProviderUtil;
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -75,7 +77,7 @@ public class AuthService {
         validateUserAccountId(userSignUpDto.getNickname());
 
         UserInfo newUser = userSignUpDto.toUser(passwordEncoder,
-            MATHRONE.getTypeName()); //MATHRONE user로 가입시켜주기
+            MATHRONE); //MATHRONE user로 가입시켜주기
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
 
@@ -90,7 +92,7 @@ public class AuthService {
         //입력받아온 accountID를 이용하여 회원가입
         UserSignUpDto userSignUpDto = new UserSignUpDto(googleIDToken.getBody().getEmail(),
             "googleLogin", accountId); //id와 email을 email로 채워서 만들기
-        UserInfo newUser = userSignUpDto.toUser(passwordEncoder, GOOGLE.getTypeName());
+        UserInfo newUser = userSignUpDto.toUser(passwordEncoder, GOOGLE);
 
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
@@ -107,7 +109,7 @@ public class AuthService {
 
         UserSignUpDto userSignUpDto = new UserSignUpDto(kakaoIDToken.getBody().getEmail(),
             "kakaoLogin", accountID); //id와 email을 email로 채워서 만들기
-        UserInfo newUser = userSignUpDto.toUser(passwordEncoder, KAKAO.getTypeName());
+        UserInfo newUser = userSignUpDto.toUser(passwordEncoder, KAKAO);
 
         return UserResponseDto.of(userinfoRepository.save(newUser));
     }
@@ -117,7 +119,7 @@ public class AuthService {
         ResponseEntity<ResponseTokenDTO> googleResponseToken) {
         //0. 가입이 되어 있는 계정이 아니면 회원가입을 자동으로 시켜주기
         if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
-            GOOGLE.getTypeName())) {
+            GOOGLE)) {
             //타입 : 구글 && 이메일이 존재하지 않는 경우
             String tmpId;
             //@로 시작하는 랜덤 아이디를 만들어 제공
@@ -129,7 +131,7 @@ public class AuthService {
 
         //active true인 경우만 로그인 가능
         UserInfo user = userinfoRepository.findByEmailAndResType(googleIDToken.getBody().getEmail(),
-            GOOGLE.getTypeName());
+            GOOGLE);
 
         if(!user.isActivate()){
             throw new CustomException(ErrorCode.DEACTIVATE_USER);
@@ -180,7 +182,7 @@ public class AuthService {
 
         //user id알아내기
         UserInfo user = userinfoRepository.findByEmailAndResType(googleIDToken.getBody().getEmail(),
-            GOOGLE.getTypeName());
+            GOOGLE);
         int userId = user.getUserId();
 
         // google에서 발급한 refresh Token
@@ -201,7 +203,7 @@ public class AuthService {
 
         //가입이 안되어 있는 경우 -> 자동가입 but accountID가 미설정되었음을 알려야함
         if (!userinfoRepository.existsByEmailAndResType(kakaoIDToken.getBody().getEmail(),
-            KAKAO.getTypeName())) {
+            KAKAO)) {
             //타입 : 카카오 && 이메일이 존재하지 않는 경우
             String tmpId;
             //@로 시작하는 랜덤 아이디를 만들어 제공
@@ -212,7 +214,7 @@ public class AuthService {
         }
 
         UserInfo user = userinfoRepository.findByEmailAndResType(kakaoIDToken.getBody().getEmail(),
-            KAKAO.getTypeName());
+            KAKAO);
 
 
         if(!user.isActivate()){
@@ -262,7 +264,7 @@ public class AuthService {
         ResponseEntity<KakaoIDToken> kakaoIdToken) {
         //user id알아내기
         UserInfo user = userinfoRepository.findByEmailAndResType(kakaoIdToken.getBody().getEmail(),
-            KAKAO.getTypeName());
+            KAKAO);
         int userId = user.getUserId();
 
         // kakao에서 발급한 refresh Token 및 만료시간
@@ -281,9 +283,9 @@ public class AuthService {
 
 
     @Transactional
-    public void deleteUser(String nickname, String resType) {
+    public void deleteUser(String nickname, UserResType resType) {
         // resType에 대한 구분을 enum class로 다루는 방안에 대해 토의하기
-        if (resType.equals(MATHRONE.getTypeName())) {
+        if (EnumUtils.isValidEnum(UserResType.class, resType.toString())) {
             // accountId가 존재하지 않는 경우에 대한 예외처리 작성하기
             userinfoRepository.deleteByNicknameAndResType(nickname, resType);
         }
@@ -315,9 +317,9 @@ public class AuthService {
         UserInfo user = userinfoRepository.findByUserId(userId);
 
         //로그인 해제
-        if (user.getResType().equals(KAKAO.getTypeName())) {
+        if (user.getResType().equals(KAKAO)) {
             logoutWithKakao(request);
-        }else if(user.getResType().equals(GOOGLE.getTypeName())){
+        }else if(user.getResType().equals(GOOGLE)){
             logoutWithGoogle(request);
         }else{
             logout(request);
@@ -641,14 +643,14 @@ public class AuthService {
     // 로그인 시 가입된 적 없으면 자동 가입이 진행되므로 필요 없어짐
 //    public void existGoogleAccount(ResponseEntity<GoogleIDToken> googleIDToken) {
 //        if (!userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
-//                GOOGLE.getTypeName())){
+//                GOOGLE)){
 //            throw new UserException(ErrorCode.GOOGLE_ACCOUNT_NOT_FOUND);
 //        }
 //    }
     //가입이 진행된 구글 계정인지 확인 -> 가입 된적 있으면 에러(회원가입 시도시)
     public void validateGoogleAccount(ResponseEntity<GoogleIDToken> googleIDToken) {
         if (userinfoRepository.existsByEmailAndResType(googleIDToken.getBody().getEmail(),
-            GOOGLE.getTypeName())) {
+            GOOGLE)) {
             throw new CustomException(ErrorCode.GOOGLE_ACCOUNT_IS_DUPLICATION);
         }
     }
@@ -656,7 +658,7 @@ public class AuthService {
 
     public void validateKakaoAccount(ResponseEntity<KakaoIDToken> kakaoIDToken) {
         if (userinfoRepository.existsByEmailAndResType(kakaoIDToken.getBody().getEmail(),
-            KAKAO.getTypeName())) {
+            KAKAO)) {
             throw new CustomException(ErrorCode.KAKAO_ACCOUNT_IS_DUPLICATION);
         }
     }

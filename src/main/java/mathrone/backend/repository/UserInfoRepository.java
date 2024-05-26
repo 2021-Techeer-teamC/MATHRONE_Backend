@@ -2,6 +2,7 @@ package mathrone.backend.repository;
 
 import java.util.Optional;
 import mathrone.backend.domain.UserInfo;
+import mathrone.backend.domain.enums.UserResType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -13,7 +14,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Integer> {
 
     Optional<UserInfo> findByNickname(String nickname);
 
-    UserInfo findByEmailAndResType(String email, String resType);
+    UserInfo findByEmailAndResType(String email, UserResType resType);
 
     Optional<UserInfo> findByEmail(String email);
 
@@ -26,13 +27,13 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Integer> {
 
     boolean existsUserInfoByNickname(String nickname);
 
-    boolean existsByEmailAndResType(String email, String resType);
+    boolean existsByEmailAndResType(String email, UserResType resType);
 
     boolean existsByUserId(int userId);
 
     boolean existsByNickname(String nickname);
 
-    void deleteByNicknameAndResType(String nickname, String resType);
+    void deleteByNicknameAndResType(String nickname, UserResType resType);
 
     UserInfo findByEmailAndResTypeAndActivateTrue(String email, String resType);
 

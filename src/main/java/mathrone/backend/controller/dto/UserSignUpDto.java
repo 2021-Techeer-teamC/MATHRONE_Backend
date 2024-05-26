@@ -3,6 +3,7 @@ package mathrone.backend.controller.dto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import mathrone.backend.domain.UserInfo;
+import mathrone.backend.domain.enums.UserResType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Getter
@@ -19,7 +20,7 @@ public class UserSignUpDto {
         this.nickname = nickname;
     }
 
-    public UserInfo toUser(PasswordEncoder passwordEncoder, String resType) {
+    public UserInfo toUser(PasswordEncoder passwordEncoder, UserResType resType) {
         return UserInfo.builder()
             .nickname(nickname)
             .email(email)

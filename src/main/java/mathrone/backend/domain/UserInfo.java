@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import mathrone.backend.domain.enums.UserResType;
 import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
@@ -50,8 +51,9 @@ public class UserInfo {
     private String phoneNum;
 
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "register_type")
-    private String resType;
+    private UserResType resType;
 
     private boolean activate = true;
 
@@ -62,7 +64,7 @@ public class UserInfo {
     private List<UserWorkbookRelInfo> userWorkbookRelInfo = new LinkedList<>();
 
     @Builder
-    public UserInfo(String email, String password, String nickname, String resType) {
+    public UserInfo(String email, String password, String nickname, UserResType resType) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;

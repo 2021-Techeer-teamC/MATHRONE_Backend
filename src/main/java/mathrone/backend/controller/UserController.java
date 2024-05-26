@@ -23,6 +23,7 @@ import mathrone.backend.domain.UserInfo;
 import mathrone.backend.domain.UserProfile;
 import mathrone.backend.service.AuthService;
 import mathrone.backend.service.SnsLoginService;
+import mathrone.backend.domain.enums.UserResType;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
