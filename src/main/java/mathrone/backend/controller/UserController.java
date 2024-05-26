@@ -49,9 +49,9 @@ public class UserController {
     private final SnsLoginService snsLoginService;
 
 
-    @DeleteMapping("/delUser")
-    @ApiOperation(value = "사용자 삭제", notes = "DB에 존재하는 사용자를 삭제")
-    public ResponseEntity<Void> deleteUser(@RequestParam String nickname, String resType) {
+    @DeleteMapping()
+    @ApiOperation(value = "[Admin 전용] 사용자 삭제", notes = "[Admin 전용] DB에 존재하는 사용자를 삭제")
+    public ResponseEntity<Void> deleteUser(@RequestParam String nickname, UserResType resType) {
         authService.deleteUser(nickname, resType);
         return ResponseEntity.ok().build();
     }
